@@ -1,0 +1,56 @@
+# Build output
+build/
+build-*/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+
+# Qt Creator local state
+.qtcreator/
+*.user
+*.user.*
+
+# Local agent/tool state
+.agents/
+.codex/
+
+# Qt / CMake generated files
+*_autogen/
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+
+# Binaries and deployed runtime files
+*.exe
+*.obj
+*.o
+*.dll
+*.a
+*.lib
+*.pdb
+*.ilk
+*.manifest
+*.qm
+platforms/
+styles/
+imageformats/
+iconengines/
+generic/
+networkinformation/
+tls/
+translations/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+*.orig
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
