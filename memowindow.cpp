@@ -163,8 +163,8 @@ void MemoWindow::setupUi()
     setAttribute(Qt::WA_TranslucentBackground, true);
 
     auto *rootLayout = new QVBoxLayout(this);
-    rootLayout->setContentsMargins(12, 10, 12, 8);
-    rootLayout->setSpacing(10);
+    rootLayout->setContentsMargins(7, 5, 7, 4);
+    rootLayout->setSpacing(5);
 
     titleBar = new QWidget(this);
     titleBar->setObjectName("TitleBar");
@@ -173,7 +173,7 @@ void MemoWindow::setupUi()
 
     auto *titleLayout = new QHBoxLayout(titleBar);
     titleLayout->setContentsMargins(2, 0, 0, 0);
-    titleLayout->setSpacing(6);
+    titleLayout->setSpacing(5);
 
     titleLabel = new QLabel(MemoStore::displayName(type), titleBar);
     titleLabel->setObjectName("TitleLabel");
@@ -190,8 +190,7 @@ void MemoWindow::setupUi()
     hideButton->setToolTip(QStringLiteral("隐藏便签"));
     connect(hideButton, &QPushButton::clicked, this, &MemoWindow::hide);
 
-    titleLayout->addWidget(titleLabel);
-    titleLayout->addStretch();
+    titleLayout->addWidget(titleLabel, 1);
     titleLayout->addWidget(topButton);
     titleLayout->addWidget(hideButton);
 
@@ -202,14 +201,20 @@ void MemoWindow::setupUi()
     auto *listWidget = new QWidget(scrollArea);
     listLayout = new QVBoxLayout(listWidget);
     listLayout->setContentsMargins(0, 0, 0, 0);
-    listLayout->setSpacing(7);
+    listLayout->setSpacing(4);
     scrollArea->setWidget(listWidget);
 
     auto *bottomBar = new QWidget(this);
+    bottomBar->setObjectName("ResizeBar");
+    bottomBar->setFixedHeight(8);
     auto *bottomLayout = new QHBoxLayout(bottomBar);
     bottomLayout->setContentsMargins(0, 0, 0, 0);
+    bottomLayout->setSpacing(0);
     bottomLayout->addStretch();
-    bottomLayout->addWidget(new QSizeGrip(bottomBar));
+    auto *resizeGrip = new QSizeGrip(bottomBar);
+    resizeGrip->setObjectName("ResizeGrip");
+    resizeGrip->setFixedSize(12, 12);
+    bottomLayout->addWidget(resizeGrip);
 
     rootLayout->addWidget(titleBar);
     rootLayout->addWidget(scrollArea, 1);
@@ -235,7 +240,7 @@ void MemoWindow::rebuildList()
         emptyFrame->setProperty("memoKind", MemoStore::typeToString(type));
 
         auto *emptyLayout = new QVBoxLayout(emptyFrame);
-        emptyLayout->setContentsMargins(10, 26, 10, 26);
+        emptyLayout->setContentsMargins(10, 22, 10, 22);
 
         auto *emptyLabel = new QLabel(QStringLiteral("暂无记录"), emptyFrame);
         emptyLabel->setObjectName("EmptyStateText");
@@ -257,8 +262,8 @@ void MemoWindow::rebuildList()
         recordFrame->installEventFilter(this);
 
         auto *recordLayout = new QVBoxLayout(recordFrame);
-        recordLayout->setContentsMargins(12, 10, 12, 10);
-        recordLayout->setSpacing(6);
+        recordLayout->setContentsMargins(10, 7, 10, 7);
+        recordLayout->setSpacing(4);
 
         auto *textLabel = new QLabel(memo.text, recordFrame);
         textLabel->setObjectName("RecordText");

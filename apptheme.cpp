@@ -23,6 +23,10 @@ struct Palette {
     QString memoTitleGradient;
     QString memoCard;
     QString memoCardHover;
+    QString memoBorder;
+    QString memoBorderStrong;
+    QString memoText;
+    QString memoTimeText;
 
     QString textPrimary;
     QString textSecondary;
@@ -64,11 +68,15 @@ Palette palette(ThemeMode mode)
             "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #151F31, stop:1 #111827)", // surfaceGradient
             "#1F2937", // surfaceRaised
             "#0F172A", // surfaceSunken
-            "#182033", // memoPanel
-            "#202A44", // memoPanelTop
-            "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #202A44, stop:1 #182033)", // memoTitleGradient
-            "#1F2A44", // memoCard
-            "#263553", // memoCardHover
+            "#252113", // memoPanel
+            "#3A3217", // memoPanelTop
+            "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #3A3217, stop:1 #252113)", // memoTitleGradient
+            "#302A18", // memoCard
+            "#3A321C", // memoCardHover
+            "#5B4E2A", // memoBorder
+            "#8A7334", // memoBorderStrong
+            "#FFF7D6", // memoText
+            "#D6C99A", // memoTimeText
 
             "#F9FAFB", // textPrimary
             "#CBD5E1", // textSecondary
@@ -108,11 +116,15 @@ Palette palette(ThemeMode mode)
         "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FFFFFF, stop:1 #F8FAFC)", // surfaceGradient
         "#F8FAFC", // surfaceRaised
         "#EEF2F7", // surfaceSunken
-        "#FFF8D6", // memoPanel
-        "#FFF3BF", // memoPanelTop
-        "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FFFBE8, stop:1 #FFF3BF)", // memoTitleGradient
-        "#FFFDF2", // memoCard
-        "#FFF6CF", // memoCardHover
+        "#FFF1A8", // memoPanel
+        "#FFE680", // memoPanelTop
+        "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FFF2A3, stop:1 #FFE680)", // memoTitleGradient
+        "#FFF9D8", // memoCard
+        "#FFF4BD", // memoCardHover
+        "#E8D486", // memoBorder
+        "#C9A938", // memoBorderStrong
+        "#111827", // memoText
+        "#475569", // memoTimeText
 
         "#111827", // textPrimary
         "#4B5563", // textSecondary
@@ -157,6 +169,10 @@ QString themed(QString style, const Palette &p)
         .replace("${memoTitleGradient}", p.memoTitleGradient)
         .replace("${memoCard}", p.memoCard)
         .replace("${memoCardHover}", p.memoCardHover)
+        .replace("${memoBorder}", p.memoBorder)
+        .replace("${memoBorderStrong}", p.memoBorderStrong)
+        .replace("${memoText}", p.memoText)
+        .replace("${memoTimeText}", p.memoTimeText)
         .replace("${textPrimary}", p.textPrimary)
         .replace("${textSecondary}", p.textSecondary)
         .replace("${textMuted}", p.textMuted)
@@ -257,78 +273,78 @@ QString AppTheme::memoWindowStyleSheet(ThemeMode mode)
     const Palette p = palette(mode);
     return themed(R"(
 MemoWindow {
-    color: ${textPrimary};
+    color: ${memoText};
     background: ${memoPanel};
-    border: 1px solid ${borderStrong};
-    border-radius: 12px;
+    border: 1px solid ${memoBorderStrong};
+    border-radius: 10px;
 }
 MemoWindow[memoKind="question"] {
-    border-color: ${primary};
+    border-color: ${memoBorderStrong};
 }
 MemoWindow[memoKind="todo"] {
-    border-color: ${secondary};
+    border-color: ${memoBorderStrong};
 }
 MemoWindow QWidget#TitleBar {
     background: ${memoTitleGradient};
-    border-bottom: 1px solid ${border};
-    min-height: 34px;
+    border-bottom: 1px solid ${memoBorderStrong};
+    min-height: 30px;
 }
 MemoWindow QLabel#TitleLabel {
-    color: ${textPrimary};
+    color: ${memoText};
     background: transparent;
     font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 700;
 }
 MemoWindow[memoKind="question"] QLabel#TitleLabel {
-    color: ${primary};
+    color: ${primaryHover};
 }
 MemoWindow[memoKind="todo"] QLabel#TitleLabel {
-    color: ${secondary};
+    color: ${secondaryHover};
 }
 MemoWindow QPushButton {
-    color: ${textPrimary};
+    color: ${memoText};
     background: ${memoCard};
-    border: 1px solid ${border};
-    border-radius: 6px;
-    padding: 4px 10px;
+    border: 1px solid ${memoBorder};
+    border-radius: 7px;
+    padding: 2px 8px;
     min-height: 22px;
-    min-width: 36px;
+    min-width: 30px;
     font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
 }
 MemoWindow QPushButton#TopButton {
-    min-width: 56px;
+    min-width: 48px;
 }
 MemoWindow QPushButton#TopButton[active="true"] {
     color: ${primary};
-    background: ${primarySoft};
+    background: ${memoCard};
     border-color: ${primary};
 }
 MemoWindow[memoKind="todo"] QPushButton#TopButton[active="true"] {
     color: ${secondary};
-    background: ${secondarySoft};
+    background: ${memoCard};
     border-color: ${secondary};
 }
 MemoWindow QPushButton#HideButton {
-    color: ${textSecondary};
-    max-width: 28px;
-    min-width: 28px;
+    color: ${memoTimeText};
+    max-width: 26px;
+    min-width: 26px;
     padding: 0;
-    font-size: 15px;
+    font-size: 14px;
 }
 MemoWindow QPushButton:hover {
-    color: ${textPrimary};
+    color: ${memoText};
     background: ${memoCardHover};
-    border-color: ${primary};
+    border-color: ${memoBorderStrong};
 }
 MemoWindow QPushButton#TopButton[active="true"]:hover {
     color: ${primaryHover};
-    background: ${primarySoft};
+    background: ${memoCardHover};
     border-color: ${primaryHover};
 }
 MemoWindow[memoKind="todo"] QPushButton#TopButton[active="true"]:hover {
     color: ${secondaryHover};
-    background: ${secondarySoft};
+    background: ${memoCardHover};
     border-color: ${secondaryHover};
 }
 MemoWindow QPushButton#HideButton:hover {
@@ -349,45 +365,56 @@ MemoWindow QScrollArea QWidget {
 }
 MemoWindow QFrame#MemoRecordCard {
     background: ${memoCard};
-    border: 1px solid ${border};
-    border-left: 3px solid ${primary};
-    border-radius: 8px;
+    border: 1px solid ${memoBorder};
+    border-left: 2px solid ${primary};
+    border-radius: 6px;
 }
 MemoWindow QFrame#MemoRecordCard[memoKind="todo"] {
     border-left-color: ${secondary};
 }
 MemoWindow QFrame#MemoRecordCard:hover {
     background: ${memoCardHover};
-    border-color: ${primary};
+    border-color: ${memoBorderStrong};
 }
 MemoWindow QFrame#MemoRecordCard[memoKind="todo"]:hover {
     border-left-color: ${secondary};
 }
 MemoWindow QLabel#RecordText {
-    color: ${textPrimary};
+    color: ${memoText};
     background: transparent;
     font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
-    font-size: 13px;
+    font-size: 14px;
+    font-weight: 500;
 }
 MemoWindow QLabel#RecordTime {
-    color: ${textSecondary};
+    color: ${memoTimeText};
     background: transparent;
     font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
-    font-size: 10px;
+    font-size: 11px;
 }
 MemoWindow QFrame#EmptyState {
-    background: ${primarySoft};
-    border: 1px dashed ${borderStrong};
-    border-radius: 8px;
+    background: ${memoCard};
+    border: 1px dashed ${memoBorderStrong};
+    border-radius: 6px;
 }
 MemoWindow QFrame#EmptyState[memoKind="todo"] {
-    background: ${secondarySoft};
+    background: ${memoCard};
 }
 MemoWindow QLabel#EmptyStateText {
-    color: ${textSecondary};
+    color: ${memoTimeText};
     background: transparent;
     font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
     font-size: 13px;
+}
+MemoWindow QWidget#ResizeBar {
+    background: ${memoPanel};
+    min-height: 8px;
+    max-height: 8px;
+}
+MemoWindow QSizeGrip#ResizeGrip {
+    background: transparent;
+    width: 12px;
+    height: 12px;
 }
 )", p);
 }
