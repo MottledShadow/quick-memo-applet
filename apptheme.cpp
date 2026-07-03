@@ -49,6 +49,25 @@ struct Palette {
     QString infoSoft;
 };
 
+struct TypeScale {
+    QString fontFamily;
+    QString captionSize;
+    QString bodySize;
+    QString bodyLargeSize;
+    QString memoTitleSize;
+    QString sectionSize;
+    QString titleSize;
+    QString pageTitleSize;
+    QString weightRegular;
+    QString weightMedium;
+    QString weightControl;
+    QString weightTitle;
+    QString lineCaption;
+    QString lineBody;
+    QString lineBodyLarge;
+    QString lineTitle;
+};
+
 Palette palette(ThemeMode mode)
 {
     if (mode == ThemeMode::Dark) {
@@ -150,8 +169,31 @@ Palette palette(ThemeMode mode)
     };
 }
 
+TypeScale typography()
+{
+    return {
+        "\"Segoe UI\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", sans-serif", // fontFamily
+        "11px", // captionSize
+        "13px", // bodySize
+        "14px", // bodyLargeSize
+        "16px", // memoTitleSize
+        "15px", // sectionSize
+        "18px", // titleSize
+        "21px", // pageTitleSize
+        "400", // weightRegular
+        "500", // weightMedium
+        "600", // weightControl
+        "700", // weightTitle
+        "16px", // lineCaption
+        "18px", // lineBody
+        "20px", // lineBodyLarge
+        "24px"  // lineTitle
+    };
+}
+
 QString themed(QString style, const Palette &p)
 {
+    const TypeScale t = typography();
     return style
         .replace("${primary}", p.primary)
         .replace("${primaryHover}", p.primaryHover)
@@ -192,7 +234,23 @@ QString themed(QString style, const Palette &p)
         .replace("${danger}", p.danger)
         .replace("${dangerSoft}", p.dangerSoft)
         .replace("${info}", p.info)
-        .replace("${infoSoft}", p.infoSoft);
+        .replace("${infoSoft}", p.infoSoft)
+        .replace("${fontFamily}", t.fontFamily)
+        .replace("${captionSize}", t.captionSize)
+        .replace("${bodySize}", t.bodySize)
+        .replace("${bodyLargeSize}", t.bodyLargeSize)
+        .replace("${memoTitleSize}", t.memoTitleSize)
+        .replace("${sectionSize}", t.sectionSize)
+        .replace("${titleSize}", t.titleSize)
+        .replace("${pageTitleSize}", t.pageTitleSize)
+        .replace("${weightRegular}", t.weightRegular)
+        .replace("${weightMedium}", t.weightMedium)
+        .replace("${weightControl}", t.weightControl)
+        .replace("${weightTitle}", t.weightTitle)
+        .replace("${lineCaption}", t.lineCaption)
+        .replace("${lineBody}", t.lineBody)
+        .replace("${lineBodyLarge}", t.lineBodyLarge)
+        .replace("${lineTitle}", t.lineTitle);
 }
 
 QString scrollBars(const Palette &p)
@@ -246,12 +304,16 @@ QToolTip {
     border: 1px solid ${borderStrong};
     border-radius: 6px;
     padding: 6px 8px;
+    font-family: ${fontFamily};
+    font-size: ${bodySize};
 }
 QMenu {
     color: ${textPrimary};
     background: ${surface};
     border: 1px solid ${border};
     padding: 4px;
+    font-family: ${fontFamily};
+    font-size: ${bodySize};
 }
 QMenu::item {
     padding: 6px 22px;
@@ -295,9 +357,10 @@ MemoWindow QWidget#TitleBar {
 MemoWindow QLabel#TitleLabel {
     color: ${memoText};
     background: transparent;
-    font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
-    font-size: 16px;
-    font-weight: 700;
+    font-family: ${fontFamily};
+    font-size: ${memoTitleSize};
+    font-weight: ${weightTitle};
+    line-height: ${lineTitle};
 }
 MemoWindow[memoKind="question"] QLabel#TitleLabel {
     color: ${primary};
@@ -313,7 +376,10 @@ MemoWindow QPushButton {
     padding: 3px 9px;
     min-height: 24px;
     min-width: 30px;
-    font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
+    font-family: ${fontFamily};
+    font-size: ${bodySize};
+    font-weight: ${weightControl};
+    line-height: ${lineBody};
 }
 MemoWindow QPushButton#TopButton {
     min-width: 52px;
@@ -333,7 +399,7 @@ MemoWindow QPushButton#HideButton {
     max-width: 26px;
     min-width: 26px;
     padding: 0;
-    font-size: 14px;
+    font-size: ${bodySize};
 }
 MemoWindow QPushButton:hover {
     color: ${memoText};
@@ -385,15 +451,18 @@ MemoWindow QFrame#MemoRecordCard[memoKind="todo"]:hover {
 MemoWindow QLabel#RecordText {
     color: ${memoText};
     background: transparent;
-    font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
-    font-size: 14px;
-    font-weight: 500;
+    font-family: ${fontFamily};
+    font-size: ${bodyLargeSize};
+    font-weight: ${weightMedium};
+    line-height: ${lineBodyLarge};
 }
 MemoWindow QLabel#RecordTime {
     color: ${memoTimeText};
     background: transparent;
-    font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
-    font-size: 11px;
+    font-family: ${fontFamily};
+    font-size: ${captionSize};
+    font-weight: ${weightRegular};
+    line-height: ${lineCaption};
 }
 MemoWindow QFrame#EmptyState {
     background: ${memoCard};
@@ -406,8 +475,10 @@ MemoWindow QFrame#EmptyState[memoKind="todo"] {
 MemoWindow QLabel#EmptyStateText {
     color: ${memoTimeText};
     background: transparent;
-    font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
-    font-size: 13px;
+    font-family: ${fontFamily};
+    font-size: ${bodySize};
+    font-weight: ${weightRegular};
+    line-height: ${lineBody};
 }
 MemoWindow QSizeGrip#ResizeGrip {
     background: transparent;
@@ -435,8 +506,10 @@ InputWindow QLineEdit {
     border: 1px solid ${border};
     border-radius: 8px;
     padding: 8px 10px;
-    font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
-    font-size: 13px;
+    font-family: ${fontFamily};
+    font-size: ${bodyLargeSize};
+    font-weight: ${weightRegular};
+    line-height: ${lineBodyLarge};
     selection-color: ${primaryText};
     selection-background-color: ${primary};
     min-height: 24px;
@@ -453,14 +526,17 @@ InputWindow QPushButton {
     border: 1px solid ${border};
     border-radius: 8px;
     padding: 7px 12px;
-    font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
-    font-weight: 700;
+    font-family: ${fontFamily};
+    font-size: ${bodySize};
+    font-weight: ${weightControl};
+    line-height: ${lineBody};
 }
 InputWindow QPushButton#TypeButton {
     min-width: 72px;
     color: ${primary};
     background: ${primarySoft};
     border-color: ${primary};
+    font-weight: ${weightTitle};
 }
 InputWindow QPushButton#TypeButton[memoKind="todo"] {
     color: ${secondary};
@@ -495,8 +571,9 @@ QString AppTheme::dashboardStyleSheet(ThemeMode mode)
 DashboardWindow {
     color: ${textPrimary};
     background: ${appBgGradient};
-    font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
-    font-size: 13px;
+    font-family: ${fontFamily};
+    font-size: ${bodySize};
+    font-weight: ${weightRegular};
 }
 DashboardWindow QLabel {
     color: ${textPrimary};
@@ -517,22 +594,29 @@ DashboardWindow QFrame#StatusBar {
 }
 DashboardWindow QLabel#PageTitle {
     color: ${textPrimary};
-    font-size: 21px;
-    font-weight: 700;
+    font-size: ${pageTitleSize};
+    font-weight: ${weightTitle};
+    line-height: ${lineTitle};
 }
 DashboardWindow QLabel#SideSectionTitle,
 DashboardWindow QLabel#RecordColumnTitle {
     color: ${textPrimary};
-    font-size: 14px;
-    font-weight: 700;
+    font-size: ${sectionSize};
+    font-weight: ${weightTitle};
+    line-height: ${lineTitle};
 }
 DashboardWindow QLabel#FieldLabel,
 DashboardWindow QLabel#StatusLabel {
     color: ${textSecondary};
+    font-size: ${captionSize};
+    font-weight: ${weightRegular};
+    line-height: ${lineCaption};
 }
 DashboardWindow QLabel#MemoControlTitle {
     color: ${textPrimary};
-    font-weight: 700;
+    font-size: ${bodySize};
+    font-weight: ${weightTitle};
+    line-height: ${lineBody};
 }
 DashboardWindow QLabel#CountBadge {
     color: ${primary};
@@ -541,7 +625,9 @@ DashboardWindow QLabel#CountBadge {
     border-radius: 9px;
     padding: 1px 8px;
     min-width: 18px;
-    font-weight: 700;
+    font-size: ${captionSize};
+    font-weight: ${weightTitle};
+    line-height: ${lineCaption};
 }
 DashboardWindow QLabel#CountBadge[memoKind="todo"] {
     color: ${secondary};
@@ -584,13 +670,16 @@ DashboardWindow QFrame#DashboardRecordCard[memoKind="todo"]:hover {
 DashboardWindow QLabel#DashboardRecordText {
     color: ${textPrimary};
     background: transparent;
-    font-size: 13px;
-    line-height: 18px;
+    font-size: ${bodySize};
+    font-weight: ${weightRegular};
+    line-height: ${lineBody};
 }
 DashboardWindow QLabel#DashboardRecordTime {
     color: ${textSecondary};
     background: transparent;
-    font-size: 11px;
+    font-size: ${captionSize};
+    font-weight: ${weightRegular};
+    line-height: ${lineCaption};
 }
 DashboardWindow QFrame#EmptyState {
     background: ${primarySoft};
@@ -603,6 +692,9 @@ DashboardWindow QFrame#EmptyState[memoKind="todo"] {
 DashboardWindow QLabel#EmptyStateText {
     color: ${textSecondary};
     background: transparent;
+    font-size: ${bodySize};
+    font-weight: ${weightRegular};
+    line-height: ${lineBody};
 }
 DashboardWindow QFrame#MemoControlCard {
     background: ${surfaceSunken};
@@ -620,7 +712,9 @@ DashboardWindow QPushButton {
     border-radius: 6px;
     padding: 6px 12px;
     min-height: 22px;
-    font-weight: 600;
+    font-size: ${bodySize};
+    font-weight: ${weightControl};
+    line-height: ${lineBody};
 }
 DashboardWindow QPushButton:hover {
     color: ${textPrimary};
@@ -676,6 +770,9 @@ DashboardWindow QKeySequenceEdit {
     border: 1px solid ${border};
     border-radius: 6px;
     padding: 7px 9px;
+    font-size: ${bodySize};
+    font-weight: ${weightRegular};
+    line-height: ${lineBody};
     selection-color: ${primaryText};
     selection-background-color: ${primary};
 }
@@ -692,6 +789,9 @@ DashboardWindow QKeySequenceEdit:disabled {
 DashboardWindow QCheckBox {
     color: ${textPrimary};
     spacing: 8px;
+    font-size: ${bodySize};
+    font-weight: ${weightRegular};
+    line-height: ${lineBody};
 }
 DashboardWindow QCheckBox:disabled {
     color: ${textDisabled};
@@ -720,6 +820,9 @@ DashboardWindow QComboBox {
     border: 1px solid ${border};
     border-radius: 6px;
     padding: 6px 30px 6px 10px;
+    font-size: ${bodySize};
+    font-weight: ${weightRegular};
+    line-height: ${lineBody};
 }
 DashboardWindow QComboBox:hover,
 DashboardWindow QComboBox:focus {
@@ -738,6 +841,8 @@ DashboardWindow QComboBox QAbstractItemView {
     color: ${textPrimary};
     background: ${surface};
     border: 1px solid ${border};
+    font-size: ${bodySize};
+    font-weight: ${weightRegular};
     selection-color: ${primaryText};
     selection-background-color: ${primary};
     outline: none;

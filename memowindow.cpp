@@ -273,10 +273,12 @@ void MemoWindow::rebuildList()
         auto *textLabel = new QLabel(memo.text, recordFrame);
         textLabel->setObjectName("RecordText");
         textLabel->setWordWrap(true);
+        textLabel->setMinimumWidth(0);
         textLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
 
         auto *timeLabel = new QLabel(memo.createdAt.toString("yyyy-MM-dd HH:mm"), recordFrame);
         timeLabel->setObjectName("RecordTime");
+        timeLabel->setMinimumWidth(0);
         timeLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
 
         recordLayout->addWidget(textLabel);

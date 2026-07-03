@@ -272,10 +272,12 @@ QWidget *DashboardWindow::createRecordCard(const MemoItem &memo, QWidget *parent
     auto *textLabel = new QLabel(memo.text, card);
     textLabel->setObjectName("DashboardRecordText");
     textLabel->setWordWrap(true);
+    textLabel->setMinimumWidth(0);
     textLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
     auto *timeLabel = new QLabel(memo.createdAt.toString("yyyy-MM-dd HH:mm"), card);
     timeLabel->setObjectName("DashboardRecordTime");
+    timeLabel->setMinimumWidth(0);
 
     layout->addWidget(textLabel);
     layout->addWidget(timeLabel);
