@@ -68,6 +68,19 @@ struct TypeScale {
     QString lineTitle;
 };
 
+struct SpacingScale {
+    QString xs;
+    QString s;
+    QString m;
+    QString l;
+    QString xl;
+    QString controlHeight;
+    QString compactControlHeight;
+    QString radiusS;
+    QString radiusM;
+    QString radiusL;
+};
+
 Palette palette(ThemeMode mode)
 {
     if (mode == ThemeMode::Dark) {
@@ -169,6 +182,22 @@ Palette palette(ThemeMode mode)
     };
 }
 
+SpacingScale spacing()
+{
+    return {
+        "4px", // xs
+        "8px", // s
+        "16px", // m
+        "24px", // l
+        "32px", // xl
+        "32px", // controlHeight
+        "28px", // compactControlHeight
+        "4px", // radiusS
+        "8px", // radiusM
+        "12px"  // radiusL
+    };
+}
+
 TypeScale typography()
 {
     return {
@@ -194,6 +223,7 @@ TypeScale typography()
 QString themed(QString style, const Palette &p)
 {
     const TypeScale t = typography();
+    const SpacingScale s = spacing();
     return style
         .replace("${primary}", p.primary)
         .replace("${primaryHover}", p.primaryHover)
@@ -250,7 +280,17 @@ QString themed(QString style, const Palette &p)
         .replace("${lineCaption}", t.lineCaption)
         .replace("${lineBody}", t.lineBody)
         .replace("${lineBodyLarge}", t.lineBodyLarge)
-        .replace("${lineTitle}", t.lineTitle);
+        .replace("${lineTitle}", t.lineTitle)
+        .replace("${spaceXs}", s.xs)
+        .replace("${spaceS}", s.s)
+        .replace("${spaceM}", s.m)
+        .replace("${spaceL}", s.l)
+        .replace("${spaceXl}", s.xl)
+        .replace("${controlHeight}", s.controlHeight)
+        .replace("${compactControlHeight}", s.compactControlHeight)
+        .replace("${radiusS}", s.radiusS)
+        .replace("${radiusM}", s.radiusM)
+        .replace("${radiusL}", s.radiusL);
 }
 
 QString scrollBars(const Palette &p)
@@ -258,13 +298,13 @@ QString scrollBars(const Palette &p)
     return themed(R"(
 QScrollBar:vertical {
     background: transparent;
-    width: 10px;
+    width: ${spaceS};
     margin: 0;
 }
 QScrollBar::handle:vertical {
     background: ${borderStrong};
-    min-height: 28px;
-    border-radius: 5px;
+    min-height: ${compactControlHeight};
+    border-radius: ${radiusS};
 }
 QScrollBar::handle:vertical:hover {
     background: ${textMuted};
@@ -275,13 +315,13 @@ QScrollBar::sub-line:vertical {
 }
 QScrollBar:horizontal {
     background: transparent;
-    height: 10px;
+    height: ${spaceS};
     margin: 0;
 }
 QScrollBar::handle:horizontal {
     background: ${borderStrong};
-    min-width: 28px;
-    border-radius: 5px;
+    min-width: ${compactControlHeight};
+    border-radius: ${radiusS};
 }
 QScrollBar::handle:horizontal:hover {
     background: ${textMuted};
@@ -302,8 +342,8 @@ QToolTip {
     color: ${textPrimary};
     background: ${surfaceRaised};
     border: 1px solid ${borderStrong};
-    border-radius: 6px;
-    padding: 6px 8px;
+    border-radius: ${radiusM};
+    padding: ${spaceS};
     font-family: ${fontFamily};
     font-size: ${bodySize};
 }
@@ -311,13 +351,13 @@ QMenu {
     color: ${textPrimary};
     background: ${surface};
     border: 1px solid ${border};
-    padding: 4px;
+    padding: ${spaceXs};
     font-family: ${fontFamily};
     font-size: ${bodySize};
 }
 QMenu::item {
-    padding: 6px 22px;
-    border-radius: 4px;
+    padding: ${spaceS} ${spaceL};
+    border-radius: ${radiusS};
 }
 QMenu::item:selected {
     color: ${textPrimary};
@@ -329,7 +369,7 @@ QMenu::item:disabled {
 QMenu::separator {
     height: 1px;
     background: ${border};
-    margin: 4px 8px;
+    margin: ${spaceXs} ${spaceS};
 }
 )", p) + scrollBars(p);
 }
@@ -352,7 +392,7 @@ MemoWindow QFrame#MemoPanel {
 MemoWindow QWidget#TitleBar {
     background: ${memoPanelTop};
     border-bottom: 1px solid ${memoBorder};
-    min-height: 36px;
+    min-height: ${controlHeight};
 }
 MemoWindow QLabel#TitleLabel {
     color: ${memoText};
@@ -372,17 +412,17 @@ MemoWindow QPushButton {
     color: ${memoText};
     background: ${memoPanelTop};
     border: 1px solid ${memoBorder};
-    border-radius: 6px;
-    padding: 3px 9px;
-    min-height: 24px;
-    min-width: 30px;
+    border-radius: ${radiusM};
+    padding: ${spaceXs} ${spaceS};
+    min-height: ${compactControlHeight};
+    min-width: ${compactControlHeight};
     font-family: ${fontFamily};
     font-size: ${bodySize};
     font-weight: ${weightControl};
     line-height: ${lineBody};
 }
 MemoWindow QPushButton#TopButton {
-    min-width: 52px;
+    min-width: 56px;
 }
 MemoWindow QPushButton#TopButton[active="true"] {
     color: ${primary};
@@ -396,8 +436,8 @@ MemoWindow[memoKind="todo"] QPushButton#TopButton[active="true"] {
 }
 MemoWindow QPushButton#HideButton {
     color: ${memoTimeText};
-    max-width: 26px;
-    min-width: 26px;
+    max-width: ${compactControlHeight};
+    min-width: ${compactControlHeight};
     padding: 0;
     font-size: ${bodySize};
 }
@@ -436,7 +476,7 @@ MemoWindow QFrame#MemoRecordCard {
     background: ${memoCard};
     border: 1px solid ${memoBorder};
     border-left: 2px solid ${primary};
-    border-radius: 6px;
+    border-radius: ${radiusM};
 }
 MemoWindow QFrame#MemoRecordCard[memoKind="todo"] {
     border-left-color: ${secondary};
@@ -467,7 +507,7 @@ MemoWindow QLabel#RecordTime {
 MemoWindow QFrame#EmptyState {
     background: ${memoCard};
     border: 1px dashed ${memoBorderStrong};
-    border-radius: 6px;
+    border-radius: ${radiusM};
 }
 MemoWindow QFrame#EmptyState[memoKind="todo"] {
     background: ${memoCard};
@@ -482,8 +522,8 @@ MemoWindow QLabel#EmptyStateText {
 }
 MemoWindow QSizeGrip#ResizeGrip {
     background: transparent;
-    width: 14px;
-    height: 14px;
+    width: ${spaceM};
+    height: ${spaceM};
 }
 )", p);
 }
@@ -498,21 +538,21 @@ InputWindow {
 InputWindow QFrame#InputPanel {
     background: ${surfaceGradient};
     border: 1px solid ${borderStrong};
-    border-radius: 14px;
+    border-radius: ${radiusL};
 }
 InputWindow QLineEdit {
     color: ${textPrimary};
     background: ${surface};
     border: 1px solid ${border};
-    border-radius: 8px;
-    padding: 8px 10px;
+    border-radius: ${radiusM};
+    padding: ${spaceS} 12px;
     font-family: ${fontFamily};
     font-size: ${bodyLargeSize};
     font-weight: ${weightRegular};
     line-height: ${lineBodyLarge};
     selection-color: ${primaryText};
     selection-background-color: ${primary};
-    min-height: 24px;
+    min-height: ${compactControlHeight};
 }
 InputWindow QLineEdit:focus {
     border-color: ${primary};
@@ -524,8 +564,8 @@ InputWindow QPushButton {
     color: ${textPrimary};
     background: ${surface};
     border: 1px solid ${border};
-    border-radius: 8px;
-    padding: 7px 12px;
+    border-radius: ${radiusM};
+    padding: ${spaceS} ${spaceM};
     font-family: ${fontFamily};
     font-size: ${bodySize};
     font-weight: ${weightControl};
@@ -586,7 +626,7 @@ DashboardWindow QFrame#RecordsPanel,
 DashboardWindow QFrame#SidePanel {
     background: ${surfaceGradient};
     border: 1px solid ${border};
-    border-radius: 12px;
+    border-radius: ${radiusL};
 }
 DashboardWindow QFrame#StatusBar {
     background: transparent;
@@ -622,9 +662,9 @@ DashboardWindow QLabel#CountBadge {
     color: ${primary};
     background: ${primarySoft};
     border: 1px solid ${primary};
-    border-radius: 9px;
-    padding: 1px 8px;
-    min-width: 18px;
+    border-radius: ${radiusM};
+    padding: 0 ${spaceS};
+    min-width: ${spaceL};
     font-size: ${captionSize};
     font-weight: ${weightTitle};
     line-height: ${lineCaption};
@@ -638,7 +678,7 @@ DashboardWindow QFrame#RecordColumn {
     background: ${surfaceSunken};
     border: 1px solid ${border};
     border-top: 3px solid ${primary};
-    border-radius: 10px;
+    border-radius: ${radiusM};
 }
 DashboardWindow QFrame#RecordColumn[memoKind="todo"] {
     border-top-color: ${secondary};
@@ -655,7 +695,7 @@ DashboardWindow QFrame#DashboardRecordCard {
     background: ${surface};
     border: 1px solid ${border};
     border-left: 3px solid ${primary};
-    border-radius: 8px;
+    border-radius: ${radiusM};
 }
 DashboardWindow QFrame#DashboardRecordCard[memoKind="todo"] {
     border-left-color: ${secondary};
@@ -684,7 +724,7 @@ DashboardWindow QLabel#DashboardRecordTime {
 DashboardWindow QFrame#EmptyState {
     background: ${primarySoft};
     border: 1px dashed ${borderStrong};
-    border-radius: 8px;
+    border-radius: ${radiusM};
 }
 DashboardWindow QFrame#EmptyState[memoKind="todo"] {
     background: ${secondarySoft};
@@ -700,7 +740,7 @@ DashboardWindow QFrame#MemoControlCard {
     background: ${surfaceSunken};
     border: 1px solid ${border};
     border-left: 3px solid ${primary};
-    border-radius: 8px;
+    border-radius: ${radiusM};
 }
 DashboardWindow QFrame#MemoControlCard[memoKind="todo"] {
     border-left-color: ${secondary};
@@ -709,9 +749,9 @@ DashboardWindow QPushButton {
     color: ${textPrimary};
     background: ${surface};
     border: 1px solid ${border};
-    border-radius: 6px;
-    padding: 6px 12px;
-    min-height: 22px;
+    border-radius: ${radiusM};
+    padding: ${spaceS} ${spaceM};
+    min-height: ${compactControlHeight};
     font-size: ${bodySize};
     font-weight: ${weightControl};
     line-height: ${lineBody};
@@ -741,7 +781,7 @@ DashboardWindow QPushButton#PrimaryButton:pressed {
     border-color: ${primaryHover};
 }
 DashboardWindow QPushButton#SecondaryButton {
-    min-width: 58px;
+    min-width: 64px;
 }
 DashboardWindow QPushButton#SecondaryButton[active="true"] {
     color: ${primaryText};
@@ -768,8 +808,8 @@ DashboardWindow QKeySequenceEdit {
     color: ${textPrimary};
     background: ${surface};
     border: 1px solid ${border};
-    border-radius: 6px;
-    padding: 7px 9px;
+    border-radius: ${radiusM};
+    padding: ${spaceS} 12px;
     font-size: ${bodySize};
     font-weight: ${weightRegular};
     line-height: ${lineBody};
@@ -800,7 +840,7 @@ DashboardWindow QCheckBox::indicator {
     width: 16px;
     height: 16px;
     border: 1px solid ${borderStrong};
-    border-radius: 4px;
+    border-radius: ${radiusS};
     background: ${surface};
 }
 DashboardWindow QCheckBox::indicator:hover {
@@ -818,8 +858,8 @@ DashboardWindow QComboBox {
     color: ${textPrimary};
     background: ${surface};
     border: 1px solid ${border};
-    border-radius: 6px;
-    padding: 6px 30px 6px 10px;
+    border-radius: ${radiusM};
+    padding: ${spaceS} ${spaceXl} ${spaceS} 12px;
     font-size: ${bodySize};
     font-weight: ${weightRegular};
     line-height: ${lineBody};
@@ -835,7 +875,7 @@ DashboardWindow QComboBox:disabled {
 }
 DashboardWindow QComboBox::drop-down {
     border: none;
-    width: 28px;
+    width: ${controlHeight};
 }
 DashboardWindow QComboBox QAbstractItemView {
     color: ${textPrimary};

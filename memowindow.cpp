@@ -159,7 +159,7 @@ void MemoWindow::closeEvent(QCloseEvent *event)
 
 void MemoWindow::setupUi()
 {
-    setMinimumSize(240, 220);
+    setMinimumSize(240, 224);
     setWindowTitle(MemoStore::displayName(type));
     setProperty("memoKind", MemoStore::typeToString(type));
     setAttribute(Qt::WA_DeleteOnClose, false);
@@ -182,8 +182,8 @@ void MemoWindow::setupUi()
     titleBar->setCursor(Qt::SizeAllCursor);
 
     auto *titleLayout = new QHBoxLayout(titleBar);
-    titleLayout->setContentsMargins(8, 4, 8, 4);
-    titleLayout->setSpacing(6);
+    titleLayout->setContentsMargins(8, 8, 8, 8);
+    titleLayout->setSpacing(8);
 
     titleLabel = new QLabel(MemoStore::displayName(type), titleBar);
     titleLabel->setObjectName("TitleLabel");
@@ -212,13 +212,13 @@ void MemoWindow::setupUi()
     auto *listWidget = new QWidget(scrollArea);
     listWidget->setObjectName("MemoList");
     listLayout = new QVBoxLayout(listWidget);
-    listLayout->setContentsMargins(8, 8, 8, 18);
-    listLayout->setSpacing(5);
+    listLayout->setContentsMargins(8, 8, 8, 16);
+    listLayout->setSpacing(8);
     scrollArea->setWidget(listWidget);
 
     resizeGrip = new QSizeGrip(panel);
     resizeGrip->setObjectName("ResizeGrip");
-    resizeGrip->setFixedSize(14, 14);
+    resizeGrip->setFixedSize(16, 16);
 
     panelLayout->addWidget(titleBar);
     panelLayout->addWidget(scrollArea, 1);
@@ -245,7 +245,7 @@ void MemoWindow::rebuildList()
         emptyFrame->setProperty("memoKind", MemoStore::typeToString(type));
 
         auto *emptyLayout = new QVBoxLayout(emptyFrame);
-        emptyLayout->setContentsMargins(10, 22, 10, 22);
+        emptyLayout->setContentsMargins(16, 24, 16, 24);
 
         auto *emptyLabel = new QLabel(QStringLiteral("暂无记录"), emptyFrame);
         emptyLabel->setObjectName("EmptyStateText");
@@ -267,7 +267,7 @@ void MemoWindow::rebuildList()
         recordFrame->installEventFilter(this);
 
         auto *recordLayout = new QVBoxLayout(recordFrame);
-        recordLayout->setContentsMargins(10, 7, 10, 7);
+        recordLayout->setContentsMargins(12, 8, 12, 8);
         recordLayout->setSpacing(4);
 
         auto *textLabel = new QLabel(memo.text, recordFrame);
@@ -314,8 +314,8 @@ void MemoWindow::updateResizeGripGeometry()
         return;
     }
 
-    const int x = panel->width() - resizeGrip->width() - 2;
-    const int y = panel->height() - resizeGrip->height() - 2;
+    const int x = panel->width() - resizeGrip->width() - 4;
+    const int y = panel->height() - resizeGrip->height() - 4;
     resizeGrip->move(x < 0 ? 0 : x, y < 0 ? 0 : y);
     resizeGrip->raise();
 }

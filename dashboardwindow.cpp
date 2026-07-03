@@ -90,23 +90,23 @@ void DashboardWindow::closeEvent(QCloseEvent *event)
 void DashboardWindow::setupUi()
 {
     setWindowTitle(QStringLiteral("Quick Memo 后台"));
-    resize(980, 640);
-    setMinimumSize(860, 520);
+    resize(984, 640);
+    setMinimumSize(864, 520);
 
     auto *rootLayout = new QVBoxLayout(this);
-    rootLayout->setContentsMargins(16, 16, 16, 12);
-    rootLayout->setSpacing(10);
+    rootLayout->setContentsMargins(16, 16, 16, 16);
+    rootLayout->setSpacing(8);
 
     auto *content = new QWidget(this);
     auto *contentLayout = new QHBoxLayout(content);
     contentLayout->setContentsMargins(0, 0, 0, 0);
-    contentLayout->setSpacing(14);
+    contentLayout->setSpacing(16);
 
     auto *recordsPanel = new QFrame(content);
     recordsPanel->setObjectName("RecordsPanel");
     auto *recordsPanelLayout = new QVBoxLayout(recordsPanel);
-    recordsPanelLayout->setContentsMargins(16, 14, 16, 16);
-    recordsPanelLayout->setSpacing(12);
+    recordsPanelLayout->setContentsMargins(16, 16, 16, 16);
+    recordsPanelLayout->setSpacing(16);
 
     auto *recordsTitleRow = new QWidget(recordsPanel);
     auto *recordsTitleLayout = new QHBoxLayout(recordsTitleRow);
@@ -120,7 +120,7 @@ void DashboardWindow::setupUi()
     auto *columns = new QWidget(recordsPanel);
     auto *columnsLayout = new QHBoxLayout(columns);
     columnsLayout->setContentsMargins(0, 0, 0, 0);
-    columnsLayout->setSpacing(12);
+    columnsLayout->setSpacing(16);
     columnsLayout->addWidget(createRecordsColumn(MemoType::Question, columns), 1);
     columnsLayout->addWidget(createRecordsColumn(MemoType::Todo, columns), 1);
 
@@ -129,10 +129,10 @@ void DashboardWindow::setupUi()
 
     auto *sidePanel = new QFrame(content);
     sidePanel->setObjectName("SidePanel");
-    sidePanel->setFixedWidth(286);
+    sidePanel->setFixedWidth(288);
     auto *sideLayout = new QVBoxLayout(sidePanel);
-    sideLayout->setContentsMargins(14, 14, 14, 14);
-    sideLayout->setSpacing(12);
+    sideLayout->setContentsMargins(16, 16, 16, 16);
+    sideLayout->setSpacing(16);
 
     auto *memoSectionTitle = new QLabel(QStringLiteral("便签窗口"), sidePanel);
     memoSectionTitle->setObjectName("SideSectionTitle");
@@ -142,7 +142,7 @@ void DashboardWindow::setupUi()
 
     auto *settingsSectionTitle = new QLabel(QStringLiteral("设置"), sidePanel);
     settingsSectionTitle->setObjectName("SideSectionTitle");
-    sideLayout->addSpacing(4);
+    sideLayout->addSpacing(8);
     sideLayout->addWidget(settingsSectionTitle);
 
     auto *hotkeyLabel = new QLabel(QStringLiteral("全局快捷键"), sidePanel);
@@ -196,7 +196,7 @@ void DashboardWindow::setupUi()
     auto *statusBar = new QFrame(this);
     statusBar->setObjectName("StatusBar");
     auto *statusLayout = new QHBoxLayout(statusBar);
-    statusLayout->setContentsMargins(10, 0, 10, 0);
+    statusLayout->setContentsMargins(16, 0, 16, 0);
     statusLabel = new QLabel(QStringLiteral("就绪"), statusBar);
     statusLabel->setObjectName("StatusLabel");
     statusLayout->addWidget(statusLabel, 1);
@@ -214,8 +214,8 @@ QWidget *DashboardWindow::createRecordsColumn(MemoType type, QWidget *parent)
     column->setProperty("memoKind", MemoStore::typeToString(type));
 
     auto *layout = new QVBoxLayout(column);
-    layout->setContentsMargins(12, 12, 12, 12);
-    layout->setSpacing(10);
+    layout->setContentsMargins(12, 16, 12, 16);
+    layout->setSpacing(8);
 
     auto *header = new QWidget(column);
     auto *headerLayout = new QHBoxLayout(header);
@@ -266,8 +266,8 @@ QWidget *DashboardWindow::createRecordCard(const MemoItem &memo, QWidget *parent
     card->setProperty("memoKind", MemoStore::typeToString(memo.type));
 
     auto *layout = new QVBoxLayout(card);
-    layout->setContentsMargins(12, 10, 12, 10);
-    layout->setSpacing(6);
+    layout->setContentsMargins(12, 12, 12, 12);
+    layout->setSpacing(4);
 
     auto *textLabel = new QLabel(memo.text, card);
     textLabel->setObjectName("DashboardRecordText");
@@ -291,7 +291,7 @@ QWidget *DashboardWindow::createEmptyState(MemoType type, QWidget *parent) const
     emptyState->setProperty("memoKind", MemoStore::typeToString(type));
 
     auto *layout = new QVBoxLayout(emptyState);
-    layout->setContentsMargins(12, 28, 12, 28);
+    layout->setContentsMargins(16, 24, 16, 24);
 
     auto *label = new QLabel(QStringLiteral("暂无记录"), emptyState);
     label->setObjectName("EmptyStateText");
@@ -308,7 +308,7 @@ QWidget *DashboardWindow::createMemoControls(MemoType type, QWidget *parent)
     container->setProperty("memoKind", MemoStore::typeToString(type));
 
     auto *layout = new QVBoxLayout(container);
-    layout->setContentsMargins(10, 10, 10, 10);
+    layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(8);
 
     auto *topRow = new QWidget(container);

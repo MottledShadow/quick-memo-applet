@@ -96,14 +96,14 @@ void InputWindow::setupUi()
     setFixedSize(472, 64);
 
     auto *outerLayout = new QHBoxLayout(this);
-    outerLayout->setContentsMargins(6, 6, 6, 6);
+    outerLayout->setContentsMargins(8, 8, 8, 8);
     outerLayout->setSpacing(0);
 
     inputPanel = new QFrame(this);
     inputPanel->setObjectName("InputPanel");
 
     auto *panelLayout = new QHBoxLayout(inputPanel);
-    panelLayout->setContentsMargins(10, 8, 10, 8);
+    panelLayout->setContentsMargins(12, 8, 12, 8);
     panelLayout->setSpacing(8);
 
     typeButton = new QPushButton(inputPanel);
