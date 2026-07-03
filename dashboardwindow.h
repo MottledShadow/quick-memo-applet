@@ -7,10 +7,11 @@
 
 class QCheckBox;
 class QComboBox;
+class QBoxLayout;
+class QFrame;
 class QKeySequenceEdit;
 class QLabel;
 class QPushButton;
-class QTableWidget;
 
 class DashboardWindow : public QWidget
 {
@@ -38,11 +39,14 @@ protected:
 
 private:
     void setupUi();
-    QWidget *createMemoControls(MemoType type);
-    QTableWidget *createRecordsTable(QWidget *parent) const;
+    QWidget *createRecordsColumn(MemoType type, QWidget *parent);
+    QWidget *createRecordCard(const MemoItem &memo, QWidget *parent) const;
+    QWidget *createEmptyState(QWidget *parent) const;
+    QWidget *createMemoControls(MemoType type, QWidget *parent);
     void refreshMemoControls(MemoType type);
     void refreshRecords();
-    void fillRecordsTable(QTableWidget *table, const QVector<MemoItem> &records);
+    void refreshRecordColumn(MemoType type, const QVector<MemoItem> &records);
+    void clearLayout(QBoxLayout *layout) const;
 
     MemoStore *store;
     QPushButton *questionVisibilityButton;
@@ -52,8 +56,10 @@ private:
     QCheckBox *autostartCheck;
     QComboBox *themeCombo;
     QKeySequenceEdit *hotkeyEdit;
-    QTableWidget *questionRecordsTable;
-    QTableWidget *todoRecordsTable;
+    QLabel *questionCountLabel;
+    QLabel *todoCountLabel;
+    QBoxLayout *questionRecordsLayout;
+    QBoxLayout *todoRecordsLayout;
     QLabel *statusLabel;
 };
 

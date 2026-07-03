@@ -149,10 +149,11 @@ void MemoWindow::setupUi()
     setMinimumSize(240, 220);
     setWindowTitle(MemoStore::displayName(type));
     setAttribute(Qt::WA_DeleteOnClose, false);
+    setAttribute(Qt::WA_TranslucentBackground, true);
 
     auto *rootLayout = new QVBoxLayout(this);
-    rootLayout->setContentsMargins(10, 8, 10, 8);
-    rootLayout->setSpacing(8);
+    rootLayout->setContentsMargins(12, 10, 12, 8);
+    rootLayout->setSpacing(10);
 
     titleBar = new QWidget(this);
     titleBar->setObjectName("TitleBar");
@@ -160,19 +161,21 @@ void MemoWindow::setupUi()
     titleBar->setCursor(Qt::SizeAllCursor);
 
     auto *titleLayout = new QHBoxLayout(titleBar);
-    titleLayout->setContentsMargins(0, 0, 0, 0);
+    titleLayout->setContentsMargins(2, 0, 0, 0);
+    titleLayout->setSpacing(6);
 
     titleLabel = new QLabel(MemoStore::displayName(type), titleBar);
     titleLabel->setObjectName("TitleLabel");
 
     topButton = new QPushButton(titleBar);
+    topButton->setObjectName("TopButton");
     connect(topButton, &QPushButton::clicked, this, [this]() {
         setAlwaysOnTop(!alwaysOnTop);
     });
 
-    auto *hideButton = new QPushButton("X", titleBar);
+    auto *hideButton = new QPushButton(QStringLiteral("×"), titleBar);
+    hideButton->setObjectName("HideButton");
     hideButton->setToolTip(QStringLiteral("隐藏便签"));
-    hideButton->setFixedWidth(32);
     connect(hideButton, &QPushButton::clicked, this, &MemoWindow::hide);
 
     titleLayout->addWidget(titleLabel);
@@ -205,21 +208,43 @@ void MemoWindow::setupUi()
 
 void MemoWindow::rebuildList()
 {
+    titleLabel->setText(QStringLiteral("%1 · %2")
+                            .arg(MemoStore::displayName(type))
+                            .arg(currentRecords.size()));
+
     while (QLayoutItem *item = listLayout->takeAt(0)) {
         delete item->widget();
         delete item;
     }
 
+    if (currentRecords.isEmpty()) {
+        auto *emptyFrame = new QFrame(this);
+        emptyFrame->setObjectName("EmptyState");
+
+        auto *emptyLayout = new QVBoxLayout(emptyFrame);
+        emptyLayout->setContentsMargins(10, 26, 10, 26);
+
+        auto *emptyLabel = new QLabel(QStringLiteral("暂无记录"), emptyFrame);
+        emptyLabel->setObjectName("EmptyStateText");
+        emptyLabel->setAlignment(Qt::AlignCenter);
+        emptyLayout->addWidget(emptyLabel);
+
+        listLayout->addWidget(emptyFrame);
+        listLayout->addStretch();
+        return;
+    }
+
     for (const MemoItem &memo : currentRecords) {
         auto *recordFrame = new QFrame(this);
+        recordFrame->setObjectName("MemoRecordCard");
         recordFrame->setProperty("record", true);
         recordFrame->setProperty("memoId", memo.id);
         recordFrame->setCursor(Qt::PointingHandCursor);
         recordFrame->installEventFilter(this);
 
         auto *recordLayout = new QVBoxLayout(recordFrame);
-        recordLayout->setContentsMargins(10, 8, 10, 8);
-        recordLayout->setSpacing(4);
+        recordLayout->setContentsMargins(12, 10, 12, 10);
+        recordLayout->setSpacing(6);
 
         auto *textLabel = new QLabel(memo.text, recordFrame);
         textLabel->setObjectName("RecordText");

@@ -2,19 +2,17 @@
 
 #include "apptheme.h"
 
-#include <QAbstractItemView>
+#include <QBoxLayout>
 #include <QCheckBox>
 #include <QCloseEvent>
 #include <QComboBox>
-#include <QFormLayout>
-#include <QGroupBox>
-#include <QHeaderView>
+#include <QFrame>
 #include <QHBoxLayout>
 #include <QKeySequenceEdit>
 #include <QLabel>
 #include <QPushButton>
+#include <QScrollArea>
 #include <QSignalBlocker>
-#include <QTableWidget>
 #include <QVBoxLayout>
 
 DashboardWindow::DashboardWindow(MemoStore *store, QWidget *parent)
@@ -27,8 +25,10 @@ DashboardWindow::DashboardWindow(MemoStore *store, QWidget *parent)
     , autostartCheck(nullptr)
     , themeCombo(nullptr)
     , hotkeyEdit(nullptr)
-    , questionRecordsTable(nullptr)
-    , todoRecordsTable(nullptr)
+    , questionCountLabel(nullptr)
+    , todoCountLabel(nullptr)
+    , questionRecordsLayout(nullptr)
+    , todoRecordsLayout(nullptr)
     , statusLabel(nullptr)
 {
     setupUi();
@@ -80,33 +80,81 @@ void DashboardWindow::closeEvent(QCloseEvent *event)
 void DashboardWindow::setupUi()
 {
     setWindowTitle(QStringLiteral("Quick Memo 后台"));
-    resize(900, 560);
+    resize(980, 640);
+    setMinimumSize(860, 520);
 
     auto *rootLayout = new QVBoxLayout(this);
-    rootLayout->setContentsMargins(14, 14, 14, 14);
-    rootLayout->setSpacing(12);
+    rootLayout->setContentsMargins(16, 16, 16, 12);
+    rootLayout->setSpacing(10);
 
-    auto *windowGroup = new QGroupBox(QStringLiteral("便签窗口"), this);
-    auto *windowLayout = new QVBoxLayout(windowGroup);
-    windowLayout->addWidget(createMemoControls(MemoType::Question));
-    windowLayout->addWidget(createMemoControls(MemoType::Todo));
+    auto *content = new QWidget(this);
+    auto *contentLayout = new QHBoxLayout(content);
+    contentLayout->setContentsMargins(0, 0, 0, 0);
+    contentLayout->setSpacing(14);
 
-    auto *settingsGroup = new QGroupBox(QStringLiteral("设置"), this);
-    auto *settingsLayout = new QFormLayout(settingsGroup);
+    auto *recordsPanel = new QFrame(content);
+    recordsPanel->setObjectName("RecordsPanel");
+    auto *recordsPanelLayout = new QVBoxLayout(recordsPanel);
+    recordsPanelLayout->setContentsMargins(16, 14, 16, 16);
+    recordsPanelLayout->setSpacing(12);
 
-    hotkeyEdit = new QKeySequenceEdit(settingsGroup);
-    auto *applyHotkeyButton = new QPushButton(QStringLiteral("应用快捷键"), settingsGroup);
+    auto *recordsTitleRow = new QWidget(recordsPanel);
+    auto *recordsTitleLayout = new QHBoxLayout(recordsTitleRow);
+    recordsTitleLayout->setContentsMargins(0, 0, 0, 0);
+
+    auto *recordsTitle = new QLabel(QStringLiteral("全部记录"), recordsTitleRow);
+    recordsTitle->setObjectName("PageTitle");
+    recordsTitleLayout->addWidget(recordsTitle);
+    recordsTitleLayout->addStretch();
+
+    auto *columns = new QWidget(recordsPanel);
+    auto *columnsLayout = new QHBoxLayout(columns);
+    columnsLayout->setContentsMargins(0, 0, 0, 0);
+    columnsLayout->setSpacing(12);
+    columnsLayout->addWidget(createRecordsColumn(MemoType::Question, columns), 1);
+    columnsLayout->addWidget(createRecordsColumn(MemoType::Todo, columns), 1);
+
+    recordsPanelLayout->addWidget(recordsTitleRow);
+    recordsPanelLayout->addWidget(columns, 1);
+
+    auto *sidePanel = new QFrame(content);
+    sidePanel->setObjectName("SidePanel");
+    sidePanel->setFixedWidth(286);
+    auto *sideLayout = new QVBoxLayout(sidePanel);
+    sideLayout->setContentsMargins(14, 14, 14, 14);
+    sideLayout->setSpacing(12);
+
+    auto *memoSectionTitle = new QLabel(QStringLiteral("便签窗口"), sidePanel);
+    memoSectionTitle->setObjectName("SideSectionTitle");
+    sideLayout->addWidget(memoSectionTitle);
+    sideLayout->addWidget(createMemoControls(MemoType::Question, sidePanel));
+    sideLayout->addWidget(createMemoControls(MemoType::Todo, sidePanel));
+
+    auto *settingsSectionTitle = new QLabel(QStringLiteral("设置"), sidePanel);
+    settingsSectionTitle->setObjectName("SideSectionTitle");
+    sideLayout->addSpacing(4);
+    sideLayout->addWidget(settingsSectionTitle);
+
+    auto *hotkeyLabel = new QLabel(QStringLiteral("全局快捷键"), sidePanel);
+    hotkeyLabel->setObjectName("FieldLabel");
+    hotkeyEdit = new QKeySequenceEdit(sidePanel);
+
+    auto *applyHotkeyButton = new QPushButton(QStringLiteral("应用"), sidePanel);
+    applyHotkeyButton->setObjectName("PrimaryButton");
     connect(applyHotkeyButton, &QPushButton::clicked, this, [this]() {
         emit hotkeyChangeRequested(hotkeyEdit->keySequence());
     });
 
-    auto *hotkeyRow = new QWidget(settingsGroup);
+    auto *hotkeyRow = new QWidget(sidePanel);
     auto *hotkeyRowLayout = new QHBoxLayout(hotkeyRow);
     hotkeyRowLayout->setContentsMargins(0, 0, 0, 0);
+    hotkeyRowLayout->setSpacing(8);
     hotkeyRowLayout->addWidget(hotkeyEdit, 1);
     hotkeyRowLayout->addWidget(applyHotkeyButton);
 
-    themeCombo = new QComboBox(settingsGroup);
+    auto *themeLabel = new QLabel(QStringLiteral("主题"), sidePanel);
+    themeLabel->setObjectName("FieldLabel");
+    themeCombo = new QComboBox(sidePanel);
     themeCombo->addItem(MemoStore::themeDisplayName(ThemeMode::Light), static_cast<int>(ThemeMode::Light));
     themeCombo->addItem(MemoStore::themeDisplayName(ThemeMode::Dark), static_cast<int>(ThemeMode::Dark));
     connect(themeCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
@@ -117,56 +165,145 @@ void DashboardWindow::setupUi()
         emit themeChangeRequested(static_cast<ThemeMode>(data.toInt()));
     });
 
-    autostartCheck = new QCheckBox(QStringLiteral("开机自启"), settingsGroup);
+    autostartCheck = new QCheckBox(QStringLiteral("开机自启"), sidePanel);
     connect(autostartCheck, &QCheckBox::toggled, this, &DashboardWindow::autostartChanged);
 
-    settingsLayout->addRow(QStringLiteral("全局快捷键"), hotkeyRow);
-    settingsLayout->addRow(QStringLiteral("主题"), themeCombo);
-    settingsLayout->addRow(QString(), autostartCheck);
-
-    auto *recordsGroup = new QGroupBox(QStringLiteral("全部记录"), this);
-    auto *recordsLayout = new QHBoxLayout(recordsGroup);
-    recordsLayout->setSpacing(12);
-
-    auto *questionGroup = new QGroupBox(MemoStore::displayName(MemoType::Question), recordsGroup);
-    auto *questionLayout = new QVBoxLayout(questionGroup);
-    questionRecordsTable = createRecordsTable(questionGroup);
-    questionLayout->addWidget(questionRecordsTable);
-
-    auto *todoGroup = new QGroupBox(MemoStore::displayName(MemoType::Todo), recordsGroup);
-    auto *todoLayout = new QVBoxLayout(todoGroup);
-    todoRecordsTable = createRecordsTable(todoGroup);
-    todoLayout->addWidget(todoRecordsTable);
-
-    recordsLayout->addWidget(questionGroup);
-    recordsLayout->addWidget(todoGroup);
-
-    statusLabel = new QLabel(this);
-    statusLabel->setText(QStringLiteral("就绪"));
-
-    auto *exitButton = new QPushButton(QStringLiteral("退出程序"), this);
+    auto *exitButton = new QPushButton(QStringLiteral("退出程序"), sidePanel);
+    exitButton->setObjectName("DangerButton");
     connect(exitButton, &QPushButton::clicked, this, &DashboardWindow::exitRequested);
 
-    auto *bottomLayout = new QHBoxLayout();
-    bottomLayout->addWidget(statusLabel, 1);
-    bottomLayout->addWidget(exitButton);
+    sideLayout->addWidget(hotkeyLabel);
+    sideLayout->addWidget(hotkeyRow);
+    sideLayout->addWidget(themeLabel);
+    sideLayout->addWidget(themeCombo);
+    sideLayout->addWidget(autostartCheck);
+    sideLayout->addStretch(1);
+    sideLayout->addWidget(exitButton);
 
-    rootLayout->addWidget(windowGroup);
-    rootLayout->addWidget(settingsGroup);
-    rootLayout->addWidget(recordsGroup, 1);
-    rootLayout->addLayout(bottomLayout);
+    contentLayout->addWidget(recordsPanel, 1);
+    contentLayout->addWidget(sidePanel);
+
+    auto *statusBar = new QFrame(this);
+    statusBar->setObjectName("StatusBar");
+    auto *statusLayout = new QHBoxLayout(statusBar);
+    statusLayout->setContentsMargins(10, 0, 10, 0);
+    statusLabel = new QLabel(QStringLiteral("就绪"), statusBar);
+    statusLabel->setObjectName("StatusLabel");
+    statusLayout->addWidget(statusLabel, 1);
+
+    rootLayout->addWidget(content, 1);
+    rootLayout->addWidget(statusBar);
 
     applyTheme(ThemeMode::Light);
 }
 
-QWidget *DashboardWindow::createMemoControls(MemoType type)
+QWidget *DashboardWindow::createRecordsColumn(MemoType type, QWidget *parent)
 {
-    auto *container = new QWidget(this);
-    auto *layout = new QHBoxLayout(container);
-    layout->setContentsMargins(0, 0, 0, 0);
+    auto *column = new QFrame(parent);
+    column->setObjectName("RecordColumn");
 
-    auto *label = new QLabel(MemoStore::displayName(type), container);
-    auto *visibilityButton = new QPushButton(container);
+    auto *layout = new QVBoxLayout(column);
+    layout->setContentsMargins(12, 12, 12, 12);
+    layout->setSpacing(10);
+
+    auto *header = new QWidget(column);
+    auto *headerLayout = new QHBoxLayout(header);
+    headerLayout->setContentsMargins(0, 0, 0, 0);
+
+    auto *titleLabel = new QLabel(MemoStore::displayName(type), header);
+    titleLabel->setObjectName("RecordColumnTitle");
+
+    auto *countLabel = new QLabel(QStringLiteral("0"), header);
+    countLabel->setObjectName("CountBadge");
+    countLabel->setAlignment(Qt::AlignCenter);
+
+    headerLayout->addWidget(titleLabel);
+    headerLayout->addWidget(countLabel);
+    headerLayout->addStretch();
+
+    auto *scrollArea = new QScrollArea(column);
+    scrollArea->setObjectName("RecordsScrollArea");
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setFrameShape(QFrame::NoFrame);
+
+    auto *listWidget = new QWidget(scrollArea);
+    listWidget->setObjectName("RecordsList");
+    auto *listLayout = new QVBoxLayout(listWidget);
+    listLayout->setContentsMargins(0, 0, 0, 0);
+    listLayout->setSpacing(8);
+    scrollArea->setWidget(listWidget);
+
+    layout->addWidget(header);
+    layout->addWidget(scrollArea, 1);
+
+    if (type == MemoType::Question) {
+        questionCountLabel = countLabel;
+        questionRecordsLayout = listLayout;
+    } else {
+        todoCountLabel = countLabel;
+        todoRecordsLayout = listLayout;
+    }
+
+    return column;
+}
+
+QWidget *DashboardWindow::createRecordCard(const MemoItem &memo, QWidget *parent) const
+{
+    auto *card = new QFrame(parent);
+    card->setObjectName("DashboardRecordCard");
+
+    auto *layout = new QVBoxLayout(card);
+    layout->setContentsMargins(12, 10, 12, 10);
+    layout->setSpacing(6);
+
+    auto *textLabel = new QLabel(memo.text, card);
+    textLabel->setObjectName("DashboardRecordText");
+    textLabel->setWordWrap(true);
+    textLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+
+    auto *timeLabel = new QLabel(memo.createdAt.toString("yyyy-MM-dd HH:mm"), card);
+    timeLabel->setObjectName("DashboardRecordTime");
+
+    layout->addWidget(textLabel);
+    layout->addWidget(timeLabel);
+    return card;
+}
+
+QWidget *DashboardWindow::createEmptyState(QWidget *parent) const
+{
+    auto *emptyState = new QFrame(parent);
+    emptyState->setObjectName("EmptyState");
+
+    auto *layout = new QVBoxLayout(emptyState);
+    layout->setContentsMargins(12, 28, 12, 28);
+
+    auto *label = new QLabel(QStringLiteral("暂无记录"), emptyState);
+    label->setObjectName("EmptyStateText");
+    label->setAlignment(Qt::AlignCenter);
+    layout->addWidget(label);
+
+    return emptyState;
+}
+
+QWidget *DashboardWindow::createMemoControls(MemoType type, QWidget *parent)
+{
+    auto *container = new QFrame(parent);
+    container->setObjectName("MemoControlCard");
+
+    auto *layout = new QVBoxLayout(container);
+    layout->setContentsMargins(10, 10, 10, 10);
+    layout->setSpacing(8);
+
+    auto *topRow = new QWidget(container);
+    auto *topRowLayout = new QHBoxLayout(topRow);
+    topRowLayout->setContentsMargins(0, 0, 0, 0);
+    topRowLayout->setSpacing(8);
+
+    auto *label = new QLabel(MemoStore::displayName(type), topRow);
+    label->setObjectName("MemoControlTitle");
+
+    auto *visibilityButton = new QPushButton(topRow);
+    visibilityButton->setObjectName("SecondaryButton");
     auto *topCheck = new QCheckBox(QStringLiteral("置顶"), container);
 
     connect(visibilityButton, &QPushButton::clicked, this, [this, type]() {
@@ -189,27 +326,12 @@ QWidget *DashboardWindow::createMemoControls(MemoType type)
         todoTopCheck = topCheck;
     }
 
-    layout->addWidget(label);
-    layout->addStretch();
-    layout->addWidget(topCheck);
-    layout->addWidget(visibilityButton);
-    return container;
-}
+    topRowLayout->addWidget(label, 1);
+    topRowLayout->addWidget(visibilityButton);
 
-QTableWidget *DashboardWindow::createRecordsTable(QWidget *parent) const
-{
-    auto *table = new QTableWidget(parent);
-    table->setColumnCount(2);
-    table->setHorizontalHeaderLabels({
-        QStringLiteral("内容"),
-        QStringLiteral("创建时间")
-    });
-    table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
-    table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
-    table->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    table->setSelectionBehavior(QAbstractItemView::SelectRows);
-    table->setAlternatingRowColors(true);
-    return table;
+    layout->addWidget(topRow);
+    layout->addWidget(topCheck);
+    return container;
 }
 
 void DashboardWindow::refreshMemoControls(MemoType type)
@@ -226,17 +348,33 @@ void DashboardWindow::refreshMemoControls(MemoType type)
 
 void DashboardWindow::refreshRecords()
 {
-    fillRecordsTable(questionRecordsTable, store->records(MemoType::Question));
-    fillRecordsTable(todoRecordsTable, store->records(MemoType::Todo));
+    refreshRecordColumn(MemoType::Question, store->records(MemoType::Question));
+    refreshRecordColumn(MemoType::Todo, store->records(MemoType::Todo));
 }
 
-void DashboardWindow::fillRecordsTable(QTableWidget *table, const QVector<MemoItem> &records)
+void DashboardWindow::refreshRecordColumn(MemoType type, const QVector<MemoItem> &records)
 {
-    table->setRowCount(records.size());
+    QBoxLayout *layout = type == MemoType::Question ? questionRecordsLayout : todoRecordsLayout;
+    QLabel *countLabel = type == MemoType::Question ? questionCountLabel : todoCountLabel;
 
-    for (int row = 0; row < records.size(); ++row) {
-        const MemoItem &memo = records.at(row);
-        table->setItem(row, 0, new QTableWidgetItem(memo.text));
-        table->setItem(row, 1, new QTableWidgetItem(memo.createdAt.toString("yyyy-MM-dd HH:mm")));
+    countLabel->setText(QString::number(records.size()));
+    clearLayout(layout);
+
+    if (records.isEmpty()) {
+        layout->addWidget(createEmptyState(layout->parentWidget()));
+    } else {
+        for (const MemoItem &memo : records) {
+            layout->addWidget(createRecordCard(memo, layout->parentWidget()));
+        }
+    }
+
+    layout->addStretch();
+}
+
+void DashboardWindow::clearLayout(QBoxLayout *layout) const
+{
+    while (QLayoutItem *item = layout->takeAt(0)) {
+        delete item->widget();
+        delete item;
     }
 }
