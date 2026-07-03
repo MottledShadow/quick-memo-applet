@@ -1,6 +1,9 @@
 #include "inputwindow.h"
 
+#include "apptheme.h"
+
 #include <QCursor>
+#include <QFrame>
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QKeyEvent>
@@ -10,6 +13,7 @@
 
 InputWindow::InputWindow(QWidget *parent)
     : QWidget(parent)
+    , inputPanel(nullptr)
     , input(nullptr)
     , typeButton(nullptr)
     , activeType(MemoType::Question)
@@ -57,6 +61,11 @@ void InputWindow::showAndFocus()
     input->setFocus();
 }
 
+void InputWindow::applyTheme(ThemeMode mode)
+{
+    setStyleSheet(AppTheme::inputWindowStyleSheet(mode));
+}
+
 void InputWindow::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_Escape) {
@@ -72,21 +81,25 @@ void InputWindow::setupUi()
 {
     setWindowTitle(QStringLiteral("快速记录"));
     setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
-    setFixedSize(460, 52);
-    setStyleSheet(
-        "InputWindow { background: #f7fbff; border: 1px solid #88a9c7; border-radius: 6px; }"
-        "QLineEdit { border: 1px solid #a9bdd0; border-radius: 4px; padding: 7px; font-size: 13px; }"
-        "QPushButton { border: 1px solid #88a9c7; border-radius: 4px; background: #e8f2fb; padding: 6px 10px; }"
-        "QPushButton:hover { background: #d6e9f9; }");
+    setAttribute(Qt::WA_TranslucentBackground, true);
+    setAutoFillBackground(false);
+    setFixedSize(472, 64);
 
-    auto *layout = new QHBoxLayout(this);
-    layout->setContentsMargins(10, 8, 10, 8);
-    layout->setSpacing(8);
+    auto *outerLayout = new QHBoxLayout(this);
+    outerLayout->setContentsMargins(6, 6, 6, 6);
+    outerLayout->setSpacing(0);
 
-    typeButton = new QPushButton(this);
+    inputPanel = new QFrame(this);
+    inputPanel->setObjectName("InputPanel");
+
+    auto *panelLayout = new QHBoxLayout(inputPanel);
+    panelLayout->setContentsMargins(10, 8, 10, 8);
+    panelLayout->setSpacing(8);
+
+    typeButton = new QPushButton(inputPanel);
     connect(typeButton, &QPushButton::clicked, this, &InputWindow::toggleCurrentType);
 
-    input = new QLineEdit(this);
+    input = new QLineEdit(inputPanel);
     input->setPlaceholderText(QStringLiteral("输入内容，Enter 保存，Esc 收起"));
     connect(input, &QLineEdit::returnPressed, this, [this]() {
         const QString text = input->text().trimmed();
@@ -97,9 +110,12 @@ void InputWindow::setupUi()
         input->clear();
     });
 
-    layout->addWidget(typeButton);
-    layout->addWidget(input, 1);
+    panelLayout->addWidget(typeButton);
+    panelLayout->addWidget(input, 1);
+    outerLayout->addWidget(inputPanel);
+
     updateTypeButton();
+    applyTheme(ThemeMode::Light);
 }
 
 void InputWindow::updateTypeButton()

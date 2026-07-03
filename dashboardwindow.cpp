@@ -1,8 +1,11 @@
 #include "dashboardwindow.h"
 
+#include "apptheme.h"
+
 #include <QAbstractItemView>
 #include <QCheckBox>
 #include <QCloseEvent>
+#include <QComboBox>
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QHeaderView>
@@ -22,6 +25,7 @@ DashboardWindow::DashboardWindow(MemoStore *store, QWidget *parent)
     , questionTopCheck(nullptr)
     , todoTopCheck(nullptr)
     , autostartCheck(nullptr)
+    , themeCombo(nullptr)
     , hotkeyEdit(nullptr)
     , questionRecordsTable(nullptr)
     , todoRecordsTable(nullptr)
@@ -45,6 +49,11 @@ void DashboardWindow::refresh()
     }
 
     {
+        const QSignalBlocker blocker(themeCombo);
+        themeCombo->setCurrentIndex(themeCombo->findData(static_cast<int>(store->themeMode())));
+    }
+
+    {
         const QSignalBlocker blocker(hotkeyEdit);
         hotkeyEdit->setKeySequence(QKeySequence(store->hotkey()));
     }
@@ -55,6 +64,11 @@ void DashboardWindow::refresh()
 void DashboardWindow::setStatusMessage(const QString &message)
 {
     statusLabel->setText(message);
+}
+
+void DashboardWindow::applyTheme(ThemeMode mode)
+{
+    setStyleSheet(AppTheme::dashboardStyleSheet(mode));
 }
 
 void DashboardWindow::closeEvent(QCloseEvent *event)
@@ -92,10 +106,22 @@ void DashboardWindow::setupUi()
     hotkeyRowLayout->addWidget(hotkeyEdit, 1);
     hotkeyRowLayout->addWidget(applyHotkeyButton);
 
+    themeCombo = new QComboBox(settingsGroup);
+    themeCombo->addItem(MemoStore::themeDisplayName(ThemeMode::Light), static_cast<int>(ThemeMode::Light));
+    themeCombo->addItem(MemoStore::themeDisplayName(ThemeMode::Dark), static_cast<int>(ThemeMode::Dark));
+    connect(themeCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
+        const QVariant data = themeCombo->itemData(index);
+        if (!data.isValid()) {
+            return;
+        }
+        emit themeChangeRequested(static_cast<ThemeMode>(data.toInt()));
+    });
+
     autostartCheck = new QCheckBox(QStringLiteral("开机自启"), settingsGroup);
     connect(autostartCheck, &QCheckBox::toggled, this, &DashboardWindow::autostartChanged);
 
     settingsLayout->addRow(QStringLiteral("全局快捷键"), hotkeyRow);
+    settingsLayout->addRow(QStringLiteral("主题"), themeCombo);
     settingsLayout->addRow(QString(), autostartCheck);
 
     auto *recordsGroup = new QGroupBox(QStringLiteral("全部记录"), this);
@@ -129,6 +155,8 @@ void DashboardWindow::setupUi()
     rootLayout->addWidget(settingsGroup);
     rootLayout->addWidget(recordsGroup, 1);
     rootLayout->addLayout(bottomLayout);
+
+    applyTheme(ThemeMode::Light);
 }
 
 QWidget *DashboardWindow::createMemoControls(MemoType type)
@@ -180,6 +208,7 @@ QTableWidget *DashboardWindow::createRecordsTable(QWidget *parent) const
     table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    table->setAlternatingRowColors(true);
     return table;
 }
 

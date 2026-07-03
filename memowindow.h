@@ -25,6 +25,7 @@ public slots:
     void setRecords(const QVector<MemoItem> &records);
     void restoreState(const MemoWindowState &state);
     void setAlwaysOnTop(bool enabled);
+    void applyTheme(ThemeMode mode);
 
 signals:
     void memoClicked(const QString &id);

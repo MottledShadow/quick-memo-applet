@@ -6,6 +6,7 @@
 #include <QWidget>
 
 class QCheckBox;
+class QComboBox;
 class QKeySequenceEdit;
 class QLabel;
 class QPushButton;
@@ -21,12 +22,14 @@ public:
 public slots:
     void refresh();
     void setStatusMessage(const QString &message);
+    void applyTheme(ThemeMode mode);
 
 signals:
     void showMemoRequested(MemoType type);
     void hideMemoRequested(MemoType type);
     void alwaysOnTopChanged(MemoType type, bool enabled);
     void hotkeyChangeRequested(const QKeySequence &sequence);
+    void themeChangeRequested(ThemeMode mode);
     void autostartChanged(bool enabled);
     void exitRequested();
 
@@ -47,6 +50,7 @@ private:
     QCheckBox *questionTopCheck;
     QCheckBox *todoTopCheck;
     QCheckBox *autostartCheck;
+    QComboBox *themeCombo;
     QKeySequenceEdit *hotkeyEdit;
     QTableWidget *questionRecordsTable;
     QTableWidget *todoRecordsTable;

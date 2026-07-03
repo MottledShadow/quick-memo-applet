@@ -60,6 +60,7 @@ MemoStore::MemoStore(QObject *parent)
     , activeType(MemoType::Question)
     , hotkeyText(kDefaultHotkey)
     , autostart(false)
+    , theme(ThemeMode::Light)
     , questionState(defaultWindowState(MemoType::Question))
     , todoState(defaultWindowState(MemoType::Todo))
 {
@@ -86,6 +87,7 @@ bool MemoStore::load()
     activeType = typeFromString(root.value("currentType").toString(typeToString(MemoType::Question)));
     hotkeyText = root.value("hotkey").toString(kDefaultHotkey);
     autostart = root.value("autostart").toBool(false);
+    theme = themeFromString(root.value("theme").toString(themeToString(ThemeMode::Light)));
 
     const QJsonObject windows = root.value("windows").toObject();
     questionState = windowStateFromJson(windows.value(typeToString(MemoType::Question)).toObject(),
@@ -143,6 +145,7 @@ bool MemoStore::save() const
         {"currentType", typeToString(activeType)},
         {"hotkey", hotkeyText},
         {"autostart", autostart},
+        {"theme", themeToString(theme)},
         {"windows", windows},
         {"records", records}
     };
@@ -220,6 +223,22 @@ void MemoStore::setAutostartEnabled(bool enabled)
     emit settingsChanged();
 }
 
+ThemeMode MemoStore::themeMode() const
+{
+    return theme;
+}
+
+void MemoStore::setThemeMode(ThemeMode mode)
+{
+    if (theme == mode) {
+        return;
+    }
+
+    theme = mode;
+    save();
+    emit settingsChanged();
+}
+
 MemoWindowState MemoStore::windowState(MemoType type) const
 {
     return type == MemoType::Question ? questionState : todoState;
@@ -286,6 +305,21 @@ MemoType MemoStore::typeFromString(const QString &value)
 QString MemoStore::displayName(MemoType type)
 {
     return type == MemoType::Question ? QStringLiteral("问题") : QStringLiteral("待办");
+}
+
+QString MemoStore::themeToString(ThemeMode mode)
+{
+    return mode == ThemeMode::Dark ? "dark" : "light";
+}
+
+ThemeMode MemoStore::themeFromString(const QString &value)
+{
+    return value == "dark" ? ThemeMode::Dark : ThemeMode::Light;
+}
+
+QString MemoStore::themeDisplayName(ThemeMode mode)
+{
+    return mode == ThemeMode::Dark ? QStringLiteral("暗色") : QStringLiteral("亮色");
 }
 
 MemoWindowState MemoStore::defaultWindowState(MemoType type) const

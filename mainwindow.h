@@ -24,6 +24,7 @@ private:
     void setupConnections();
     void restoreWindows();
     void registerStoredHotkey();
+    void applyTheme(ThemeMode mode);
     bool applyAutostart(bool enabled);
     MemoWindow *memoWindow(MemoType type) const;
 

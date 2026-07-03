@@ -6,6 +6,7 @@
 #include <QWidget>
 
 class QLineEdit;
+class QFrame;
 class QPushButton;
 
 class InputWindow : public QWidget
@@ -21,6 +22,7 @@ public slots:
     void setCurrentType(MemoType type);
     void toggleCurrentType();
     void showAndFocus();
+    void applyTheme(ThemeMode mode);
 
 signals:
     void memoSubmitted(MemoType type, const QString &text);
@@ -33,6 +35,7 @@ private:
     void setupUi();
     void updateTypeButton();
 
+    QFrame *inputPanel;
     QLineEdit *input;
     QPushButton *typeButton;
     MemoType activeType;

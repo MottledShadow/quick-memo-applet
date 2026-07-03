@@ -1,5 +1,7 @@
 #include "memowindow.h"
 
+#include "apptheme.h"
+
 #include <QBoxLayout>
 #include <QCloseEvent>
 #include <QCursor>
@@ -69,6 +71,11 @@ void MemoWindow::setAlwaysOnTop(bool enabled)
     alwaysOnTop = enabled;
     updateWindowFlags(true);
     emitStateChanged();
+}
+
+void MemoWindow::applyTheme(ThemeMode mode)
+{
+    setStyleSheet(AppTheme::memoWindowStyleSheet(mode));
 }
 
 bool MemoWindow::eventFilter(QObject *object, QEvent *event)
@@ -142,21 +149,13 @@ void MemoWindow::setupUi()
     setMinimumSize(240, 220);
     setWindowTitle(MemoStore::displayName(type));
     setAttribute(Qt::WA_DeleteOnClose, false);
-    setStyleSheet(
-        "MemoWindow { background: #fff8d7; border: 1px solid #d4b955; }"
-        "QLabel#TitleLabel { color: #3a3320; font-size: 15px; font-weight: 600; }"
-        "QPushButton { border: 1px solid #d4b955; border-radius: 4px; background: #fff2a8; padding: 3px 8px; }"
-        "QPushButton:hover { background: #ffe879; }"
-        "QFrame[record=true] { background: #fffdf0; border: 1px solid #eadb8c; border-radius: 5px; }"
-        "QFrame[record=true]:hover { background: #fff3b8; }"
-        "QLabel#RecordText { color: #2f2a1d; font-size: 13px; }"
-        "QLabel#RecordTime { color: #7c7048; font-size: 10px; }");
 
     auto *rootLayout = new QVBoxLayout(this);
     rootLayout->setContentsMargins(10, 8, 10, 8);
     rootLayout->setSpacing(8);
 
     titleBar = new QWidget(this);
+    titleBar->setObjectName("TitleBar");
     titleBar->installEventFilter(this);
     titleBar->setCursor(Qt::SizeAllCursor);
 
@@ -201,7 +200,7 @@ void MemoWindow::setupUi()
     rootLayout->addWidget(scrollArea, 1);
     rootLayout->addWidget(bottomBar);
 
-    updateWindowFlags(false);
+    applyTheme(ThemeMode::Light);
 }
 
 void MemoWindow::rebuildList()

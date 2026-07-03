@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 
+#include "apptheme.h"
 #include "dashboardwindow.h"
 #include "hotkeymanager.h"
 #include "inputwindow.h"
@@ -32,6 +33,7 @@ MainWindow::MainWindow(QObject *parent)
     questionWindow->setRecords(store->records(MemoType::Question));
     todoWindow->setRecords(store->records(MemoType::Todo));
     inputWindow->setCurrentType(store->currentType());
+    applyTheme(store->themeMode());
 
     restoreWindows();
     setupConnections();
@@ -56,6 +58,7 @@ void MainWindow::setupConnections()
 
     connect(store, &MemoStore::settingsChanged, this, [this]() {
         inputWindow->setCurrentType(store->currentType());
+        applyTheme(store->themeMode());
     });
 
     connect(questionWindow, &MemoWindow::memoClicked, store, &MemoStore::deleteMemo);
@@ -73,6 +76,7 @@ void MainWindow::setupConnections()
         }
         inputWindow->showAndFocus();
     });
+
     connect(trayController, &TrayController::openDashboardRequested, this, [this]() {
         dashboardWindow->show();
         dashboardWindow->raise();
@@ -108,6 +112,13 @@ void MainWindow::setupConnections()
                                               .arg(sequence.toString(QKeySequence::NativeText)));
     });
 
+    connect(dashboardWindow, &DashboardWindow::themeChangeRequested, this, [this](ThemeMode mode) {
+        store->setThemeMode(mode);
+        applyTheme(mode);
+        dashboardWindow->setStatusMessage(QStringLiteral("主题已切换为：%1")
+                                              .arg(MemoStore::themeDisplayName(mode)));
+    });
+
     connect(dashboardWindow, &DashboardWindow::autostartChanged, this, [this](bool enabled) {
         if (!applyAutostart(enabled)) {
             dashboardWindow->setStatusMessage(QStringLiteral("开机自启设置失败。"));
@@ -140,6 +151,15 @@ void MainWindow::registerStoredHotkey()
     if (!hotkeyManager->registerHotkey(QKeySequence(store->hotkey()), &error)) {
         dashboardWindow->setStatusMessage(error);
     }
+}
+
+void MainWindow::applyTheme(ThemeMode mode)
+{
+    qApp->setStyleSheet(AppTheme::applicationStyleSheet(mode));
+    inputWindow->applyTheme(mode);
+    questionWindow->applyTheme(mode);
+    todoWindow->applyTheme(mode);
+    dashboardWindow->applyTheme(mode);
 }
 
 bool MainWindow::applyAutostart(bool enabled)

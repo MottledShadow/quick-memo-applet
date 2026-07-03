@@ -12,6 +12,11 @@ enum class MemoType {
     Todo
 };
 
+enum class ThemeMode {
+    Light,
+    Dark
+};
+
 struct MemoItem {
     QString id;
     MemoType type;
@@ -47,6 +52,9 @@ public:
     bool autostartEnabled() const;
     void setAutostartEnabled(bool enabled);
 
+    ThemeMode themeMode() const;
+    void setThemeMode(ThemeMode mode);
+
     MemoWindowState windowState(MemoType type) const;
     void setWindowState(MemoType type, const MemoWindowState &state);
 
@@ -58,6 +66,9 @@ public:
     static QString typeToString(MemoType type);
     static MemoType typeFromString(const QString &value);
     static QString displayName(MemoType type);
+    static QString themeToString(ThemeMode mode);
+    static ThemeMode themeFromString(const QString &value);
+    static QString themeDisplayName(ThemeMode mode);
 
 signals:
     void recordsChanged();
@@ -72,6 +83,7 @@ private:
     MemoType activeType;
     QString hotkeyText;
     bool autostart;
+    ThemeMode theme;
     MemoWindowState questionState;
     MemoWindowState todoState;
 };
