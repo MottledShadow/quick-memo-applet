@@ -13,7 +13,17 @@
 #include <QPushButton>
 #include <QScrollArea>
 #include <QSignalBlocker>
+#include <QStyle>
 #include <QVBoxLayout>
+
+namespace {
+void refreshDynamicStyle(QWidget *widget)
+{
+    widget->style()->unpolish(widget);
+    widget->style()->polish(widget);
+    widget->update();
+}
+}
 
 DashboardWindow::DashboardWindow(MemoStore *store, QWidget *parent)
     : QWidget(parent)
@@ -201,6 +211,7 @@ QWidget *DashboardWindow::createRecordsColumn(MemoType type, QWidget *parent)
 {
     auto *column = new QFrame(parent);
     column->setObjectName("RecordColumn");
+    column->setProperty("memoKind", MemoStore::typeToString(type));
 
     auto *layout = new QVBoxLayout(column);
     layout->setContentsMargins(12, 12, 12, 12);
@@ -215,6 +226,7 @@ QWidget *DashboardWindow::createRecordsColumn(MemoType type, QWidget *parent)
 
     auto *countLabel = new QLabel(QStringLiteral("0"), header);
     countLabel->setObjectName("CountBadge");
+    countLabel->setProperty("memoKind", MemoStore::typeToString(type));
     countLabel->setAlignment(Qt::AlignCenter);
 
     headerLayout->addWidget(titleLabel);
@@ -251,6 +263,7 @@ QWidget *DashboardWindow::createRecordCard(const MemoItem &memo, QWidget *parent
 {
     auto *card = new QFrame(parent);
     card->setObjectName("DashboardRecordCard");
+    card->setProperty("memoKind", MemoStore::typeToString(memo.type));
 
     auto *layout = new QVBoxLayout(card);
     layout->setContentsMargins(12, 10, 12, 10);
@@ -269,10 +282,11 @@ QWidget *DashboardWindow::createRecordCard(const MemoItem &memo, QWidget *parent
     return card;
 }
 
-QWidget *DashboardWindow::createEmptyState(QWidget *parent) const
+QWidget *DashboardWindow::createEmptyState(MemoType type, QWidget *parent) const
 {
     auto *emptyState = new QFrame(parent);
     emptyState->setObjectName("EmptyState");
+    emptyState->setProperty("memoKind", MemoStore::typeToString(type));
 
     auto *layout = new QVBoxLayout(emptyState);
     layout->setContentsMargins(12, 28, 12, 28);
@@ -289,6 +303,7 @@ QWidget *DashboardWindow::createMemoControls(MemoType type, QWidget *parent)
 {
     auto *container = new QFrame(parent);
     container->setObjectName("MemoControlCard");
+    container->setProperty("memoKind", MemoStore::typeToString(type));
 
     auto *layout = new QVBoxLayout(container);
     layout->setContentsMargins(10, 10, 10, 10);
@@ -304,7 +319,9 @@ QWidget *DashboardWindow::createMemoControls(MemoType type, QWidget *parent)
 
     auto *visibilityButton = new QPushButton(topRow);
     visibilityButton->setObjectName("SecondaryButton");
+    visibilityButton->setCursor(Qt::PointingHandCursor);
     auto *topCheck = new QCheckBox(QStringLiteral("置顶"), container);
+    topCheck->setCursor(Qt::PointingHandCursor);
 
     connect(visibilityButton, &QPushButton::clicked, this, [this, type]() {
         const MemoWindowState state = store->windowState(type);
@@ -341,6 +358,8 @@ void DashboardWindow::refreshMemoControls(MemoType type)
     QCheckBox *topCheck = type == MemoType::Question ? questionTopCheck : todoTopCheck;
 
     visibilityButton->setText(state.visible ? QStringLiteral("隐藏") : QStringLiteral("显示"));
+    visibilityButton->setProperty("active", state.visible);
+    refreshDynamicStyle(visibilityButton);
 
     const QSignalBlocker blocker(topCheck);
     topCheck->setChecked(state.alwaysOnTop);
@@ -361,7 +380,7 @@ void DashboardWindow::refreshRecordColumn(MemoType type, const QVector<MemoItem>
     clearLayout(layout);
 
     if (records.isEmpty()) {
-        layout->addWidget(createEmptyState(layout->parentWidget()));
+        layout->addWidget(createEmptyState(type, layout->parentWidget()));
     } else {
         for (const MemoItem &memo : records) {
             layout->addWidget(createRecordCard(memo, layout->parentWidget()));

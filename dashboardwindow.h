@@ -41,7 +41,7 @@ private:
     void setupUi();
     QWidget *createRecordsColumn(MemoType type, QWidget *parent);
     QWidget *createRecordCard(const MemoItem &memo, QWidget *parent) const;
-    QWidget *createEmptyState(QWidget *parent) const;
+    QWidget *createEmptyState(MemoType type, QWidget *parent) const;
     QWidget *createMemoControls(MemoType type, QWidget *parent);
     void refreshMemoControls(MemoType type);
     void refreshRecords();

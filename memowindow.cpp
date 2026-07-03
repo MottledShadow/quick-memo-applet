@@ -14,6 +14,16 @@
 #include <QScrollArea>
 #include <QShowEvent>
 #include <QSizeGrip>
+#include <QStyle>
+
+namespace {
+void refreshDynamicStyle(QWidget *widget)
+{
+    widget->style()->unpolish(widget);
+    widget->style()->polish(widget);
+    widget->update();
+}
+}
 
 MemoWindow::MemoWindow(MemoType type, QWidget *parent)
     : QWidget(parent)
@@ -148,6 +158,7 @@ void MemoWindow::setupUi()
 {
     setMinimumSize(240, 220);
     setWindowTitle(MemoStore::displayName(type));
+    setProperty("memoKind", MemoStore::typeToString(type));
     setAttribute(Qt::WA_DeleteOnClose, false);
     setAttribute(Qt::WA_TranslucentBackground, true);
 
@@ -169,6 +180,7 @@ void MemoWindow::setupUi()
 
     topButton = new QPushButton(titleBar);
     topButton->setObjectName("TopButton");
+    topButton->setCursor(Qt::PointingHandCursor);
     connect(topButton, &QPushButton::clicked, this, [this]() {
         setAlwaysOnTop(!alwaysOnTop);
     });
@@ -220,6 +232,7 @@ void MemoWindow::rebuildList()
     if (currentRecords.isEmpty()) {
         auto *emptyFrame = new QFrame(this);
         emptyFrame->setObjectName("EmptyState");
+        emptyFrame->setProperty("memoKind", MemoStore::typeToString(type));
 
         auto *emptyLayout = new QVBoxLayout(emptyFrame);
         emptyLayout->setContentsMargins(10, 26, 10, 26);
@@ -239,6 +252,7 @@ void MemoWindow::rebuildList()
         recordFrame->setObjectName("MemoRecordCard");
         recordFrame->setProperty("record", true);
         recordFrame->setProperty("memoId", memo.id);
+        recordFrame->setProperty("memoKind", MemoStore::typeToString(memo.type));
         recordFrame->setCursor(Qt::PointingHandCursor);
         recordFrame->installEventFilter(this);
 
@@ -273,6 +287,8 @@ void MemoWindow::updateWindowFlags(bool keepVisible)
     setWindowFlags(flags);
 
     topButton->setText(alwaysOnTop ? QStringLiteral("置顶") : QStringLiteral("普通"));
+    topButton->setProperty("active", alwaysOnTop);
+    refreshDynamicStyle(topButton);
 
     if (keepVisible && wasVisible) {
         show();

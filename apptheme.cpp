@@ -22,6 +22,10 @@ struct Palette {
     QString noteCard;
     QString noteCardHover;
     QString noteBorder;
+    QString questionAccent;
+    QString questionSoft;
+    QString todoAccent;
+    QString todoSoft;
 };
 
 Palette palette(ThemeMode mode)
@@ -47,7 +51,11 @@ Palette palette(ThemeMode mode)
             "#0d1117", // inputBackground
             "#161b22", // noteCard
             "#21262d", // noteCardHover
-            "#30363d"  // noteBorder
+            "#30363d", // noteBorder
+            "#58a6ff", // questionAccent
+            "#102a43", // questionSoft
+            "#3fb950", // todoAccent
+            "#123321"  // todoSoft
         };
     }
 
@@ -71,7 +79,11 @@ Palette palette(ThemeMode mode)
         "#ffffff", // inputBackground
         "#fff8c5", // noteCard
         "#fff1a6", // noteCardHover
-        "#eadc86"  // noteBorder
+        "#eadc86", // noteBorder
+        "#0969da", // questionAccent
+        "#ddf4ff", // questionSoft
+        "#1a7f37", // todoAccent
+        "#dafbe1"  // todoSoft
     };
 }
 
@@ -124,7 +136,8 @@ QToolTip {
     color: %1;
     background: %2;
     border: 1px solid %3;
-    padding: 6px;
+    border-radius: 6px;
+    padding: 6px 8px;
 }
 QMenu {
     color: %1;
@@ -140,8 +153,16 @@ QMenu::item:selected {
     color: %4;
     background: %5;
 }
+QMenu::item:disabled {
+    color: %6;
+}
+QMenu::separator {
+    height: 1px;
+    background: %3;
+    margin: 4px 8px;
+}
 )")
-        .arg(p.text, p.panel, p.border, p.strongText, p.hover)
+        .arg(p.text, p.panel, p.border, p.strongText, p.hover, p.disabledText)
         + scrollBars(p);
 }
 
@@ -154,15 +175,28 @@ MemoWindow {
     border: 1px solid %2;
     border-radius: 12px;
 }
+MemoWindow[memoKind="question"] {
+    border-color: %15;
+}
+MemoWindow[memoKind="todo"] {
+    border-color: %17;
+}
 MemoWindow QWidget#TitleBar {
     background: transparent;
-    min-height: 30px;
+    border-bottom: 1px solid %2;
+    min-height: 34px;
 }
 MemoWindow QLabel#TitleLabel {
     color: %3;
     font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
     font-size: 15px;
     font-weight: 700;
+}
+MemoWindow[memoKind="question"] QLabel#TitleLabel {
+    color: %15;
+}
+MemoWindow[memoKind="todo"] QLabel#TitleLabel {
+    color: %17;
 }
 MemoWindow QPushButton {
     color: %4;
@@ -173,6 +207,18 @@ MemoWindow QPushButton {
     min-height: 22px;
     min-width: 36px;
     font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
+}
+MemoWindow QPushButton#TopButton {
+    min-width: 56px;
+}
+MemoWindow QPushButton#TopButton[active="true"] {
+    color: %3;
+    background: %16;
+    border-color: %15;
+}
+MemoWindow[memoKind="todo"] QPushButton#TopButton[active="true"] {
+    background: %18;
+    border-color: %17;
 }
 MemoWindow QPushButton#HideButton {
     color: %12;
@@ -185,6 +231,15 @@ MemoWindow QPushButton:hover {
     color: %3;
     background: %6;
     border-color: %7;
+}
+MemoWindow QPushButton#TopButton[active="true"]:hover {
+    color: %3;
+    background: %16;
+    border-color: %15;
+}
+MemoWindow[memoKind="todo"] QPushButton#TopButton[active="true"]:hover {
+    background: %18;
+    border-color: %17;
 }
 MemoWindow QPushButton#HideButton:hover {
     color: %13;
@@ -202,11 +257,18 @@ MemoWindow QScrollArea QWidget {
 MemoWindow QFrame#MemoRecordCard {
     background: %9;
     border: 1px solid %10;
+    border-left: 3px solid %15;
     border-radius: 8px;
+}
+MemoWindow QFrame#MemoRecordCard[memoKind="todo"] {
+    border-left-color: %17;
 }
 MemoWindow QFrame#MemoRecordCard:hover {
     background: %11;
     border-color: %7;
+}
+MemoWindow QFrame#MemoRecordCard[memoKind="todo"]:hover {
+    border-left-color: %17;
 }
 MemoWindow QLabel#RecordText {
     color: %4;
@@ -219,9 +281,12 @@ MemoWindow QLabel#RecordTime {
     font-size: 10px;
 }
 MemoWindow QFrame#EmptyState {
-    background: transparent;
+    background: %16;
     border: 1px dashed %2;
     border-radius: 8px;
+}
+MemoWindow QFrame#EmptyState[memoKind="todo"] {
+    background: %18;
 }
 MemoWindow QLabel#EmptyStateText {
     color: %12;
@@ -231,7 +296,7 @@ MemoWindow QLabel#EmptyStateText {
 )")
         .arg(p.background, p.border, p.strongText, p.text, p.panel, p.hover,
              p.accent, p.pressed, p.noteCard, p.noteBorder, p.noteCardHover, p.mutedText,
-             p.danger, p.dangerSoft);
+             p.danger, p.dangerSoft, p.questionAccent, p.questionSoft, p.todoAccent, p.todoSoft);
 }
 
 QString AppTheme::inputWindowStyleSheet(ThemeMode mode)
@@ -244,7 +309,7 @@ InputWindow {
 InputWindow QFrame#InputPanel {
     background: %1;
     border: 1px solid %2;
-    border-radius: 12px;
+    border-radius: 14px;
 }
 InputWindow QLineEdit {
     color: %3;
@@ -255,6 +320,7 @@ InputWindow QLineEdit {
     font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
     font-size: 13px;
     selection-background-color: %5;
+    min-height: 24px;
 }
 InputWindow QLineEdit:focus {
     border-color: %6;
@@ -271,17 +337,39 @@ InputWindow QPushButton {
     font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
     font-weight: 700;
 }
+InputWindow QPushButton#TypeButton {
+    min-width: 72px;
+    color: %6;
+    background: %11;
+    border-color: %6;
+}
+InputWindow QPushButton#TypeButton[memoKind="todo"] {
+    color: %13;
+    background: %14;
+    border-color: %13;
+}
 InputWindow QPushButton:hover {
     color: %8;
     background: %9;
     border-color: %6;
+}
+InputWindow QPushButton#TypeButton:hover {
+    color: %8;
+    background: %11;
+    border-color: %6;
+}
+InputWindow QPushButton#TypeButton[memoKind="todo"]:hover {
+    color: %8;
+    background: %14;
+    border-color: %13;
 }
 InputWindow QPushButton:pressed {
     background: %10;
 }
 )")
         .arg(p.panel, p.border, p.text, p.inputBackground, p.accentSoft,
-             p.accent, p.mutedText, p.strongText, p.hover, p.pressed);
+             p.accent, p.mutedText, p.strongText, p.hover, p.pressed,
+             p.questionSoft, p.questionAccent, p.todoAccent, p.todoSoft);
 }
 
 QString AppTheme::dashboardStyleSheet(ThemeMode mode)
@@ -305,7 +393,7 @@ DashboardWindow QFrame#RecordsPanel,
 DashboardWindow QFrame#SidePanel {
     background: %5;
     border: 1px solid %6;
-    border-radius: 10px;
+    border-radius: 12px;
 }
 DashboardWindow QFrame#StatusBar {
     background: transparent;
@@ -313,7 +401,7 @@ DashboardWindow QFrame#StatusBar {
 }
 DashboardWindow QLabel#PageTitle {
     color: %4;
-    font-size: 20px;
+    font-size: 21px;
     font-weight: 700;
 }
 DashboardWindow QLabel#SideSectionTitle,
@@ -339,10 +427,19 @@ DashboardWindow QLabel#CountBadge {
     min-width: 18px;
     font-weight: 700;
 }
+DashboardWindow QLabel#CountBadge[memoKind="todo"] {
+    color: %23;
+    background: %24;
+    border-color: %23;
+}
 DashboardWindow QFrame#RecordColumn {
     background: %10;
     border: 1px solid %6;
+    border-top: 3px solid %21;
     border-radius: 10px;
+}
+DashboardWindow QFrame#RecordColumn[memoKind="todo"] {
+    border-top-color: %23;
 }
 DashboardWindow QScrollArea#RecordsScrollArea,
 DashboardWindow QWidget#RecordsList {
@@ -352,11 +449,18 @@ DashboardWindow QWidget#RecordsList {
 DashboardWindow QFrame#DashboardRecordCard {
     background: %14;
     border: 1px solid %15;
+    border-left: 3px solid %21;
     border-radius: 8px;
+}
+DashboardWindow QFrame#DashboardRecordCard[memoKind="todo"] {
+    border-left-color: %23;
 }
 DashboardWindow QFrame#DashboardRecordCard:hover {
     background: %16;
     border-color: %8;
+}
+DashboardWindow QFrame#DashboardRecordCard[memoKind="todo"]:hover {
+    border-left-color: %23;
 }
 DashboardWindow QLabel#DashboardRecordText {
     color: %1;
@@ -368,9 +472,12 @@ DashboardWindow QLabel#DashboardRecordTime {
     font-size: 11px;
 }
 DashboardWindow QFrame#EmptyState {
-    background: transparent;
+    background: %22;
     border: 1px dashed %6;
     border-radius: 8px;
+}
+DashboardWindow QFrame#EmptyState[memoKind="todo"] {
+    background: %24;
 }
 DashboardWindow QLabel#EmptyStateText {
     color: %17;
@@ -378,7 +485,11 @@ DashboardWindow QLabel#EmptyStateText {
 DashboardWindow QFrame#MemoControlCard {
     background: %10;
     border: 1px solid %6;
+    border-left: 3px solid %21;
     border-radius: 8px;
+}
+DashboardWindow QFrame#MemoControlCard[memoKind="todo"] {
+    border-left-color: %23;
 }
 DashboardWindow QPushButton {
     color: %1;
@@ -415,6 +526,15 @@ DashboardWindow QPushButton#PrimaryButton:pressed {
 }
 DashboardWindow QPushButton#SecondaryButton {
     min-width: 58px;
+}
+DashboardWindow QPushButton#SecondaryButton[active="true"] {
+    color: %18;
+    background: %8;
+    border-color: %8;
+}
+DashboardWindow QFrame#MemoControlCard[memoKind="todo"] QPushButton#SecondaryButton[active="true"] {
+    background: %23;
+    border-color: %23;
 }
 DashboardWindow QPushButton#DangerButton {
     color: %19;
@@ -502,5 +622,6 @@ DashboardWindow QComboBox QAbstractItemView {
         .arg(p.text, p.background, p.disabledText, p.strongText, p.panel, p.border,
              p.hover, p.accent, p.pressed, p.panelAlt, p.inputBackground, p.accentSoft,
              p.tableAlt, p.noteCard, p.noteBorder, p.noteCardHover, p.mutedText,
-             p.accentText, p.danger, p.dangerSoft);
+             p.accentText, p.danger, p.dangerSoft, p.questionAccent, p.questionSoft,
+             p.todoAccent, p.todoSoft);
 }

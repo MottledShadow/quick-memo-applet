@@ -10,6 +10,16 @@
 #include <QLineEdit>
 #include <QPushButton>
 #include <QScreen>
+#include <QStyle>
+
+namespace {
+void refreshDynamicStyle(QWidget *widget)
+{
+    widget->style()->unpolish(widget);
+    widget->style()->polish(widget);
+    widget->update();
+}
+}
 
 InputWindow::InputWindow(QWidget *parent)
     : QWidget(parent)
@@ -97,6 +107,8 @@ void InputWindow::setupUi()
     panelLayout->setSpacing(8);
 
     typeButton = new QPushButton(inputPanel);
+    typeButton->setObjectName("TypeButton");
+    typeButton->setCursor(Qt::PointingHandCursor);
     connect(typeButton, &QPushButton::clicked, this, &InputWindow::toggleCurrentType);
 
     input = new QLineEdit(inputPanel);
@@ -121,6 +133,8 @@ void InputWindow::setupUi()
 void InputWindow::updateTypeButton()
 {
     typeButton->setText(MemoStore::displayName(activeType));
+    typeButton->setProperty("memoKind", MemoStore::typeToString(activeType));
+    refreshDynamicStyle(typeButton);
     input->setPlaceholderText(QStringLiteral("记录到「%1」；Enter 保存，Esc 收起")
                                   .arg(MemoStore::displayName(activeType)));
 }
