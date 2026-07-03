@@ -17,11 +17,13 @@ public:
 
 signals:
     void openDashboardRequested();
+    void exitRequested();
 
 private:
     QSystemTrayIcon *trayIcon;
     QMenu *trayMenu;
     QAction *openDashboardAction;
+    QAction *exitAction;
 };
 
 #endif // TRAYCONTROLLER_H

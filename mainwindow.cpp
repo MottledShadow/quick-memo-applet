@@ -82,6 +82,7 @@ void MainWindow::setupConnections()
         dashboardWindow->raise();
         dashboardWindow->activateWindow();
     });
+    connect(trayController, &TrayController::exitRequested, this, &MainWindow::quitApplication);
 
     connect(dashboardWindow, &DashboardWindow::showMemoRequested, this, [this](MemoType type) {
         MemoWindow *window = memoWindow(type);
@@ -131,12 +132,7 @@ void MainWindow::setupConnections()
                                                   : QStringLiteral("已关闭开机自启。"));
     });
 
-    connect(dashboardWindow, &DashboardWindow::exitRequested, this, [this]() {
-        store->setWindowState(MemoType::Question, questionWindow->currentState());
-        store->setWindowState(MemoType::Todo, todoWindow->currentState());
-        store->save();
-        qApp->quit();
-    });
+    connect(dashboardWindow, &DashboardWindow::exitRequested, this, &MainWindow::quitApplication);
 }
 
 void MainWindow::restoreWindows()
@@ -184,4 +180,12 @@ bool MainWindow::applyAutostart(bool enabled)
 MemoWindow *MainWindow::memoWindow(MemoType type) const
 {
     return type == MemoType::Question ? questionWindow : todoWindow;
+}
+
+void MainWindow::quitApplication()
+{
+    store->setWindowState(MemoType::Question, questionWindow->currentState());
+    store->setWindowState(MemoType::Todo, todoWindow->currentState());
+    store->save();
+    qApp->quit();
 }

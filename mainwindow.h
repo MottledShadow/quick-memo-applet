@@ -27,6 +27,7 @@ private:
     void applyTheme(ThemeMode mode);
     bool applyAutostart(bool enabled);
     MemoWindow *memoWindow(MemoType type) const;
+    void quitApplication();
 
     MemoStore *store;
     InputWindow *inputWindow;
