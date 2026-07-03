@@ -8,8 +8,10 @@
 #include <QWidget>
 
 class QBoxLayout;
+class QFrame;
 class QLabel;
 class QPushButton;
+class QSizeGrip;
 
 class MemoWindow : public QWidget
 {
@@ -43,13 +45,16 @@ private:
     void setupUi();
     void rebuildList();
     void updateWindowFlags(bool keepVisible);
+    void updateResizeGripGeometry();
     void emitStateChanged();
 
     MemoType type;
     QVector<MemoItem> currentRecords;
+    QFrame *panel;
     QWidget *titleBar;
     QLabel *titleLabel;
     QPushButton *topButton;
+    QSizeGrip *resizeGrip;
     QBoxLayout *listLayout;
     bool alwaysOnTop;
     bool dragging;

@@ -28,9 +28,11 @@ void refreshDynamicStyle(QWidget *widget)
 MemoWindow::MemoWindow(MemoType type, QWidget *parent)
     : QWidget(parent)
     , type(type)
+    , panel(nullptr)
     , titleBar(nullptr)
     , titleLabel(nullptr)
     , topButton(nullptr)
+    , resizeGrip(nullptr)
     , listLayout(nullptr)
     , alwaysOnTop(true)
     , dragging(false)
@@ -133,6 +135,7 @@ void MemoWindow::moveEvent(QMoveEvent *event)
 void MemoWindow::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
+    updateResizeGripGeometry();
     emitStateChanged();
 }
 
@@ -160,20 +163,27 @@ void MemoWindow::setupUi()
     setWindowTitle(MemoStore::displayName(type));
     setProperty("memoKind", MemoStore::typeToString(type));
     setAttribute(Qt::WA_DeleteOnClose, false);
-    setAttribute(Qt::WA_TranslucentBackground, true);
+    setAttribute(Qt::WA_TranslucentBackground, false);
+    setAutoFillBackground(false);
 
     auto *rootLayout = new QVBoxLayout(this);
-    rootLayout->setContentsMargins(7, 5, 7, 4);
-    rootLayout->setSpacing(5);
+    rootLayout->setContentsMargins(0, 0, 0, 0);
+    rootLayout->setSpacing(0);
 
-    titleBar = new QWidget(this);
+    panel = new QFrame(this);
+    panel->setObjectName("MemoPanel");
+    auto *panelLayout = new QVBoxLayout(panel);
+    panelLayout->setContentsMargins(0, 0, 0, 0);
+    panelLayout->setSpacing(0);
+
+    titleBar = new QWidget(panel);
     titleBar->setObjectName("TitleBar");
     titleBar->installEventFilter(this);
     titleBar->setCursor(Qt::SizeAllCursor);
 
     auto *titleLayout = new QHBoxLayout(titleBar);
-    titleLayout->setContentsMargins(2, 0, 0, 0);
-    titleLayout->setSpacing(5);
+    titleLayout->setContentsMargins(8, 4, 8, 4);
+    titleLayout->setSpacing(6);
 
     titleLabel = new QLabel(MemoStore::displayName(type), titleBar);
     titleLabel->setObjectName("TitleLabel");
@@ -194,33 +204,28 @@ void MemoWindow::setupUi()
     titleLayout->addWidget(topButton);
     titleLayout->addWidget(hideButton);
 
-    auto *scrollArea = new QScrollArea(this);
+    auto *scrollArea = new QScrollArea(panel);
+    scrollArea->setObjectName("MemoScrollArea");
     scrollArea->setWidgetResizable(true);
     scrollArea->setFrameShape(QFrame::NoFrame);
 
     auto *listWidget = new QWidget(scrollArea);
+    listWidget->setObjectName("MemoList");
     listLayout = new QVBoxLayout(listWidget);
-    listLayout->setContentsMargins(0, 0, 0, 0);
-    listLayout->setSpacing(4);
+    listLayout->setContentsMargins(8, 8, 8, 18);
+    listLayout->setSpacing(5);
     scrollArea->setWidget(listWidget);
 
-    auto *bottomBar = new QWidget(this);
-    bottomBar->setObjectName("ResizeBar");
-    bottomBar->setFixedHeight(8);
-    auto *bottomLayout = new QHBoxLayout(bottomBar);
-    bottomLayout->setContentsMargins(0, 0, 0, 0);
-    bottomLayout->setSpacing(0);
-    bottomLayout->addStretch();
-    auto *resizeGrip = new QSizeGrip(bottomBar);
+    resizeGrip = new QSizeGrip(panel);
     resizeGrip->setObjectName("ResizeGrip");
-    resizeGrip->setFixedSize(12, 12);
-    bottomLayout->addWidget(resizeGrip);
+    resizeGrip->setFixedSize(14, 14);
 
-    rootLayout->addWidget(titleBar);
-    rootLayout->addWidget(scrollArea, 1);
-    rootLayout->addWidget(bottomBar);
+    panelLayout->addWidget(titleBar);
+    panelLayout->addWidget(scrollArea, 1);
+    rootLayout->addWidget(panel);
 
     applyTheme(ThemeMode::Light);
+    updateResizeGripGeometry();
 }
 
 void MemoWindow::rebuildList()
@@ -299,6 +304,18 @@ void MemoWindow::updateWindowFlags(bool keepVisible)
         show();
         raise();
     }
+}
+
+void MemoWindow::updateResizeGripGeometry()
+{
+    if (resizeGrip == nullptr || panel == nullptr) {
+        return;
+    }
+
+    const int x = panel->width() - resizeGrip->width() - 2;
+    const int y = panel->height() - resizeGrip->height() - 2;
+    resizeGrip->move(x < 0 ? 0 : x, y < 0 ? 0 : y);
+    resizeGrip->raise();
 }
 
 void MemoWindow::emitStateChanged()

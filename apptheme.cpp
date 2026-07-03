@@ -21,6 +21,7 @@ struct Palette {
     QString memoPanel;
     QString memoPanelTop;
     QString memoTitleGradient;
+    QString memoList;
     QString memoCard;
     QString memoCardHover;
     QString memoBorder;
@@ -68,15 +69,16 @@ Palette palette(ThemeMode mode)
             "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #151F31, stop:1 #111827)", // surfaceGradient
             "#1F2937", // surfaceRaised
             "#0F172A", // surfaceSunken
-            "#252113", // memoPanel
-            "#3A3217", // memoPanelTop
-            "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #3A3217, stop:1 #252113)", // memoTitleGradient
-            "#302A18", // memoCard
-            "#3A321C", // memoCardHover
-            "#5B4E2A", // memoBorder
-            "#8A7334", // memoBorderStrong
-            "#FFF7D6", // memoText
-            "#D6C99A", // memoTimeText
+            "#0F172A", // memoPanel
+            "#111827", // memoPanelTop
+            "#111827", // memoTitleGradient
+            "#0B1220", // memoList
+            "#1E293B", // memoCard
+            "#263449", // memoCardHover
+            "#334155", // memoBorder
+            "#475569", // memoBorderStrong
+            "#F8FAFC", // memoText
+            "#CBD5E1", // memoTimeText
 
             "#F9FAFB", // textPrimary
             "#CBD5E1", // textSecondary
@@ -116,13 +118,14 @@ Palette palette(ThemeMode mode)
         "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FFFFFF, stop:1 #F8FAFC)", // surfaceGradient
         "#F8FAFC", // surfaceRaised
         "#EEF2F7", // surfaceSunken
-        "#FFF1A8", // memoPanel
-        "#FFE680", // memoPanelTop
-        "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FFF2A3, stop:1 #FFE680)", // memoTitleGradient
-        "#FFF9D8", // memoCard
-        "#FFF4BD", // memoCardHover
-        "#E8D486", // memoBorder
-        "#C9A938", // memoBorderStrong
+        "#FFFFFF", // memoPanel
+        "#F8FAFC", // memoPanelTop
+        "#F8FAFC", // memoTitleGradient
+        "#F1F5F9", // memoList
+        "#FFFFFF", // memoCard
+        "#F8FAFC", // memoCardHover
+        "#E2E8F0", // memoBorder
+        "#CBD5E1", // memoBorderStrong
         "#111827", // memoText
         "#475569", // memoTimeText
 
@@ -167,6 +170,7 @@ QString themed(QString style, const Palette &p)
         .replace("${memoPanel}", p.memoPanel)
         .replace("${memoPanelTop}", p.memoPanelTop)
         .replace("${memoTitleGradient}", p.memoTitleGradient)
+        .replace("${memoList}", p.memoList)
         .replace("${memoCard}", p.memoCard)
         .replace("${memoCardHover}", p.memoCardHover)
         .replace("${memoBorder}", p.memoBorder)
@@ -275,19 +279,18 @@ QString AppTheme::memoWindowStyleSheet(ThemeMode mode)
 MemoWindow {
     color: ${memoText};
     background: ${memoPanel};
+    border: none;
+}
+MemoWindow QFrame#MemoPanel {
+    color: ${memoText};
+    background: ${memoPanel};
     border: 1px solid ${memoBorderStrong};
-    border-radius: 10px;
-}
-MemoWindow[memoKind="question"] {
-    border-color: ${memoBorderStrong};
-}
-MemoWindow[memoKind="todo"] {
-    border-color: ${memoBorderStrong};
+    border-radius: 0;
 }
 MemoWindow QWidget#TitleBar {
-    background: ${memoTitleGradient};
-    border-bottom: 1px solid ${memoBorderStrong};
-    min-height: 30px;
+    background: ${memoPanelTop};
+    border-bottom: 1px solid ${memoBorder};
+    min-height: 36px;
 }
 MemoWindow QLabel#TitleLabel {
     color: ${memoText};
@@ -297,32 +300,32 @@ MemoWindow QLabel#TitleLabel {
     font-weight: 700;
 }
 MemoWindow[memoKind="question"] QLabel#TitleLabel {
-    color: ${primaryHover};
+    color: ${primary};
 }
 MemoWindow[memoKind="todo"] QLabel#TitleLabel {
-    color: ${secondaryHover};
+    color: ${secondary};
 }
 MemoWindow QPushButton {
     color: ${memoText};
-    background: ${memoCard};
+    background: ${memoPanelTop};
     border: 1px solid ${memoBorder};
-    border-radius: 7px;
-    padding: 2px 8px;
-    min-height: 22px;
+    border-radius: 6px;
+    padding: 3px 9px;
+    min-height: 24px;
     min-width: 30px;
     font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
 }
 MemoWindow QPushButton#TopButton {
-    min-width: 48px;
+    min-width: 52px;
 }
 MemoWindow QPushButton#TopButton[active="true"] {
     color: ${primary};
-    background: ${memoCard};
+    background: ${memoPanelTop};
     border-color: ${primary};
 }
 MemoWindow[memoKind="todo"] QPushButton#TopButton[active="true"] {
     color: ${secondary};
-    background: ${memoCard};
+    background: ${memoPanelTop};
     border-color: ${secondary};
 }
 MemoWindow QPushButton#HideButton {
@@ -334,7 +337,7 @@ MemoWindow QPushButton#HideButton {
 }
 MemoWindow QPushButton:hover {
     color: ${memoText};
-    background: ${memoCardHover};
+    background: ${memoCard};
     border-color: ${memoBorderStrong};
 }
 MemoWindow QPushButton#TopButton[active="true"]:hover {
@@ -355,12 +358,12 @@ MemoWindow QPushButton#HideButton:hover {
 MemoWindow QPushButton:pressed {
     background: ${overlayPressed};
 }
-MemoWindow QScrollArea {
-    background: ${memoPanel};
+MemoWindow QScrollArea#MemoScrollArea {
+    background: ${memoList};
     border: none;
 }
-MemoWindow QScrollArea QWidget {
-    background: ${memoPanel};
+MemoWindow QWidget#MemoList {
+    background: ${memoList};
     border: none;
 }
 MemoWindow QFrame#MemoRecordCard {
@@ -374,7 +377,7 @@ MemoWindow QFrame#MemoRecordCard[memoKind="todo"] {
 }
 MemoWindow QFrame#MemoRecordCard:hover {
     background: ${memoCardHover};
-    border-color: ${memoBorderStrong};
+    border-color: ${memoBorder};
 }
 MemoWindow QFrame#MemoRecordCard[memoKind="todo"]:hover {
     border-left-color: ${secondary};
@@ -406,15 +409,10 @@ MemoWindow QLabel#EmptyStateText {
     font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
     font-size: 13px;
 }
-MemoWindow QWidget#ResizeBar {
-    background: ${memoPanel};
-    min-height: 8px;
-    max-height: 8px;
-}
 MemoWindow QSizeGrip#ResizeGrip {
     background: transparent;
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
 }
 )", p);
 }
