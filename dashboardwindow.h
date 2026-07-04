@@ -61,6 +61,8 @@ private:
     QBoxLayout *questionRecordsLayout;
     QBoxLayout *todoRecordsLayout;
     QLabel *statusLabel;
+    QFrame *recordsPanel;
+    QFrame *sidePanel;
 };
 
 #endif // DASHBOARDWINDOW_H

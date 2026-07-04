@@ -74,6 +74,7 @@ void InputWindow::showAndFocus()
 void InputWindow::applyTheme(ThemeMode mode)
 {
     setStyleSheet(AppTheme::inputWindowStyleSheet(mode));
+    AppTheme::applyElevation(inputPanel, mode, ElevationLevel::E3);
 }
 
 void InputWindow::keyPressEvent(QKeyEvent *event)
@@ -93,10 +94,10 @@ void InputWindow::setupUi()
     setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
     setAttribute(Qt::WA_TranslucentBackground, true);
     setAutoFillBackground(false);
-    setFixedSize(472, 64);
+    setFixedSize(480, 72);
 
     auto *outerLayout = new QHBoxLayout(this);
-    outerLayout->setContentsMargins(8, 8, 8, 8);
+    outerLayout->setContentsMargins(12, 12, 12, 12);
     outerLayout->setSpacing(0);
 
     inputPanel = new QFrame(this);

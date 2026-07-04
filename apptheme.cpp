@@ -1,5 +1,9 @@
 #include "apptheme.h"
 
+#include <QColor>
+#include <QGraphicsDropShadowEffect>
+#include <QWidget>
+
 namespace {
 struct Palette {
     QString primary;
@@ -17,6 +21,7 @@ struct Palette {
     QString surface;
     QString surfaceGradient;
     QString surfaceRaised;
+    QString surfaceHighlight;
     QString surfaceSunken;
     QString memoPanel;
     QString memoPanelTop;
@@ -81,6 +86,13 @@ struct SpacingScale {
     QString radiusL;
 };
 
+struct ElevationSpec {
+    qreal blurRadius;
+    qreal xOffset;
+    qreal yOffset;
+    QColor color;
+};
+
 Palette palette(ThemeMode mode)
 {
     if (mode == ThemeMode::Dark) {
@@ -98,12 +110,13 @@ Palette palette(ThemeMode mode)
             "#0B1220", // appBg
             "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #0F172A, stop:1 #0B1220)", // appBgGradient
             "#111827", // surface
-            "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #151F31, stop:1 #111827)", // surfaceGradient
+            "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #182235, stop:0.55 #111827, stop:1 #0F172A)", // surfaceGradient
             "#1F2937", // surfaceRaised
+            "#263449", // surfaceHighlight
             "#0F172A", // surfaceSunken
             "#0F172A", // memoPanel
             "#111827", // memoPanelTop
-            "#111827", // memoTitleGradient
+            "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #182235, stop:1 #111827)", // memoTitleGradient
             "#0B1220", // memoList
             "#1E293B", // memoCard
             "#263449", // memoCardHover
@@ -147,12 +160,13 @@ Palette palette(ThemeMode mode)
         "#F3F5F7", // appBg
         "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #F8FAFC, stop:1 #F3F5F7)", // appBgGradient
         "#FFFFFF", // surface
-        "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FFFFFF, stop:1 #F8FAFC)", // surfaceGradient
+        "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FFFFFF, stop:0.58 #FFFFFF, stop:1 #F4F7FB)", // surfaceGradient
         "#F8FAFC", // surfaceRaised
+        "#FFFFFF", // surfaceHighlight
         "#EEF2F7", // surfaceSunken
         "#FFFFFF", // memoPanel
         "#F8FAFC", // memoPanelTop
-        "#F8FAFC", // memoTitleGradient
+        "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FFFFFF, stop:1 #F8FAFC)", // memoTitleGradient
         "#F1F5F9", // memoList
         "#FFFFFF", // memoCard
         "#F8FAFC", // memoCardHover
@@ -238,6 +252,7 @@ QString themed(QString style, const Palette &p)
         .replace("${surface}", p.surface)
         .replace("${surfaceGradient}", p.surfaceGradient)
         .replace("${surfaceRaised}", p.surfaceRaised)
+        .replace("${surfaceHighlight}", p.surfaceHighlight)
         .replace("${surfaceSunken}", p.surfaceSunken)
         .replace("${memoPanel}", p.memoPanel)
         .replace("${memoPanelTop}", p.memoPanelTop)
@@ -332,6 +347,56 @@ QScrollBar::sub-line:horizontal {
 }
 )", p);
 }
+
+ElevationSpec elevationSpec(ThemeMode mode, ElevationLevel level)
+{
+    if (level == ElevationLevel::E0) {
+        return {0, 0, 0, QColor(0, 0, 0, 0)};
+    }
+
+    if (mode == ThemeMode::Dark) {
+        switch (level) {
+        case ElevationLevel::E1:
+            return {16, 0, 4, QColor(8, 13, 24, 110)};
+        case ElevationLevel::E2:
+            return {26, 0, 10, QColor(8, 13, 24, 140)};
+        case ElevationLevel::E3:
+            return {34, 0, 14, QColor(2, 6, 23, 165)};
+        case ElevationLevel::E0:
+            break;
+        }
+    }
+
+    switch (level) {
+    case ElevationLevel::E1:
+        return {14, 0, 4, QColor(71, 85, 105, 42)};
+    case ElevationLevel::E2:
+        return {24, 0, 8, QColor(71, 85, 105, 58)};
+    case ElevationLevel::E3:
+        return {32, 0, 12, QColor(51, 65, 85, 70)};
+    case ElevationLevel::E0:
+        break;
+    }
+
+    return {0, 0, 0, QColor(0, 0, 0, 0)};
+}
+}
+
+void AppTheme::applyElevation(QWidget *widget, ThemeMode mode, ElevationLevel level)
+{
+    if (widget == nullptr || level == ElevationLevel::E0) {
+        if (widget != nullptr) {
+            widget->setGraphicsEffect(nullptr);
+        }
+        return;
+    }
+
+    const ElevationSpec spec = elevationSpec(mode, level);
+    auto *effect = new QGraphicsDropShadowEffect(widget);
+    effect->setBlurRadius(spec.blurRadius);
+    effect->setOffset(spec.xOffset, spec.yOffset);
+    effect->setColor(spec.color);
+    widget->setGraphicsEffect(effect);
 }
 
 QString AppTheme::applicationStyleSheet(ThemeMode mode)
@@ -387,10 +452,12 @@ MemoWindow QFrame#MemoPanel {
     color: ${memoText};
     background: ${memoPanel};
     border: 1px solid ${memoBorderStrong};
+    border-top-color: ${surfaceHighlight};
+    border-left-color: ${surfaceHighlight};
     border-radius: ${radiusM};
 }
 MemoWindow QWidget#TitleBar {
-    background: ${memoPanelTop};
+    background: ${memoTitleGradient};
     border-bottom: 1px solid ${memoBorder};
     border-top-left-radius: ${radiusM};
     border-top-right-radius: ${radiusM};
@@ -480,6 +547,7 @@ MemoWindow QFrame#MemoRecordCard {
     background: ${memoCard};
     border: 1px solid ${memoBorder};
     border-left: 3px solid ${primary};
+    border-top-color: ${surfaceHighlight};
     border-radius: ${radiusM};
 }
 MemoWindow QFrame#MemoRecordCard[memoKind="todo"] {
@@ -543,6 +611,8 @@ InputWindow {
 InputWindow QFrame#InputPanel {
     background: ${surfaceGradient};
     border: 1px solid ${borderStrong};
+    border-top-color: ${surfaceHighlight};
+    border-left-color: ${surfaceHighlight};
     border-radius: ${radiusL};
 }
 InputWindow QLineEdit {
@@ -631,6 +701,8 @@ DashboardWindow QFrame#RecordsPanel,
 DashboardWindow QFrame#SidePanel {
     background: ${surfaceGradient};
     border: 1px solid ${border};
+    border-top-color: ${surfaceHighlight};
+    border-left-color: ${surfaceHighlight};
     border-radius: ${radiusL};
 }
 DashboardWindow QFrame#StatusBar {
@@ -680,7 +752,7 @@ DashboardWindow QLabel#CountBadge[memoKind="todo"] {
     border-color: ${secondary};
 }
 DashboardWindow QFrame#RecordColumn {
-    background: ${surfaceSunken};
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 ${surfaceSunken}, stop:1 ${appBg});
     border: 1px solid ${border};
     border-top: 3px solid ${primary};
     border-radius: ${radiusM};
@@ -700,6 +772,7 @@ DashboardWindow QFrame#DashboardRecordCard {
     background: ${surface};
     border: 1px solid ${border};
     border-left: 3px solid ${primary};
+    border-top-color: ${surfaceHighlight};
     border-radius: ${radiusM};
 }
 DashboardWindow QFrame#DashboardRecordCard[memoKind="todo"] {

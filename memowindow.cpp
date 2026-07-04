@@ -88,6 +88,7 @@ void MemoWindow::setAlwaysOnTop(bool enabled)
 void MemoWindow::applyTheme(ThemeMode mode)
 {
     setStyleSheet(AppTheme::memoWindowStyleSheet(mode));
+    AppTheme::applyElevation(panel, mode, ElevationLevel::E3);
 }
 
 bool MemoWindow::eventFilter(QObject *object, QEvent *event)
@@ -159,7 +160,7 @@ void MemoWindow::closeEvent(QCloseEvent *event)
 
 void MemoWindow::setupUi()
 {
-    setMinimumSize(240, 224);
+    setMinimumSize(256, 240);
     setWindowTitle(MemoStore::displayName(type));
     setProperty("memoKind", MemoStore::typeToString(type));
     setAttribute(Qt::WA_DeleteOnClose, false);
@@ -167,7 +168,7 @@ void MemoWindow::setupUi()
     setAutoFillBackground(false);
 
     auto *rootLayout = new QVBoxLayout(this);
-    rootLayout->setContentsMargins(0, 0, 0, 0);
+    rootLayout->setContentsMargins(8, 8, 8, 8);
     rootLayout->setSpacing(0);
 
     panel = new QFrame(this);

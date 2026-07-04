@@ -40,6 +40,8 @@ DashboardWindow::DashboardWindow(MemoStore *store, QWidget *parent)
     , questionRecordsLayout(nullptr)
     , todoRecordsLayout(nullptr)
     , statusLabel(nullptr)
+    , recordsPanel(nullptr)
+    , sidePanel(nullptr)
 {
     setupUi();
     connect(store, &MemoStore::recordsChanged, this, &DashboardWindow::refresh);
@@ -79,6 +81,8 @@ void DashboardWindow::setStatusMessage(const QString &message)
 void DashboardWindow::applyTheme(ThemeMode mode)
 {
     setStyleSheet(AppTheme::dashboardStyleSheet(mode));
+    AppTheme::applyElevation(recordsPanel, mode, ElevationLevel::E2);
+    AppTheme::applyElevation(sidePanel, mode, ElevationLevel::E2);
 }
 
 void DashboardWindow::closeEvent(QCloseEvent *event)
@@ -99,10 +103,10 @@ void DashboardWindow::setupUi()
 
     auto *content = new QWidget(this);
     auto *contentLayout = new QHBoxLayout(content);
-    contentLayout->setContentsMargins(0, 0, 0, 0);
+    contentLayout->setContentsMargins(8, 8, 8, 8);
     contentLayout->setSpacing(16);
 
-    auto *recordsPanel = new QFrame(content);
+    recordsPanel = new QFrame(content);
     recordsPanel->setObjectName("RecordsPanel");
     auto *recordsPanelLayout = new QVBoxLayout(recordsPanel);
     recordsPanelLayout->setContentsMargins(16, 16, 16, 16);
@@ -127,7 +131,7 @@ void DashboardWindow::setupUi()
     recordsPanelLayout->addWidget(recordsTitleRow);
     recordsPanelLayout->addWidget(columns, 1);
 
-    auto *sidePanel = new QFrame(content);
+    sidePanel = new QFrame(content);
     sidePanel->setObjectName("SidePanel");
     sidePanel->setFixedWidth(288);
     auto *sideLayout = new QVBoxLayout(sidePanel);

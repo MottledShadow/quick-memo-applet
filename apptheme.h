@@ -5,6 +5,15 @@
 
 #include <QString>
 
+class QWidget;
+
+enum class ElevationLevel {
+    E0,
+    E1,
+    E2,
+    E3
+};
+
 class AppTheme
 {
 public:
@@ -12,6 +21,7 @@ public:
     static QString memoWindowStyleSheet(ThemeMode mode);
     static QString inputWindowStyleSheet(ThemeMode mode);
     static QString dashboardStyleSheet(ThemeMode mode);
+    static void applyElevation(QWidget *widget, ThemeMode mode, ElevationLevel level);
 };
 
 #endif // APPTHEME_H
