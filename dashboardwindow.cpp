@@ -14,6 +14,7 @@
 #include <QScrollArea>
 #include <QSignalBlocker>
 #include <QStyle>
+#include <QStringList>
 #include <QVBoxLayout>
 
 namespace {
@@ -37,6 +38,7 @@ DashboardWindow::DashboardWindow(MemoStore *store, QWidget *parent)
     , autostartCheck(nullptr)
     , themeCombo(nullptr)
     , hotkeyEdit(nullptr)
+    , hotkeyPreviewLayout(nullptr)
     , questionCountLabel(nullptr)
     , todoCountLabel(nullptr)
     , questionRecordsLayout(nullptr)
@@ -71,6 +73,7 @@ void DashboardWindow::refresh()
         const QSignalBlocker blocker(hotkeyEdit);
         hotkeyEdit->setKeySequence(QKeySequence(store->hotkey()));
     }
+    refreshHotkeyPreview(QKeySequence(store->hotkey()));
 
     refreshRecords();
 }
@@ -136,42 +139,73 @@ void DashboardWindow::setupUi()
     sidePanel = new QFrame(content);
     sidePanel->setObjectName("SidePanel");
     sidePanel->setFixedWidth(288);
-    auto *sideLayout = new QVBoxLayout(sidePanel);
+    auto *sidePanelLayout = new QVBoxLayout(sidePanel);
+    sidePanelLayout->setContentsMargins(0, 0, 0, 0);
+    sidePanelLayout->setSpacing(0);
+
+    auto *sideScrollArea = new QScrollArea(sidePanel);
+    sideScrollArea->setObjectName("SideContentScrollArea");
+    sideScrollArea->setWidgetResizable(true);
+    sideScrollArea->setFrameShape(QFrame::NoFrame);
+    sideScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    sideScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+
+    auto *sideContent = new QWidget(sideScrollArea);
+    sideContent->setObjectName("SideContent");
+    sideContent->setMinimumHeight(720);
+
+    auto *sideLayout = new QVBoxLayout(sideContent);
     sideLayout->setContentsMargins(16, 16, 16, 16);
     sideLayout->setSpacing(16);
 
-    auto *memoSectionTitle = new QLabel(QStringLiteral("便签窗口"), sidePanel);
+    auto *memoSectionTitle = new QLabel(QStringLiteral("便签窗口"), sideContent);
     memoSectionTitle->setObjectName("SideSectionTitle");
     sideLayout->addWidget(memoSectionTitle);
-    sideLayout->addWidget(createMemoControls(MemoType::Question, sidePanel));
-    sideLayout->addWidget(createMemoControls(MemoType::Todo, sidePanel));
+    sideLayout->addWidget(createMemoControls(MemoType::Question, sideContent));
+    sideLayout->addWidget(createMemoControls(MemoType::Todo, sideContent));
 
-    auto *settingsSectionTitle = new QLabel(QStringLiteral("设置"), sidePanel);
+    auto *settingsSectionTitle = new QLabel(QStringLiteral("设置"), sideContent);
     settingsSectionTitle->setObjectName("SideSectionTitle");
     sideLayout->addSpacing(8);
     sideLayout->addWidget(settingsSectionTitle);
 
-    auto *hotkeyLabel = new QLabel(QStringLiteral("全局快捷键"), sidePanel);
+    QBoxLayout *hotkeyGroupLayout = nullptr;
+    auto *hotkeyGroup = createSettingsGroup(QStringLiteral("快捷键"), sideContent, &hotkeyGroupLayout);
+    auto *hotkeyLabel = new QLabel(QStringLiteral("全局快捷键"), hotkeyGroup);
     hotkeyLabel->setObjectName("FieldLabel");
-    hotkeyEdit = new QKeySequenceEdit(sidePanel);
+    hotkeyEdit = new QKeySequenceEdit(hotkeyGroup);
 
-    auto *applyHotkeyButton = new QPushButton(QStringLiteral("应用"), sidePanel);
+    auto *applyHotkeyButton = new QPushButton(QStringLiteral("应用"), hotkeyGroup);
     applyHotkeyButton->setObjectName("PrimaryButton");
     applyHotkeyButton->setToolTip(QStringLiteral("应用新的全局快捷键"));
     connect(applyHotkeyButton, &QPushButton::clicked, this, [this]() {
         emit hotkeyChangeRequested(hotkeyEdit->keySequence());
     });
+    connect(hotkeyEdit, &QKeySequenceEdit::keySequenceChanged,
+            this, &DashboardWindow::refreshHotkeyPreview);
 
-    auto *hotkeyRow = new QWidget(sidePanel);
+    auto *hotkeyRow = new QWidget(hotkeyGroup);
     auto *hotkeyRowLayout = new QHBoxLayout(hotkeyRow);
     hotkeyRowLayout->setContentsMargins(0, 0, 0, 0);
     hotkeyRowLayout->setSpacing(8);
     hotkeyRowLayout->addWidget(hotkeyEdit, 1);
     hotkeyRowLayout->addWidget(applyHotkeyButton);
 
-    auto *themeLabel = new QLabel(QStringLiteral("主题"), sidePanel);
+    auto *hotkeyPreview = new QWidget(hotkeyGroup);
+    hotkeyPreview->setObjectName("HotkeyPreview");
+    hotkeyPreviewLayout = new QHBoxLayout(hotkeyPreview);
+    hotkeyPreviewLayout->setContentsMargins(0, 0, 0, 0);
+    hotkeyPreviewLayout->setSpacing(6);
+
+    hotkeyGroupLayout->addWidget(hotkeyLabel);
+    hotkeyGroupLayout->addWidget(hotkeyRow);
+    hotkeyGroupLayout->addWidget(hotkeyPreview);
+
+    QBoxLayout *appearanceGroupLayout = nullptr;
+    auto *appearanceGroup = createSettingsGroup(QStringLiteral("外观"), sideContent, &appearanceGroupLayout);
+    auto *themeLabel = new QLabel(QStringLiteral("主题"), appearanceGroup);
     themeLabel->setObjectName("FieldLabel");
-    themeCombo = new QComboBox(sidePanel);
+    themeCombo = new QComboBox(appearanceGroup);
     themeCombo->setObjectName("ThemeCombo");
     themeCombo->setCursor(Qt::PointingHandCursor);
     themeCombo->setToolTip(QStringLiteral("切换亮色或暗色主题"));
@@ -184,23 +218,29 @@ void DashboardWindow::setupUi()
         }
         emit themeChangeRequested(static_cast<ThemeMode>(data.toInt()));
     });
+    appearanceGroupLayout->addWidget(themeLabel);
+    appearanceGroupLayout->addWidget(themeCombo);
 
-    autostartCheck = new QCheckBox(QStringLiteral("开机自启"), sidePanel);
+    QBoxLayout *systemGroupLayout = nullptr;
+    auto *systemGroup = createSettingsGroup(QStringLiteral("系统"), sideContent, &systemGroupLayout);
+    autostartCheck = new QCheckBox(QStringLiteral("开机自启"), systemGroup);
     autostartCheck->setToolTip(QStringLiteral("开机后自动启动 Quick Memo"));
     connect(autostartCheck, &QCheckBox::toggled, this, &DashboardWindow::autostartChanged);
+    systemGroupLayout->addWidget(autostartCheck);
 
-    auto *exitButton = new QPushButton(QStringLiteral("退出程序"), sidePanel);
+    auto *exitButton = new QPushButton(QStringLiteral("退出程序"), sideContent);
     exitButton->setObjectName("DangerButton");
     exitButton->setToolTip(QStringLiteral("保存状态并退出程序"));
     connect(exitButton, &QPushButton::clicked, this, &DashboardWindow::exitRequested);
 
-    sideLayout->addWidget(hotkeyLabel);
-    sideLayout->addWidget(hotkeyRow);
-    sideLayout->addWidget(themeLabel);
-    sideLayout->addWidget(themeCombo);
-    sideLayout->addWidget(autostartCheck);
+    sideLayout->addWidget(hotkeyGroup);
+    sideLayout->addWidget(appearanceGroup);
+    sideLayout->addWidget(systemGroup);
     sideLayout->addStretch(1);
     sideLayout->addWidget(exitButton);
+
+    sideScrollArea->setWidget(sideContent);
+    sidePanelLayout->addWidget(sideScrollArea);
 
     contentLayout->addWidget(recordsPanel, 1);
     contentLayout->addWidget(sidePanel);
@@ -342,12 +382,14 @@ QWidget *DashboardWindow::createMemoControls(MemoType type, QWidget *parent)
     auto *container = new QFrame(parent);
     container->setObjectName("MemoControlCard");
     container->setProperty("memoKind", MemoStore::typeToString(type));
+    container->setMinimumHeight(96);
 
     auto *layout = new QVBoxLayout(container);
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(8);
 
     auto *topRow = new QWidget(container);
+    topRow->setMinimumHeight(30);
     auto *topRowLayout = new QHBoxLayout(topRow);
     topRowLayout->setContentsMargins(0, 0, 0, 0);
     topRowLayout->setSpacing(8);
@@ -368,6 +410,7 @@ QWidget *DashboardWindow::createMemoControls(MemoType type, QWidget *parent)
     topCheck->setProperty("memoKind", MemoStore::typeToString(type));
     topCheck->setCursor(Qt::PointingHandCursor);
     topCheck->setToolTip(QStringLiteral("保持便签窗口置顶"));
+    topCheck->setMinimumHeight(34);
 
     connect(visibilityButton, &QPushButton::clicked, this, [this, type]() {
         const MemoWindowState state = store->windowState(type);
@@ -401,6 +444,27 @@ QWidget *DashboardWindow::createMemoControls(MemoType type, QWidget *parent)
     return container;
 }
 
+QFrame *DashboardWindow::createSettingsGroup(const QString &title, QWidget *parent, QBoxLayout **contentLayout) const
+{
+    auto *group = new QFrame(parent);
+    group->setObjectName("SettingsGroup");
+    group->setMinimumHeight(72);
+
+    auto *layout = new QVBoxLayout(group);
+    layout->setContentsMargins(12, 12, 12, 12);
+    layout->setSpacing(8);
+
+    auto *titleLabel = new QLabel(title, group);
+    titleLabel->setObjectName("SettingGroupTitle");
+    layout->addWidget(titleLabel);
+
+    if (contentLayout != nullptr) {
+        *contentLayout = layout;
+    }
+
+    return group;
+}
+
 void DashboardWindow::refreshMemoControls(MemoType type)
 {
     const MemoWindowState state = store->windowState(type);
@@ -421,6 +485,40 @@ void DashboardWindow::refreshMemoControls(MemoType type)
     const QSignalBlocker blocker(topCheck);
     topCheck->setChecked(state.alwaysOnTop);
     refreshDynamicStyle(topCheck);
+}
+
+void DashboardWindow::refreshHotkeyPreview(const QKeySequence &sequence)
+{
+    if (hotkeyPreviewLayout == nullptr) {
+        return;
+    }
+
+    clearLayout(hotkeyPreviewLayout);
+
+    const QString text = sequence.toString(QKeySequence::NativeText).trimmed();
+    QWidget *parent = hotkeyPreviewLayout->parentWidget();
+    if (parent == nullptr) {
+        return;
+    }
+
+    if (text.isEmpty()) {
+        auto *emptyLabel = new QLabel(QStringLiteral("未设置"), parent);
+        emptyLabel->setObjectName("Keycap");
+        emptyLabel->setProperty("empty", true);
+        emptyLabel->setAlignment(Qt::AlignCenter);
+        hotkeyPreviewLayout->addWidget(emptyLabel);
+        hotkeyPreviewLayout->addStretch(1);
+        return;
+    }
+
+    const QStringList parts = text.split(QLatin1Char('+'), Qt::SkipEmptyParts);
+    for (const QString &part : parts) {
+        auto *keycap = new QLabel(part.trimmed(), parent);
+        keycap->setObjectName("Keycap");
+        keycap->setAlignment(Qt::AlignCenter);
+        hotkeyPreviewLayout->addWidget(keycap);
+    }
+    hotkeyPreviewLayout->addStretch(1);
 }
 
 void DashboardWindow::refreshRecords()

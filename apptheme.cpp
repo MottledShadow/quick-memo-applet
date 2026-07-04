@@ -825,6 +825,23 @@ DashboardWindow QFrame#StatusBar {
     background: transparent;
     border: none;
 }
+DashboardWindow QScrollArea#SideContentScrollArea {
+    background: transparent;
+    border: none;
+}
+DashboardWindow QWidget#SideContent {
+    background: transparent;
+    border: none;
+}
+DashboardWindow QFrame#SettingsGroup {
+    background: ${surface};
+    border: 1px solid ${border};
+    border-top-color: ${surfaceHighlight};
+    border-radius: ${radiusM};
+}
+DashboardWindow QFrame#SettingsGroup:hover {
+    border-color: ${borderStrong};
+}
 DashboardWindow QLabel#PageTitle {
     color: ${textPrimary};
     font-size: ${pageTitleSize};
@@ -844,6 +861,12 @@ DashboardWindow QLabel#StatusLabel {
     font-size: ${captionSize};
     font-weight: ${weightRegular};
     line-height: ${lineCaption};
+}
+DashboardWindow QLabel#SettingGroupTitle {
+    color: ${textPrimary};
+    font-size: ${bodySize};
+    font-weight: ${weightControl};
+    line-height: ${lineBody};
 }
 DashboardWindow QLabel#MemoControlTitle {
     color: ${textPrimary};
@@ -1075,6 +1098,27 @@ DashboardWindow QKeySequenceEdit:disabled {
     color: ${textDisabled};
     background: ${surfaceSunken};
     border-color: ${border};
+}
+DashboardWindow QWidget#HotkeyPreview {
+    background: transparent;
+    border: none;
+    min-height: 24px;
+}
+DashboardWindow QLabel#Keycap {
+    color: ${textSecondary};
+    background: ${surfaceSunken};
+    border: 1px solid ${border};
+    border-radius: ${radiusS};
+    padding: 2px 7px;
+    min-height: 18px;
+    font-size: ${captionSize};
+    font-weight: ${weightControl};
+    line-height: ${lineCaption};
+}
+DashboardWindow QLabel#Keycap[empty="true"] {
+    color: ${textMuted};
+    background: transparent;
+    border-style: dashed;
 }
 DashboardWindow QCheckBox {
     color: ${textPrimary};

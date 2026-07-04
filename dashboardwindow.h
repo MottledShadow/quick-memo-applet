@@ -3,6 +3,7 @@
 
 #include "memostore.h"
 
+#include <QKeySequence>
 #include <QWidget>
 
 class QCheckBox;
@@ -43,7 +44,9 @@ private:
     QWidget *createRecordCard(const MemoItem &memo, QWidget *parent) const;
     QWidget *createEmptyState(MemoType type, QWidget *parent) const;
     QWidget *createMemoControls(MemoType type, QWidget *parent);
+    QFrame *createSettingsGroup(const QString &title, QWidget *parent, QBoxLayout **contentLayout) const;
     void refreshMemoControls(MemoType type);
+    void refreshHotkeyPreview(const QKeySequence &sequence);
     void refreshRecords();
     void refreshRecordColumn(MemoType type, const QVector<MemoItem> &records);
     void clearLayout(QBoxLayout *layout) const;
@@ -58,6 +61,7 @@ private:
     QCheckBox *autostartCheck;
     QComboBox *themeCombo;
     QKeySequenceEdit *hotkeyEdit;
+    QBoxLayout *hotkeyPreviewLayout;
     QLabel *questionCountLabel;
     QLabel *todoCountLabel;
     QBoxLayout *questionRecordsLayout;
