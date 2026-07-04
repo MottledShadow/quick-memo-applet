@@ -20,6 +20,9 @@ void refreshDynamicStyle(QWidget *widget)
     widget->style()->unpolish(widget);
     widget->style()->polish(widget);
     widget->update();
+    if (widget->isVisible()) {
+        widget->repaint();
+    }
 }
 }
 
@@ -86,6 +89,7 @@ void InputWindow::applyTheme(ThemeMode mode)
 {
     setStyleSheet(AppTheme::inputWindowStyleSheet(mode));
     AppTheme::applyElevation(inputPanel, mode, ElevationLevel::E3);
+    updateTypeButton();
 }
 
 bool InputWindow::eventFilter(QObject *object, QEvent *event)
@@ -185,9 +189,13 @@ void InputWindow::updateTypeButton()
                             .arg(QString(QChar(0x25CF)), MemoStore::displayName(activeType)));
     typeButton->setProperty("memoKind", MemoStore::typeToString(activeType));
     inputPanel->setProperty("memoKind", MemoStore::typeToString(activeType));
-    refreshDynamicStyle(typeButton);
-    refreshDynamicStyle(inputPanel);
     input->setPlaceholderText(activeType == MemoType::Question
                                   ? QStringLiteral("记下一个问题...")
                                   : QStringLiteral("写下一件待办..."));
+    refreshDynamicStyle(typeButton);
+    refreshDynamicStyle(inputPanel);
+    input->update();
+    if (input->isVisible()) {
+        input->repaint();
+    }
 }

@@ -65,16 +65,19 @@ void HotkeyManager::unregisterHotkey()
 bool HotkeyManager::nativeEventFilter(const QByteArray &eventType, void *message, qintptr *result)
 {
     Q_UNUSED(eventType)
-    Q_UNUSED(result)
 
 #ifdef Q_OS_WIN
     auto *msg = static_cast<MSG *>(message);
     if (msg != nullptr && msg->message == WM_HOTKEY && msg->wParam == static_cast<WPARAM>(hotkeyId)) {
+        if (result != nullptr) {
+            *result = 0;
+        }
         emit activated();
         return true;
     }
 #else
     Q_UNUSED(message)
+    Q_UNUSED(result)
 #endif
 
     return false;
