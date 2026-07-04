@@ -1028,6 +1028,8 @@ DashboardWindow QPushButton#PrimaryButton {
     color: ${primaryText};
     background: ${primary};
     border-color: ${primary};
+    min-height: 32px;
+    padding: 0 ${spaceM};
 }
 DashboardWindow QPushButton#PrimaryButton:hover,
 DashboardWindow QPushButton#PrimaryButton:pressed {
@@ -1044,8 +1046,8 @@ DashboardWindow QPushButton#SecondaryButton {
     color: ${textSecondary};
     background: transparent;
     border-color: ${border};
-    min-width: 56px;
-    min-height: 26px;
+    min-width: 64px;
+    min-height: ${compactControlHeight};
     padding: ${spaceXs} ${spaceM};
 }
 DashboardWindow QPushButton#SecondaryButton[active="true"] {
@@ -1082,7 +1084,8 @@ DashboardWindow QKeySequenceEdit {
     background: ${surface};
     border: 1px solid ${border};
     border-radius: ${radiusM};
-    padding: ${spaceS} 12px;
+    padding: 0 12px;
+    min-height: 34px;
     font-size: ${bodySize};
     font-weight: ${weightRegular};
     line-height: ${lineBody};
@@ -1098,6 +1101,18 @@ DashboardWindow QKeySequenceEdit:disabled {
     color: ${textDisabled};
     background: ${surfaceSunken};
     border-color: ${border};
+}
+DashboardWindow QKeySequenceEdit QLineEdit {
+    color: ${textPrimary};
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    min-height: 0;
+}
+DashboardWindow QKeySequenceEdit QLineEdit:focus {
+    background: transparent;
+    border: none;
 }
 DashboardWindow QWidget#HotkeyPreview {
     background: transparent;
@@ -1122,10 +1137,19 @@ DashboardWindow QLabel#Keycap[empty="true"] {
 }
 DashboardWindow QCheckBox {
     color: ${textPrimary};
+    background: transparent;
+    border: none;
+    padding: 0;
     spacing: 8px;
     font-size: ${bodySize};
     font-weight: ${weightRegular};
     line-height: ${lineBody};
+}
+DashboardWindow QCheckBox#SystemToggle {
+    color: ${textSecondary};
+    background: transparent;
+    border: none;
+    padding: 0;
 }
 DashboardWindow QCheckBox#PinToggle {
     color: ${textSecondary};
@@ -1201,7 +1225,8 @@ DashboardWindow QComboBox {
     background: ${surface};
     border: 1px solid ${border};
     border-radius: ${radiusM};
-    padding: ${spaceS} ${spaceXl} ${spaceS} 12px;
+    padding: 0 ${spaceXl} 0 12px;
+    min-height: 34px;
     font-size: ${bodySize};
     font-weight: ${weightRegular};
     line-height: ${lineBody};

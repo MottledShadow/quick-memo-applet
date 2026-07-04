@@ -13,6 +13,7 @@
 #include <QPushButton>
 #include <QScrollArea>
 #include <QSignalBlocker>
+#include <QSizePolicy>
 #include <QStyle>
 #include <QStringList>
 #include <QVBoxLayout>
@@ -138,7 +139,7 @@ void DashboardWindow::setupUi()
 
     sidePanel = new QFrame(content);
     sidePanel->setObjectName("SidePanel");
-    sidePanel->setFixedWidth(288);
+    sidePanel->setFixedWidth(320);
     auto *sidePanelLayout = new QVBoxLayout(sidePanel);
     sidePanelLayout->setContentsMargins(0, 0, 0, 0);
     sidePanelLayout->setSpacing(0);
@@ -152,7 +153,7 @@ void DashboardWindow::setupUi()
 
     auto *sideContent = new QWidget(sideScrollArea);
     sideContent->setObjectName("SideContent");
-    sideContent->setMinimumHeight(720);
+    sideContent->setMinimumHeight(760);
 
     auto *sideLayout = new QVBoxLayout(sideContent);
     sideLayout->setContentsMargins(16, 16, 16, 16);
@@ -174,9 +175,11 @@ void DashboardWindow::setupUi()
     auto *hotkeyLabel = new QLabel(QStringLiteral("全局快捷键"), hotkeyGroup);
     hotkeyLabel->setObjectName("FieldLabel");
     hotkeyEdit = new QKeySequenceEdit(hotkeyGroup);
+    hotkeyEdit->setMinimumHeight(38);
 
     auto *applyHotkeyButton = new QPushButton(QStringLiteral("应用"), hotkeyGroup);
     applyHotkeyButton->setObjectName("PrimaryButton");
+    applyHotkeyButton->setMinimumSize(76, 34);
     applyHotkeyButton->setToolTip(QStringLiteral("应用新的全局快捷键"));
     connect(applyHotkeyButton, &QPushButton::clicked, this, [this]() {
         emit hotkeyChangeRequested(hotkeyEdit->keySequence());
@@ -184,22 +187,23 @@ void DashboardWindow::setupUi()
     connect(hotkeyEdit, &QKeySequenceEdit::keySequenceChanged,
             this, &DashboardWindow::refreshHotkeyPreview);
 
-    auto *hotkeyRow = new QWidget(hotkeyGroup);
-    auto *hotkeyRowLayout = new QHBoxLayout(hotkeyRow);
-    hotkeyRowLayout->setContentsMargins(0, 0, 0, 0);
-    hotkeyRowLayout->setSpacing(8);
-    hotkeyRowLayout->addWidget(hotkeyEdit, 1);
-    hotkeyRowLayout->addWidget(applyHotkeyButton);
+    auto *hotkeyFooter = new QWidget(hotkeyGroup);
+    auto *hotkeyFooterLayout = new QHBoxLayout(hotkeyFooter);
+    hotkeyFooterLayout->setContentsMargins(0, 0, 0, 0);
+    hotkeyFooterLayout->setSpacing(8);
 
-    auto *hotkeyPreview = new QWidget(hotkeyGroup);
+    auto *hotkeyPreview = new QWidget(hotkeyFooter);
     hotkeyPreview->setObjectName("HotkeyPreview");
     hotkeyPreviewLayout = new QHBoxLayout(hotkeyPreview);
     hotkeyPreviewLayout->setContentsMargins(0, 0, 0, 0);
     hotkeyPreviewLayout->setSpacing(6);
+    hotkeyFooterLayout->addWidget(hotkeyPreview, 1);
+    hotkeyFooterLayout->addWidget(applyHotkeyButton, 0, Qt::AlignRight);
 
     hotkeyGroupLayout->addWidget(hotkeyLabel);
-    hotkeyGroupLayout->addWidget(hotkeyRow);
-    hotkeyGroupLayout->addWidget(hotkeyPreview);
+    hotkeyGroupLayout->addWidget(hotkeyEdit);
+    hotkeyGroupLayout->addWidget(hotkeyFooter);
+    hotkeyGroup->setMinimumHeight(154);
 
     QBoxLayout *appearanceGroupLayout = nullptr;
     auto *appearanceGroup = createSettingsGroup(QStringLiteral("外观"), sideContent, &appearanceGroupLayout);
@@ -208,6 +212,7 @@ void DashboardWindow::setupUi()
     themeCombo = new QComboBox(appearanceGroup);
     themeCombo->setObjectName("ThemeCombo");
     themeCombo->setCursor(Qt::PointingHandCursor);
+    themeCombo->setMinimumHeight(38);
     themeCombo->setToolTip(QStringLiteral("切换亮色或暗色主题"));
     themeCombo->addItem(MemoStore::themeDisplayName(ThemeMode::Light), static_cast<int>(ThemeMode::Light));
     themeCombo->addItem(MemoStore::themeDisplayName(ThemeMode::Dark), static_cast<int>(ThemeMode::Dark));
@@ -220,13 +225,17 @@ void DashboardWindow::setupUi()
     });
     appearanceGroupLayout->addWidget(themeLabel);
     appearanceGroupLayout->addWidget(themeCombo);
+    appearanceGroup->setMinimumHeight(124);
 
     QBoxLayout *systemGroupLayout = nullptr;
     auto *systemGroup = createSettingsGroup(QStringLiteral("系统"), sideContent, &systemGroupLayout);
     autostartCheck = new QCheckBox(QStringLiteral("开机自启"), systemGroup);
+    autostartCheck->setObjectName("SystemToggle");
+    autostartCheck->setMinimumHeight(28);
     autostartCheck->setToolTip(QStringLiteral("开机后自动启动 Quick Memo"));
     connect(autostartCheck, &QCheckBox::toggled, this, &DashboardWindow::autostartChanged);
     systemGroupLayout->addWidget(autostartCheck);
+    systemGroup->setMinimumHeight(112);
 
     auto *exitButton = new QPushButton(QStringLiteral("退出程序"), sideContent);
     exitButton->setObjectName("DangerButton");
@@ -382,14 +391,15 @@ QWidget *DashboardWindow::createMemoControls(MemoType type, QWidget *parent)
     auto *container = new QFrame(parent);
     container->setObjectName("MemoControlCard");
     container->setProperty("memoKind", MemoStore::typeToString(type));
-    container->setMinimumHeight(96);
+    container->setMinimumHeight(112);
+    container->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
 
     auto *layout = new QVBoxLayout(container);
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(8);
 
     auto *topRow = new QWidget(container);
-    topRow->setMinimumHeight(30);
+    topRow->setMinimumHeight(38);
     auto *topRowLayout = new QHBoxLayout(topRow);
     topRowLayout->setContentsMargins(0, 0, 0, 0);
     topRowLayout->setSpacing(8);
@@ -405,12 +415,13 @@ QWidget *DashboardWindow::createMemoControls(MemoType type, QWidget *parent)
     auto *visibilityButton = new QPushButton(topRow);
     visibilityButton->setObjectName("SecondaryButton");
     visibilityButton->setCursor(Qt::PointingHandCursor);
+    visibilityButton->setMinimumSize(72, 34);
     auto *topCheck = new QCheckBox(QStringLiteral("置顶"), container);
     topCheck->setObjectName("PinToggle");
     topCheck->setProperty("memoKind", MemoStore::typeToString(type));
     topCheck->setCursor(Qt::PointingHandCursor);
     topCheck->setToolTip(QStringLiteral("保持便签窗口置顶"));
-    topCheck->setMinimumHeight(34);
+    topCheck->setMinimumHeight(36);
 
     connect(visibilityButton, &QPushButton::clicked, this, [this, type]() {
         const MemoWindowState state = store->windowState(type);
@@ -448,7 +459,8 @@ QFrame *DashboardWindow::createSettingsGroup(const QString &title, QWidget *pare
 {
     auto *group = new QFrame(parent);
     group->setObjectName("SettingsGroup");
-    group->setMinimumHeight(72);
+    group->setMinimumHeight(92);
+    group->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
 
     auto *layout = new QVBoxLayout(group);
     layout->setContentsMargins(12, 12, 12, 12);
