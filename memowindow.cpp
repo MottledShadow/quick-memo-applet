@@ -163,7 +163,7 @@ void MemoWindow::setupUi()
     setWindowTitle(MemoStore::displayName(type));
     setProperty("memoKind", MemoStore::typeToString(type));
     setAttribute(Qt::WA_DeleteOnClose, false);
-    setAttribute(Qt::WA_TranslucentBackground, false);
+    setAttribute(Qt::WA_TranslucentBackground, true);
     setAutoFillBackground(false);
 
     auto *rootLayout = new QVBoxLayout(this);

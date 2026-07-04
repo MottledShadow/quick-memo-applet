@@ -165,6 +165,8 @@ void DashboardWindow::setupUi()
     auto *themeLabel = new QLabel(QStringLiteral("主题"), sidePanel);
     themeLabel->setObjectName("FieldLabel");
     themeCombo = new QComboBox(sidePanel);
+    themeCombo->setObjectName("ThemeCombo");
+    themeCombo->setCursor(Qt::PointingHandCursor);
     themeCombo->addItem(MemoStore::themeDisplayName(ThemeMode::Light), static_cast<int>(ThemeMode::Light));
     themeCombo->addItem(MemoStore::themeDisplayName(ThemeMode::Dark), static_cast<int>(ThemeMode::Dark));
     connect(themeCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
@@ -323,6 +325,7 @@ QWidget *DashboardWindow::createMemoControls(MemoType type, QWidget *parent)
     visibilityButton->setObjectName("SecondaryButton");
     visibilityButton->setCursor(Qt::PointingHandCursor);
     auto *topCheck = new QCheckBox(QStringLiteral("置顶"), container);
+    topCheck->setProperty("memoKind", MemoStore::typeToString(type));
     topCheck->setCursor(Qt::PointingHandCursor);
 
     connect(visibilityButton, &QPushButton::clicked, this, [this, type]() {

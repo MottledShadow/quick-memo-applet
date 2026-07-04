@@ -192,9 +192,9 @@ SpacingScale spacing()
         "32px", // xl
         "32px", // controlHeight
         "28px", // compactControlHeight
-        "4px", // radiusS
+        "8px", // radiusS
         "8px", // radiusM
-        "12px"  // radiusL
+        "8px"  // radiusL
     };
 }
 
@@ -380,18 +380,22 @@ QString AppTheme::memoWindowStyleSheet(ThemeMode mode)
     return themed(R"(
 MemoWindow {
     color: ${memoText};
-    background: ${memoPanel};
+    background: transparent;
     border: none;
 }
 MemoWindow QFrame#MemoPanel {
     color: ${memoText};
     background: ${memoPanel};
     border: 1px solid ${memoBorderStrong};
-    border-radius: 0;
+    border-radius: ${radiusM};
 }
 MemoWindow QWidget#TitleBar {
     background: ${memoPanelTop};
     border-bottom: 1px solid ${memoBorder};
+    border-top-left-radius: ${radiusM};
+    border-top-right-radius: ${radiusM};
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
     min-height: ${controlHeight};
 }
 MemoWindow QLabel#TitleLabel {
@@ -475,7 +479,7 @@ MemoWindow QWidget#MemoList {
 MemoWindow QFrame#MemoRecordCard {
     background: ${memoCard};
     border: 1px solid ${memoBorder};
-    border-left: 2px solid ${primary};
+    border-left: 3px solid ${primary};
     border-radius: ${radiusM};
 }
 MemoWindow QFrame#MemoRecordCard[memoKind="todo"] {
@@ -483,10 +487,11 @@ MemoWindow QFrame#MemoRecordCard[memoKind="todo"] {
 }
 MemoWindow QFrame#MemoRecordCard:hover {
     background: ${memoCardHover};
-    border-color: ${memoBorder};
+    border-color: ${memoBorderStrong};
+    border-left-color: ${primaryHover};
 }
 MemoWindow QFrame#MemoRecordCard[memoKind="todo"]:hover {
-    border-left-color: ${secondary};
+    border-left-color: ${secondaryHover};
 }
 MemoWindow QLabel#RecordText {
     color: ${memoText};
@@ -702,10 +707,11 @@ DashboardWindow QFrame#DashboardRecordCard[memoKind="todo"] {
 }
 DashboardWindow QFrame#DashboardRecordCard:hover {
     background: ${surfaceRaised};
-    border-color: ${primary};
+    border-color: ${borderStrong};
+    border-left-color: ${primaryHover};
 }
 DashboardWindow QFrame#DashboardRecordCard[memoKind="todo"]:hover {
-    border-left-color: ${secondary};
+    border-left-color: ${secondaryHover};
 }
 DashboardWindow QLabel#DashboardRecordText {
     color: ${textPrimary};
@@ -837,18 +843,35 @@ DashboardWindow QCheckBox:disabled {
     color: ${textDisabled};
 }
 DashboardWindow QCheckBox::indicator {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     border: 1px solid ${borderStrong};
-    border-radius: ${radiusS};
+    border-radius: ${radiusM};
     background: ${surface};
 }
 DashboardWindow QCheckBox::indicator:hover {
     border-color: ${primary};
+    background: ${primarySoft};
 }
 DashboardWindow QCheckBox::indicator:checked {
     background: ${primary};
     border-color: ${primary};
+}
+DashboardWindow QCheckBox::indicator:checked:hover {
+    background: ${primaryHover};
+    border-color: ${primaryHover};
+}
+DashboardWindow QCheckBox[memoKind="todo"]::indicator:hover {
+    border-color: ${secondary};
+    background: ${secondarySoft};
+}
+DashboardWindow QCheckBox[memoKind="todo"]::indicator:checked {
+    background: ${secondary};
+    border-color: ${secondary};
+}
+DashboardWindow QCheckBox[memoKind="todo"]::indicator:checked:hover {
+    background: ${secondaryHover};
+    border-color: ${secondaryHover};
 }
 DashboardWindow QCheckBox::indicator:disabled {
     background: ${surfaceSunken};
@@ -863,10 +886,13 @@ DashboardWindow QComboBox {
     font-size: ${bodySize};
     font-weight: ${weightRegular};
     line-height: ${lineBody};
+    selection-color: ${primaryText};
+    selection-background-color: ${primary};
 }
 DashboardWindow QComboBox:hover,
 DashboardWindow QComboBox:focus {
     border-color: ${primary};
+    background: ${surfaceRaised};
 }
 DashboardWindow QComboBox:disabled {
     color: ${textDisabled};
@@ -874,13 +900,32 @@ DashboardWindow QComboBox:disabled {
     border-color: ${border};
 }
 DashboardWindow QComboBox::drop-down {
+    background: ${surfaceRaised};
     border: none;
+    border-left: 1px solid ${border};
+    border-top-right-radius: ${radiusM};
+    border-bottom-right-radius: ${radiusM};
     width: ${controlHeight};
+}
+DashboardWindow QComboBox::drop-down:hover {
+    background: ${overlayHover};
+}
+DashboardWindow QComboBox::down-arrow {
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid ${textSecondary};
+}
+DashboardWindow QComboBox::down-arrow:disabled {
+    border-top-color: ${textDisabled};
 }
 DashboardWindow QComboBox QAbstractItemView {
     color: ${textPrimary};
     background: ${surface};
     border: 1px solid ${border};
+    border-radius: ${radiusM};
+    padding: ${spaceXs};
     font-size: ${bodySize};
     font-weight: ${weightRegular};
     selection-color: ${primaryText};
