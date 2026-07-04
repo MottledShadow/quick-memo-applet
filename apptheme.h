@@ -3,6 +3,7 @@
 
 #include "memostore.h"
 
+#include <QColor>
 #include <QString>
 
 class QWidget;
@@ -22,6 +23,8 @@ public:
     static QString inputWindowStyleSheet(ThemeMode mode);
     static QString dashboardStyleSheet(ThemeMode mode);
     static void applyElevation(QWidget *widget, ThemeMode mode, ElevationLevel level);
+    static QColor memoAccentColor(MemoType type, ThemeMode mode);
+    static QColor memoPaperLineColor(ThemeMode mode);
 };
 
 #endif // APPTHEME_H

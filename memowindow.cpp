@@ -3,20 +3,158 @@
 #include "apptheme.h"
 
 #include <QBoxLayout>
+#include <QColor>
 #include <QCloseEvent>
 #include <QCursor>
 #include <QFrame>
 #include <QHideEvent>
 #include <QLabel>
 #include <QMouseEvent>
+#include <QPaintEvent>
+#include <QPainter>
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QScrollArea>
 #include <QShowEvent>
 #include <QSizeGrip>
 #include <QStyle>
+#include <QStyleOption>
+#include <QVariant>
 
 namespace {
+constexpr int kPaperLineSpacing = 32;
+constexpr int kPaperContentTop = 18;
+constexpr int kPaperTextLineOffset = 25;
+
+class LinedMemoPaper : public QFrame
+{
+public:
+    explicit LinedMemoPaper(QWidget *parent = nullptr)
+        : QFrame(parent)
+    {
+        setAttribute(Qt::WA_StyledBackground, true);
+    }
+
+protected:
+    void paintEvent(QPaintEvent *event) override
+    {
+        Q_UNUSED(event)
+
+        QStyleOption option;
+        option.initFrom(this);
+
+        QPainter painter(this);
+        style()->drawPrimitive(QStyle::PE_Widget, &option, &painter, this);
+        drawPaperDetails(&painter);
+        drawAccentTape(&painter);
+        drawRuleLines(&painter);
+    }
+
+private:
+    QColor accentColor() const
+    {
+        const QVariant value = property("accentColor");
+        if (value.canConvert<QColor>()) {
+            QColor color = value.value<QColor>();
+            if (color.isValid()) {
+                return color;
+            }
+        }
+
+        return QColor(37, 99, 235);
+    }
+
+    QColor ruleLineColor() const
+    {
+        const QVariant value = property("paperLineColor");
+        if (value.canConvert<QColor>()) {
+            QColor color = value.value<QColor>();
+            if (color.isValid()) {
+                color.setAlphaF(0.58);
+                return color;
+            }
+        }
+
+        return QColor(227, 214, 155, 148);
+    }
+
+    void drawPaperDetails(QPainter *painter) const
+    {
+        if (width() <= 4 || height() <= 4) {
+            return;
+        }
+
+        painter->save();
+        painter->setRenderHint(QPainter::Antialiasing, true);
+
+        QPen innerHighlight(QColor(255, 255, 255, 118));
+        innerHighlight.setWidthF(1.0);
+        painter->setPen(innerHighlight);
+        painter->setBrush(Qt::NoBrush);
+        painter->drawRoundedRect(QRectF(1.5, 1.5, width() - 3.0, height() - 3.0), 7.0, 7.0);
+
+        QPen warmEdge(QColor(141, 112, 38, 36));
+        warmEdge.setWidthF(1.0);
+        painter->setPen(warmEdge);
+        painter->drawLine(QPointF(6.0, height() - 2.5), QPointF(width() - 8.0, height() - 2.5));
+        painter->drawLine(QPointF(width() - 2.5, 10.0), QPointF(width() - 2.5, height() - 10.0));
+
+        painter->restore();
+    }
+
+    void drawAccentTape(QPainter *painter) const
+    {
+        QColor fill = accentColor();
+        fill.setAlphaF(0.22);
+
+        QColor edge = fill;
+        edge.setAlphaF(0.30);
+
+        painter->save();
+        painter->setRenderHint(QPainter::Antialiasing, true);
+        painter->translate(20.0, 7.0);
+        painter->rotate(-4.0);
+        painter->setPen(QPen(edge, 1.0));
+        painter->setBrush(fill);
+        painter->drawRoundedRect(QRectF(0.0, 0.0, 52.0, 9.0), 3.0, 3.0);
+        painter->restore();
+    }
+
+    void drawRuleLines(QPainter *painter) const
+    {
+        const QWidget *header = findChild<QWidget *>(QStringLiteral("TitleBar"));
+        if (header == nullptr) {
+            return;
+        }
+
+        const int lineLeft = 24;
+        const int lineRight = width() - 24;
+        const int firstLineY = header->geometry().bottom() + kPaperContentTop + kPaperTextLineOffset;
+        const int lineStep = kPaperLineSpacing;
+        const int maxY = height() - 28;
+
+        if (lineRight <= lineLeft || maxY <= firstLineY) {
+            return;
+        }
+
+        QPen pen(ruleLineColor());
+        pen.setWidthF(1.0);
+        pen.setCapStyle(Qt::FlatCap);
+        pen.setStyle(Qt::DashLine);
+
+        painter->save();
+        painter->setRenderHint(QPainter::Antialiasing, false);
+        painter->setPen(pen);
+
+        for (int y = firstLineY; y <= maxY; y += lineStep) {
+            const qreal crispY = y + 0.5;
+            painter->drawLine(QPointF(lineLeft, crispY), QPointF(lineRight, crispY));
+        }
+
+        painter->restore();
+    }
+};
+
 void refreshDynamicStyle(QWidget *widget)
 {
     widget->style()->unpolish(widget);
@@ -31,12 +169,14 @@ MemoWindow::MemoWindow(MemoType type, QWidget *parent)
     , panel(nullptr)
     , titleBar(nullptr)
     , titleLabel(nullptr)
+    , titleCountLabel(nullptr)
     , topButton(nullptr)
     , resizeGrip(nullptr)
     , listLayout(nullptr)
     , alwaysOnTop(true)
     , dragging(false)
 {
+    setProperty("memoKind", MemoStore::typeToString(type));
     setupUi();
     updateWindowFlags(false);
 }
@@ -89,6 +229,9 @@ void MemoWindow::applyTheme(ThemeMode mode)
 {
     setStyleSheet(AppTheme::memoWindowStyleSheet(mode));
     AppTheme::applyElevation(panel, mode, ElevationLevel::E3);
+    panel->setProperty("accentColor", QVariant::fromValue(AppTheme::memoAccentColor(type, mode)));
+    panel->setProperty("paperLineColor", QVariant::fromValue(AppTheme::memoPaperLineColor(mode)));
+    panel->update();
 }
 
 bool MemoWindow::eventFilter(QObject *object, QEvent *event)
@@ -196,7 +339,7 @@ void MemoWindow::setupUi()
     rootLayout->setContentsMargins(8, 8, 8, 8);
     rootLayout->setSpacing(0);
 
-    panel = new QFrame(this);
+    panel = new LinedMemoPaper(this);
     panel->setObjectName("MemoPanel");
     auto *panelLayout = new QVBoxLayout(panel);
     panelLayout->setContentsMargins(0, 0, 0, 0);
@@ -208,15 +351,20 @@ void MemoWindow::setupUi()
     titleBar->setCursor(Qt::SizeAllCursor);
 
     auto *titleLayout = new QHBoxLayout(titleBar);
-    titleLayout->setContentsMargins(8, 8, 8, 8);
+    titleLayout->setContentsMargins(18, 14, 12, 4);
     titleLayout->setSpacing(8);
 
     titleLabel = new QLabel(MemoStore::displayName(type), titleBar);
     titleLabel->setObjectName("TitleLabel");
 
+    titleCountLabel = new QLabel(QStringLiteral("0"), titleBar);
+    titleCountLabel->setObjectName("TitleCount");
+    titleCountLabel->setAlignment(Qt::AlignCenter);
+
     topButton = new QPushButton(titleBar);
     topButton->setObjectName("TopButton");
     topButton->setCursor(Qt::PointingHandCursor);
+    topButton->setFixedSize(24, 24);
     connect(topButton, &QPushButton::clicked, this, [this]() {
         setAlwaysOnTop(!alwaysOnTop);
     });
@@ -224,9 +372,12 @@ void MemoWindow::setupUi()
     auto *hideButton = new QPushButton(QStringLiteral("×"), titleBar);
     hideButton->setObjectName("HideButton");
     hideButton->setToolTip(QStringLiteral("隐藏便签"));
+    hideButton->setFixedSize(24, 24);
     connect(hideButton, &QPushButton::clicked, this, &MemoWindow::hide);
 
-    titleLayout->addWidget(titleLabel, 1);
+    titleLayout->addWidget(titleLabel);
+    titleLayout->addWidget(titleCountLabel, 0, Qt::AlignVCenter);
+    titleLayout->addStretch(1);
     titleLayout->addWidget(topButton);
     titleLayout->addWidget(hideButton);
 
@@ -234,12 +385,18 @@ void MemoWindow::setupUi()
     scrollArea->setObjectName("MemoScrollArea");
     scrollArea->setWidgetResizable(true);
     scrollArea->setFrameShape(QFrame::NoFrame);
+    scrollArea->setAutoFillBackground(false);
+    scrollArea->setAttribute(Qt::WA_TranslucentBackground);
+    scrollArea->viewport()->setAutoFillBackground(false);
+    scrollArea->viewport()->setAttribute(Qt::WA_TranslucentBackground);
 
     auto *listWidget = new QWidget(scrollArea);
     listWidget->setObjectName("MemoList");
+    listWidget->setAutoFillBackground(false);
+    listWidget->setAttribute(Qt::WA_TranslucentBackground);
     listLayout = new QVBoxLayout(listWidget);
-    listLayout->setContentsMargins(8, 8, 8, 16);
-    listLayout->setSpacing(8);
+    listLayout->setContentsMargins(24, kPaperContentTop, 24, 20);
+    listLayout->setSpacing(0);
     scrollArea->setWidget(listWidget);
 
     resizeGrip = new QSizeGrip(panel);
@@ -256,9 +413,8 @@ void MemoWindow::setupUi()
 
 void MemoWindow::rebuildList()
 {
-    titleLabel->setText(QStringLiteral("%1 · %2")
-                            .arg(MemoStore::displayName(type))
-                            .arg(currentRecords.size()));
+    titleLabel->setText(MemoStore::displayName(type));
+    titleCountLabel->setText(QString::number(currentRecords.size()));
 
     while (QLayoutItem *item = listLayout->takeAt(0)) {
         delete item->widget();
@@ -266,19 +422,6 @@ void MemoWindow::rebuildList()
     }
 
     if (currentRecords.isEmpty()) {
-        auto *emptyFrame = new QFrame(this);
-        emptyFrame->setObjectName("EmptyState");
-        emptyFrame->setProperty("memoKind", MemoStore::typeToString(type));
-
-        auto *emptyLayout = new QVBoxLayout(emptyFrame);
-        emptyLayout->setContentsMargins(16, 24, 16, 24);
-
-        auto *emptyLabel = new QLabel(QStringLiteral("暂无记录"), emptyFrame);
-        emptyLabel->setObjectName("EmptyStateText");
-        emptyLabel->setAlignment(Qt::AlignCenter);
-        emptyLayout->addWidget(emptyLabel);
-
-        listLayout->addWidget(emptyFrame);
         listLayout->addStretch();
         return;
     }
@@ -292,24 +435,29 @@ void MemoWindow::rebuildList()
         recordFrame->setCursor(Qt::PointingHandCursor);
         recordFrame->setToolTip(QStringLiteral("点击删除"));
         recordFrame->installEventFilter(this);
+        recordFrame->setFixedHeight(kPaperLineSpacing);
 
-        auto *recordLayout = new QVBoxLayout(recordFrame);
-        recordLayout->setContentsMargins(12, 8, 12, 8);
-        recordLayout->setSpacing(4);
+        auto *recordLayout = new QHBoxLayout(recordFrame);
+        recordLayout->setContentsMargins(0, 0, 0, 0);
+        recordLayout->setSpacing(memo.type == MemoType::Todo ? 8 : 0);
+
+        if (memo.type == MemoType::Todo) {
+            auto *marker = new QFrame(recordFrame);
+            marker->setObjectName("TodoMarker");
+            marker->setFixedSize(8, 8);
+            marker->setAttribute(Qt::WA_TransparentForMouseEvents);
+            recordLayout->addWidget(marker, 0, Qt::AlignVCenter);
+        }
 
         auto *textLabel = new QLabel(memo.text, recordFrame);
         textLabel->setObjectName("RecordText");
         textLabel->setWordWrap(true);
         textLabel->setMinimumWidth(0);
+        textLabel->setFixedHeight(kPaperLineSpacing);
+        textLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         textLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
 
-        auto *timeLabel = new QLabel(memo.createdAt.toString("yyyy-MM-dd HH:mm"), recordFrame);
-        timeLabel->setObjectName("RecordTime");
-        timeLabel->setMinimumWidth(0);
-        timeLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
-
         recordLayout->addWidget(textLabel);
-        recordLayout->addWidget(timeLabel);
         listLayout->addWidget(recordFrame);
     }
 
@@ -325,7 +473,7 @@ void MemoWindow::updateWindowFlags(bool keepVisible)
     }
     setWindowFlags(flags);
 
-    topButton->setText(alwaysOnTop ? QStringLiteral("置顶") : QStringLiteral("普通"));
+    topButton->setText(QString(QChar(alwaysOnTop ? 0x25CF : 0x25CB)));
     topButton->setToolTip(alwaysOnTop ? QStringLiteral("取消置顶")
                                       : QStringLiteral("保持置顶"));
     topButton->setProperty("active", alwaysOnTop);

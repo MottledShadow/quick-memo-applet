@@ -53,6 +53,7 @@ private:
     QFrame *panel;
     QWidget *titleBar;
     QLabel *titleLabel;
+    QLabel *titleCountLabel;
     QPushButton *topButton;
     QSizeGrip *resizeGrip;
     QBoxLayout *listLayout;
