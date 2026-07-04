@@ -110,9 +110,12 @@ void InputWindow::setupUi()
     typeButton = new QPushButton(inputPanel);
     typeButton->setObjectName("TypeButton");
     typeButton->setCursor(Qt::PointingHandCursor);
+    typeButton->setToolTip(QStringLiteral("切换记录类型"));
     connect(typeButton, &QPushButton::clicked, this, &InputWindow::toggleCurrentType);
 
     input = new QLineEdit(inputPanel);
+    input->setClearButtonEnabled(true);
+    input->setToolTip(QStringLiteral("输入后按 Enter 保存"));
     input->setPlaceholderText(QStringLiteral("输入内容，Enter 保存，Esc 收起"));
     connect(input, &QLineEdit::returnPressed, this, [this]() {
         const QString text = input->text().trimmed();

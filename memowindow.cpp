@@ -326,6 +326,8 @@ void MemoWindow::updateWindowFlags(bool keepVisible)
     setWindowFlags(flags);
 
     topButton->setText(alwaysOnTop ? QStringLiteral("置顶") : QStringLiteral("普通"));
+    topButton->setToolTip(alwaysOnTop ? QStringLiteral("取消置顶")
+                                      : QStringLiteral("保持置顶"));
     topButton->setProperty("active", alwaysOnTop);
     refreshDynamicStyle(topButton);
 

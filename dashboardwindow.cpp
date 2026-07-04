@@ -155,6 +155,7 @@ void DashboardWindow::setupUi()
 
     auto *applyHotkeyButton = new QPushButton(QStringLiteral("应用"), sidePanel);
     applyHotkeyButton->setObjectName("PrimaryButton");
+    applyHotkeyButton->setToolTip(QStringLiteral("应用新的全局快捷键"));
     connect(applyHotkeyButton, &QPushButton::clicked, this, [this]() {
         emit hotkeyChangeRequested(hotkeyEdit->keySequence());
     });
@@ -171,6 +172,7 @@ void DashboardWindow::setupUi()
     themeCombo = new QComboBox(sidePanel);
     themeCombo->setObjectName("ThemeCombo");
     themeCombo->setCursor(Qt::PointingHandCursor);
+    themeCombo->setToolTip(QStringLiteral("切换亮色或暗色主题"));
     themeCombo->addItem(MemoStore::themeDisplayName(ThemeMode::Light), static_cast<int>(ThemeMode::Light));
     themeCombo->addItem(MemoStore::themeDisplayName(ThemeMode::Dark), static_cast<int>(ThemeMode::Dark));
     connect(themeCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
@@ -182,10 +184,12 @@ void DashboardWindow::setupUi()
     });
 
     autostartCheck = new QCheckBox(QStringLiteral("开机自启"), sidePanel);
+    autostartCheck->setToolTip(QStringLiteral("开机后自动启动 Quick Memo"));
     connect(autostartCheck, &QCheckBox::toggled, this, &DashboardWindow::autostartChanged);
 
     auto *exitButton = new QPushButton(QStringLiteral("退出程序"), sidePanel);
     exitButton->setObjectName("DangerButton");
+    exitButton->setToolTip(QStringLiteral("保存状态并退出程序"));
     connect(exitButton, &QPushButton::clicked, this, &DashboardWindow::exitRequested);
 
     sideLayout->addWidget(hotkeyLabel);
@@ -331,6 +335,7 @@ QWidget *DashboardWindow::createMemoControls(MemoType type, QWidget *parent)
     auto *topCheck = new QCheckBox(QStringLiteral("置顶"), container);
     topCheck->setProperty("memoKind", MemoStore::typeToString(type));
     topCheck->setCursor(Qt::PointingHandCursor);
+    topCheck->setToolTip(QStringLiteral("保持便签窗口置顶"));
 
     connect(visibilityButton, &QPushButton::clicked, this, [this, type]() {
         const MemoWindowState state = store->windowState(type);
@@ -367,6 +372,8 @@ void DashboardWindow::refreshMemoControls(MemoType type)
     QCheckBox *topCheck = type == MemoType::Question ? questionTopCheck : todoTopCheck;
 
     visibilityButton->setText(state.visible ? QStringLiteral("隐藏") : QStringLiteral("显示"));
+    visibilityButton->setToolTip(state.visible ? QStringLiteral("隐藏便签窗口")
+                                                : QStringLiteral("显示便签窗口"));
     visibilityButton->setProperty("active", state.visible);
     refreshDynamicStyle(visibilityButton);
 
