@@ -5,8 +5,10 @@
 
 #include <QWidget>
 
+class QEvent;
 class QLineEdit;
 class QFrame;
+class QLabel;
 class QPushButton;
 
 class InputWindow : public QWidget
@@ -29,6 +31,7 @@ signals:
     void currentTypeChanged(MemoType type);
 
 protected:
+    bool eventFilter(QObject *object, QEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
 
 private:
@@ -38,6 +41,8 @@ private:
     QFrame *inputPanel;
     QLineEdit *input;
     QPushButton *typeButton;
+    QLabel *enterHint;
+    QLabel *escHint;
     MemoType activeType;
 };
 

@@ -688,47 +688,60 @@ InputWindow {
 InputWindow QFrame#InputPanel {
     background: ${surfaceGradient};
     border: 1px solid ${borderStrong};
+    border-left: 3px solid ${primary};
     border-top-color: ${surfaceHighlight};
-    border-left-color: ${surfaceHighlight};
     border-radius: ${radiusL};
+}
+InputWindow QFrame#InputPanel[memoKind="todo"] {
+    border-left-color: ${secondary};
+}
+InputWindow QFrame#InputPanel[focused="true"] {
+    border-color: ${primary};
+    border-left-color: ${primary};
+}
+InputWindow QFrame#InputPanel[memoKind="todo"][focused="true"] {
+    border-color: ${secondary};
+    border-left-color: ${secondary};
 }
 InputWindow QLineEdit {
     color: ${textPrimary};
-    background: ${surface};
-    border: 1px solid ${border};
-    border-radius: ${radiusM};
-    padding: ${spaceS} 12px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0 ${spaceS};
     font-family: ${fontFamily};
     font-size: ${bodyLargeSize};
     font-weight: ${weightRegular};
     line-height: ${lineBodyLarge};
     selection-color: ${primaryText};
     selection-background-color: ${primary};
-    min-height: ${compactControlHeight};
+    min-height: 32px;
 }
 InputWindow QLineEdit:focus {
-    border-color: ${primary};
+    border: none;
 }
 InputWindow QLineEdit::placeholder {
     color: ${textMuted};
 }
 InputWindow QPushButton {
-    color: ${textPrimary};
-    background: ${surface};
-    border: 1px solid ${border};
-    border-radius: ${radiusM};
-    padding: ${spaceS} ${spaceM};
+    color: ${primary};
+    background: ${primarySoft};
+    border: 1px solid ${primary};
+    border-radius: 16px;
+    padding: 0 12px;
     font-family: ${fontFamily};
     font-size: ${bodySize};
     font-weight: ${weightControl};
     line-height: ${lineBody};
+    min-height: 32px;
 }
 InputWindow QPushButton#TypeButton {
-    min-width: 72px;
+    min-width: 78px;
+    max-height: 32px;
     color: ${primary};
     background: ${primarySoft};
     border-color: ${primary};
-    font-weight: ${weightTitle};
+    font-weight: ${weightControl};
 }
 InputWindow QPushButton#TypeButton[memoKind="todo"] {
     color: ${secondary};
@@ -736,14 +749,14 @@ InputWindow QPushButton#TypeButton[memoKind="todo"] {
     border-color: ${secondary};
 }
 InputWindow QPushButton:hover {
-    color: ${textPrimary};
-    background: ${overlayHover};
-    border-color: ${primary};
+    color: ${primaryHover};
+    background: ${primarySoft};
+    border-color: ${primaryHover};
 }
 InputWindow QPushButton:focus {
-    color: ${textPrimary};
-    background: ${overlayHover};
-    border-color: ${primary};
+    color: ${primaryHover};
+    background: ${primarySoft};
+    border-color: ${primaryHover};
 }
 InputWindow QPushButton#TypeButton:hover {
     color: ${primaryHover};
@@ -767,6 +780,17 @@ InputWindow QPushButton#TypeButton[memoKind="todo"]:focus {
 }
 InputWindow QPushButton:pressed {
     background: ${overlayPressed};
+}
+InputWindow QLabel#ShortcutHint {
+    color: ${textMuted};
+    background: ${surfaceRaised};
+    border: 1px solid ${border};
+    border-radius: ${radiusS};
+    padding: 2px 6px;
+    font-family: ${fontFamily};
+    font-size: ${captionSize};
+    font-weight: ${weightRegular};
+    line-height: ${lineCaption};
 }
 )", p);
 }

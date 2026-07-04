@@ -7,6 +7,7 @@
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QKeyEvent>
+#include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
 #include <QScreen>
@@ -26,6 +27,8 @@ InputWindow::InputWindow(QWidget *parent)
     , inputPanel(nullptr)
     , input(nullptr)
     , typeButton(nullptr)
+    , enterHint(nullptr)
+    , escHint(nullptr)
     , activeType(MemoType::Question)
 {
     setupUi();
@@ -77,6 +80,21 @@ void InputWindow::applyTheme(ThemeMode mode)
     AppTheme::applyElevation(inputPanel, mode, ElevationLevel::E3);
 }
 
+bool InputWindow::eventFilter(QObject *object, QEvent *event)
+{
+    if (object == input || object == typeButton) {
+        if (event->type() == QEvent::FocusIn || event->type() == QEvent::FocusOut) {
+            const bool focused = event->type() == QEvent::FocusIn
+                                     || (object == input && typeButton->hasFocus())
+                                     || (object == typeButton && input->hasFocus());
+            inputPanel->setProperty("focused", focused);
+            refreshDynamicStyle(inputPanel);
+        }
+    }
+
+    return QWidget::eventFilter(object, event);
+}
+
 void InputWindow::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_Escape) {
@@ -94,29 +112,32 @@ void InputWindow::setupUi()
     setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
     setAttribute(Qt::WA_TranslucentBackground, true);
     setAutoFillBackground(false);
-    setFixedSize(480, 72);
+    setFixedSize(560, 64);
 
     auto *outerLayout = new QHBoxLayout(this);
-    outerLayout->setContentsMargins(12, 12, 12, 12);
+    outerLayout->setContentsMargins(8, 8, 8, 8);
     outerLayout->setSpacing(0);
 
     inputPanel = new QFrame(this);
     inputPanel->setObjectName("InputPanel");
+    inputPanel->setProperty("focused", false);
 
     auto *panelLayout = new QHBoxLayout(inputPanel);
-    panelLayout->setContentsMargins(12, 8, 12, 8);
-    panelLayout->setSpacing(8);
+    panelLayout->setContentsMargins(12, 7, 12, 7);
+    panelLayout->setSpacing(10);
 
     typeButton = new QPushButton(inputPanel);
     typeButton->setObjectName("TypeButton");
     typeButton->setCursor(Qt::PointingHandCursor);
     typeButton->setToolTip(QStringLiteral("切换记录类型"));
+    typeButton->installEventFilter(this);
     connect(typeButton, &QPushButton::clicked, this, &InputWindow::toggleCurrentType);
 
     input = new QLineEdit(inputPanel);
     input->setClearButtonEnabled(true);
     input->setToolTip(QStringLiteral("输入后按 Enter 保存"));
-    input->setPlaceholderText(QStringLiteral("输入内容，Enter 保存，Esc 收起"));
+    input->setPlaceholderText(QStringLiteral("记下一个问题..."));
+    input->installEventFilter(this);
     connect(input, &QLineEdit::returnPressed, this, [this]() {
         const QString text = input->text().trimmed();
         if (text.isEmpty()) {
@@ -126,8 +147,18 @@ void InputWindow::setupUi()
         input->clear();
     });
 
+    enterHint = new QLabel(QStringLiteral("Enter 保存"), inputPanel);
+    enterHint->setObjectName("ShortcutHint");
+    enterHint->setAttribute(Qt::WA_TransparentForMouseEvents);
+
+    escHint = new QLabel(QStringLiteral("Esc 收起"), inputPanel);
+    escHint->setObjectName("ShortcutHint");
+    escHint->setAttribute(Qt::WA_TransparentForMouseEvents);
+
     panelLayout->addWidget(typeButton);
     panelLayout->addWidget(input, 1);
+    panelLayout->addWidget(enterHint, 0, Qt::AlignVCenter);
+    panelLayout->addWidget(escHint, 0, Qt::AlignVCenter);
     outerLayout->addWidget(inputPanel);
 
     updateTypeButton();
@@ -136,9 +167,13 @@ void InputWindow::setupUi()
 
 void InputWindow::updateTypeButton()
 {
-    typeButton->setText(MemoStore::displayName(activeType));
+    typeButton->setText(QStringLiteral("%1 %2")
+                            .arg(QString(QChar(0x25CF)), MemoStore::displayName(activeType)));
     typeButton->setProperty("memoKind", MemoStore::typeToString(activeType));
+    inputPanel->setProperty("memoKind", MemoStore::typeToString(activeType));
     refreshDynamicStyle(typeButton);
-    input->setPlaceholderText(QStringLiteral("记录到「%1」；Enter 保存，Esc 收起")
-                                  .arg(MemoStore::displayName(activeType)));
+    refreshDynamicStyle(inputPanel);
+    input->setPlaceholderText(activeType == MemoType::Question
+                                  ? QStringLiteral("记下一个问题...")
+                                  : QStringLiteral("写下一件待办..."));
 }
