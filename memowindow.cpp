@@ -116,11 +116,36 @@ bool MemoWindow::eventFilter(QObject *object, QEvent *event)
     }
 
     const QVariant memoId = object->property("memoId");
+    if (memoId.isValid() && event->type() == QEvent::MouseButtonPress) {
+        auto *mouseEvent = static_cast<QMouseEvent *>(event);
+        if (mouseEvent->button() == Qt::LeftButton) {
+            auto *widget = qobject_cast<QWidget *>(object);
+            if (widget != nullptr) {
+                widget->setProperty("pressed", true);
+                refreshDynamicStyle(widget);
+            }
+            return true;
+        }
+    }
+
     if (memoId.isValid() && event->type() == QEvent::MouseButtonRelease) {
         auto *mouseEvent = static_cast<QMouseEvent *>(event);
+        auto *widget = qobject_cast<QWidget *>(object);
+        if (widget != nullptr) {
+            widget->setProperty("pressed", false);
+            refreshDynamicStyle(widget);
+        }
         if (mouseEvent->button() == Qt::LeftButton) {
             emit memoClicked(memoId.toString());
             return true;
+        }
+    }
+
+    if (memoId.isValid() && event->type() == QEvent::Leave) {
+        auto *widget = qobject_cast<QWidget *>(object);
+        if (widget != nullptr) {
+            widget->setProperty("pressed", false);
+            refreshDynamicStyle(widget);
         }
     }
 
@@ -265,6 +290,7 @@ void MemoWindow::rebuildList()
         recordFrame->setProperty("memoId", memo.id);
         recordFrame->setProperty("memoKind", MemoStore::typeToString(memo.type));
         recordFrame->setCursor(Qt::PointingHandCursor);
+        recordFrame->setToolTip(QStringLiteral("点击删除"));
         recordFrame->installEventFilter(this);
 
         auto *recordLayout = new QVBoxLayout(recordFrame);

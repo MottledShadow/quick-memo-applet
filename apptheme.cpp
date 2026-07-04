@@ -324,9 +324,19 @@ QScrollBar::handle:vertical {
 QScrollBar::handle:vertical:hover {
     background: ${textMuted};
 }
+QScrollBar::handle:vertical:pressed {
+    background: ${overlayPressed};
+}
+QScrollBar::handle:vertical:disabled {
+    background: transparent;
+}
 QScrollBar::add-line:vertical,
 QScrollBar::sub-line:vertical {
     height: 0;
+}
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    background: transparent;
 }
 QScrollBar:horizontal {
     background: transparent;
@@ -341,9 +351,22 @@ QScrollBar::handle:horizontal {
 QScrollBar::handle:horizontal:hover {
     background: ${textMuted};
 }
+QScrollBar::handle:horizontal:pressed {
+    background: ${overlayPressed};
+}
+QScrollBar::handle:horizontal:disabled {
+    background: transparent;
+}
 QScrollBar::add-line:horizontal,
 QScrollBar::sub-line:horizontal {
     width: 0;
+}
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal {
+    background: transparent;
+}
+QAbstractScrollArea::corner {
+    background: transparent;
 }
 )", p);
 }
@@ -517,6 +540,11 @@ MemoWindow QPushButton:hover {
     background: ${memoCard};
     border-color: ${memoBorderStrong};
 }
+MemoWindow QPushButton:focus {
+    color: ${memoText};
+    background: ${memoCard};
+    border-color: ${primary};
+}
 MemoWindow QPushButton#TopButton[active="true"]:hover {
     color: ${primaryHover};
     background: ${memoCardHover};
@@ -527,7 +555,15 @@ MemoWindow[memoKind="todo"] QPushButton#TopButton[active="true"]:hover {
     background: ${memoCardHover};
     border-color: ${secondaryHover};
 }
+MemoWindow[memoKind="todo"] QPushButton:focus {
+    border-color: ${secondary};
+}
 MemoWindow QPushButton#HideButton:hover {
+    color: ${danger};
+    background: ${dangerSoft};
+    border-color: ${danger};
+}
+MemoWindow QPushButton#HideButton:focus {
     color: ${danger};
     background: ${dangerSoft};
     border-color: ${danger};
@@ -560,6 +596,11 @@ MemoWindow QFrame#MemoRecordCard:hover {
 }
 MemoWindow QFrame#MemoRecordCard[memoKind="todo"]:hover {
     border-left-color: ${secondaryHover};
+}
+MemoWindow QFrame#MemoRecordCard[pressed="true"] {
+    background: ${dangerSoft};
+    border-color: ${danger};
+    border-left-color: ${danger};
 }
 MemoWindow QLabel#RecordText {
     color: ${memoText};
@@ -663,12 +704,27 @@ InputWindow QPushButton:hover {
     background: ${overlayHover};
     border-color: ${primary};
 }
+InputWindow QPushButton:focus {
+    color: ${textPrimary};
+    background: ${overlayHover};
+    border-color: ${primary};
+}
 InputWindow QPushButton#TypeButton:hover {
     color: ${primaryHover};
     background: ${primarySoft};
     border-color: ${primaryHover};
 }
+InputWindow QPushButton#TypeButton:focus {
+    color: ${primaryHover};
+    background: ${primarySoft};
+    border-color: ${primaryHover};
+}
 InputWindow QPushButton#TypeButton[memoKind="todo"]:hover {
+    color: ${secondaryHover};
+    background: ${secondarySoft};
+    border-color: ${secondaryHover};
+}
+InputWindow QPushButton#TypeButton[memoKind="todo"]:focus {
     color: ${secondaryHover};
     background: ${secondarySoft};
     border-color: ${secondaryHover};
@@ -840,6 +896,11 @@ DashboardWindow QPushButton:hover {
     background: ${overlayHover};
     border-color: ${primary};
 }
+DashboardWindow QPushButton:focus {
+    color: ${textPrimary};
+    background: ${overlayHover};
+    border-color: ${primary};
+}
 DashboardWindow QPushButton:pressed {
     background: ${overlayPressed};
 }
@@ -859,6 +920,11 @@ DashboardWindow QPushButton#PrimaryButton:pressed {
     background: ${primaryHover};
     border-color: ${primaryHover};
 }
+DashboardWindow QPushButton#PrimaryButton:focus {
+    color: ${primaryText};
+    background: ${primaryHover};
+    border-color: ${primaryHover};
+}
 DashboardWindow QPushButton#SecondaryButton {
     min-width: 64px;
 }
@@ -872,12 +938,20 @@ DashboardWindow QFrame#MemoControlCard[memoKind="todo"] QPushButton#SecondaryBut
     background: ${secondary};
     border-color: ${secondary};
 }
+DashboardWindow QFrame#MemoControlCard[memoKind="todo"] QPushButton:focus {
+    border-color: ${secondary};
+}
 DashboardWindow QPushButton#DangerButton {
     color: ${danger};
     background: ${surface};
     border-color: ${danger};
 }
 DashboardWindow QPushButton#DangerButton:hover {
+    color: ${danger};
+    background: ${dangerSoft};
+    border-color: ${danger};
+}
+DashboardWindow QPushButton#DangerButton:focus {
     color: ${danger};
     background: ${dangerSoft};
     border-color: ${danger};
@@ -926,6 +1000,10 @@ DashboardWindow QCheckBox::indicator:hover {
     border-color: ${primary};
     background: ${primarySoft};
 }
+DashboardWindow QCheckBox:focus::indicator {
+    border-color: ${primary};
+    background: ${primarySoft};
+}
 DashboardWindow QCheckBox::indicator:checked {
     background: ${primary};
     border-color: ${primary};
@@ -935,6 +1013,10 @@ DashboardWindow QCheckBox::indicator:checked:hover {
     border-color: ${primaryHover};
 }
 DashboardWindow QCheckBox[memoKind="todo"]::indicator:hover {
+    border-color: ${secondary};
+    background: ${secondarySoft};
+}
+DashboardWindow QCheckBox[memoKind="todo"]:focus::indicator {
     border-color: ${secondary};
     background: ${secondarySoft};
 }
