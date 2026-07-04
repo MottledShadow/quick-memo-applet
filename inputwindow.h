@@ -6,6 +6,7 @@
 #include <QWidget>
 
 class QEvent;
+class QHideEvent;
 class QLineEdit;
 class QFrame;
 class QLabel;
@@ -19,6 +20,7 @@ public:
     explicit InputWindow(QWidget *parent = nullptr);
 
     MemoType currentType() const;
+    bool isOpenForCapture() const;
 
 public slots:
     void setCurrentType(MemoType type);
@@ -32,6 +34,7 @@ signals:
 
 protected:
     bool eventFilter(QObject *object, QEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
 
 private:
@@ -44,6 +47,7 @@ private:
     QLabel *enterHint;
     QLabel *escHint;
     MemoType activeType;
+    bool captureOpen;
 };
 
 #endif // INPUTWINDOW_H

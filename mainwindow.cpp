@@ -71,7 +71,7 @@ void MainWindow::setupConnections()
     connect(inputWindow, &InputWindow::currentTypeChanged, store, &MemoStore::setCurrentType);
 
     connect(hotkeyManager, &HotkeyManager::activated, this, [this]() {
-        if (inputWindow->isVisible()) {
+        if (inputWindow->isOpenForCapture()) {
             inputWindow->toggleCurrentType();
         }
         inputWindow->showAndFocus();

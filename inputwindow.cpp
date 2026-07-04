@@ -5,6 +5,7 @@
 #include <QCursor>
 #include <QFrame>
 #include <QGuiApplication>
+#include <QHideEvent>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QLabel>
@@ -30,6 +31,7 @@ InputWindow::InputWindow(QWidget *parent)
     , enterHint(nullptr)
     , escHint(nullptr)
     , activeType(MemoType::Question)
+    , captureOpen(false)
 {
     setupUi();
 }
@@ -37,6 +39,11 @@ InputWindow::InputWindow(QWidget *parent)
 MemoType InputWindow::currentType() const
 {
     return activeType;
+}
+
+bool InputWindow::isOpenForCapture() const
+{
+    return captureOpen;
 }
 
 void InputWindow::setCurrentType(MemoType type)
@@ -68,6 +75,7 @@ void InputWindow::showAndFocus()
         }
     }
 
+    captureOpen = true;
     show();
     raise();
     activateWindow();
@@ -93,6 +101,12 @@ bool InputWindow::eventFilter(QObject *object, QEvent *event)
     }
 
     return QWidget::eventFilter(object, event);
+}
+
+void InputWindow::hideEvent(QHideEvent *event)
+{
+    captureOpen = false;
+    QWidget::hideEvent(event);
 }
 
 void InputWindow::keyPressEvent(QKeyEvent *event)
