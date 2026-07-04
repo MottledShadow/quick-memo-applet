@@ -30,6 +30,8 @@ DashboardWindow::DashboardWindow(MemoStore *store, QWidget *parent)
     , store(store)
     , questionVisibilityButton(nullptr)
     , todoVisibilityButton(nullptr)
+    , questionWindowStatusLabel(nullptr)
+    , todoWindowStatusLabel(nullptr)
     , questionTopCheck(nullptr)
     , todoTopCheck(nullptr)
     , autostartCheck(nullptr)
@@ -275,9 +277,18 @@ QWidget *DashboardWindow::createRecordCard(const MemoItem &memo, QWidget *parent
     card->setObjectName("DashboardRecordCard");
     card->setProperty("memoKind", MemoStore::typeToString(memo.type));
 
-    auto *layout = new QVBoxLayout(card);
-    layout->setContentsMargins(12, 12, 12, 12);
-    layout->setSpacing(4);
+    auto *layout = new QHBoxLayout(card);
+    layout->setContentsMargins(12, 10, 12, 10);
+    layout->setSpacing(10);
+
+    auto *accentDot = new QFrame(card);
+    accentDot->setObjectName("RecordAccentDot");
+    accentDot->setProperty("memoKind", MemoStore::typeToString(memo.type));
+    accentDot->setFixedSize(7, 7);
+
+    auto *contentLayout = new QVBoxLayout();
+    contentLayout->setContentsMargins(0, 0, 0, 0);
+    contentLayout->setSpacing(6);
 
     auto *textLabel = new QLabel(memo.text, card);
     textLabel->setObjectName("DashboardRecordText");
@@ -288,9 +299,12 @@ QWidget *DashboardWindow::createRecordCard(const MemoItem &memo, QWidget *parent
     auto *timeLabel = new QLabel(memo.createdAt.toString("yyyy-MM-dd HH:mm"), card);
     timeLabel->setObjectName("DashboardRecordTime");
     timeLabel->setMinimumWidth(0);
+    timeLabel->setAlignment(Qt::AlignRight);
 
-    layout->addWidget(textLabel);
-    layout->addWidget(timeLabel);
+    contentLayout->addWidget(textLabel);
+    contentLayout->addWidget(timeLabel);
+    layout->addWidget(accentDot, 0, Qt::AlignTop);
+    layout->addLayout(contentLayout, 1);
     return card;
 }
 
@@ -301,11 +315,23 @@ QWidget *DashboardWindow::createEmptyState(MemoType type, QWidget *parent) const
     emptyState->setProperty("memoKind", MemoStore::typeToString(type));
 
     auto *layout = new QVBoxLayout(emptyState);
-    layout->setContentsMargins(16, 24, 16, 24);
+    layout->setContentsMargins(18, 18, 18, 18);
+    layout->setSpacing(10);
 
-    auto *label = new QLabel(QStringLiteral("暂无记录"), emptyState);
+    auto *label = new QLabel(type == MemoType::Question
+                                 ? QStringLiteral("这里还没有问题")
+                                 : QStringLiteral("这里还没有待办"),
+                             emptyState);
     label->setObjectName("EmptyStateText");
     label->setAlignment(Qt::AlignCenter);
+
+    for (int i = 0; i < 3; ++i) {
+        auto *rule = new QFrame(emptyState);
+        rule->setObjectName("EmptyStateRule");
+        rule->setProperty("memoKind", MemoStore::typeToString(type));
+        layout->addWidget(rule);
+    }
+
     layout->addWidget(label);
 
     return emptyState;
@@ -329,10 +355,16 @@ QWidget *DashboardWindow::createMemoControls(MemoType type, QWidget *parent)
     auto *label = new QLabel(MemoStore::displayName(type), topRow);
     label->setObjectName("MemoControlTitle");
 
+    auto *statusLabel = new QLabel(topRow);
+    statusLabel->setObjectName("WindowStatusBadge");
+    statusLabel->setProperty("memoKind", MemoStore::typeToString(type));
+    statusLabel->setAlignment(Qt::AlignCenter);
+
     auto *visibilityButton = new QPushButton(topRow);
     visibilityButton->setObjectName("SecondaryButton");
     visibilityButton->setCursor(Qt::PointingHandCursor);
     auto *topCheck = new QCheckBox(QStringLiteral("置顶"), container);
+    topCheck->setObjectName("PinToggle");
     topCheck->setProperty("memoKind", MemoStore::typeToString(type));
     topCheck->setCursor(Qt::PointingHandCursor);
     topCheck->setToolTip(QStringLiteral("保持便签窗口置顶"));
@@ -351,13 +383,17 @@ QWidget *DashboardWindow::createMemoControls(MemoType type, QWidget *parent)
 
     if (type == MemoType::Question) {
         questionVisibilityButton = visibilityButton;
+        questionWindowStatusLabel = statusLabel;
         questionTopCheck = topCheck;
     } else {
         todoVisibilityButton = visibilityButton;
+        todoWindowStatusLabel = statusLabel;
         todoTopCheck = topCheck;
     }
 
-    topRowLayout->addWidget(label, 1);
+    topRowLayout->addWidget(label);
+    topRowLayout->addWidget(statusLabel);
+    topRowLayout->addStretch(1);
     topRowLayout->addWidget(visibilityButton);
 
     layout->addWidget(topRow);
@@ -369,6 +405,7 @@ void DashboardWindow::refreshMemoControls(MemoType type)
 {
     const MemoWindowState state = store->windowState(type);
     QPushButton *visibilityButton = type == MemoType::Question ? questionVisibilityButton : todoVisibilityButton;
+    QLabel *statusLabel = type == MemoType::Question ? questionWindowStatusLabel : todoWindowStatusLabel;
     QCheckBox *topCheck = type == MemoType::Question ? questionTopCheck : todoTopCheck;
 
     visibilityButton->setText(state.visible ? QStringLiteral("隐藏") : QStringLiteral("显示"));
@@ -377,8 +414,13 @@ void DashboardWindow::refreshMemoControls(MemoType type)
     visibilityButton->setProperty("active", state.visible);
     refreshDynamicStyle(visibilityButton);
 
+    statusLabel->setText(state.visible ? QStringLiteral("已显示") : QStringLiteral("已隐藏"));
+    statusLabel->setProperty("active", state.visible);
+    refreshDynamicStyle(statusLabel);
+
     const QSignalBlocker blocker(topCheck);
     topCheck->setChecked(state.alwaysOnTop);
+    refreshDynamicStyle(topCheck);
 }
 
 void DashboardWindow::refreshRecords()

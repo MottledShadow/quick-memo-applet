@@ -51,6 +51,8 @@ private:
     MemoStore *store;
     QPushButton *questionVisibilityButton;
     QPushButton *todoVisibilityButton;
+    QLabel *questionWindowStatusLabel;
+    QLabel *todoWindowStatusLabel;
     QCheckBox *questionTopCheck;
     QCheckBox *todoTopCheck;
     QCheckBox *autostartCheck;

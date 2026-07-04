@@ -851,9 +851,29 @@ DashboardWindow QLabel#MemoControlTitle {
     font-weight: ${weightTitle};
     line-height: ${lineBody};
 }
-DashboardWindow QLabel#CountBadge {
+DashboardWindow QLabel#WindowStatusBadge {
+    color: ${textMuted};
+    background: ${surfaceSunken};
+    border: 1px solid ${border};
+    border-radius: ${radiusS};
+    padding: 1px ${spaceS};
+    font-size: ${captionSize};
+    font-weight: ${weightRegular};
+    line-height: ${lineCaption};
+}
+DashboardWindow QLabel#WindowStatusBadge[active="true"] {
     color: ${primary};
     background: ${primarySoft};
+    border-color: ${primary};
+}
+DashboardWindow QLabel#WindowStatusBadge[memoKind="todo"][active="true"] {
+    color: ${secondary};
+    background: ${secondarySoft};
+    border-color: ${secondary};
+}
+DashboardWindow QLabel#CountBadge {
+    color: ${primary};
+    background: ${surface};
     border: 1px solid ${primary};
     border-radius: ${radiusM};
     padding: 0 ${spaceS};
@@ -864,77 +884,89 @@ DashboardWindow QLabel#CountBadge {
 }
 DashboardWindow QLabel#CountBadge[memoKind="todo"] {
     color: ${secondary};
-    background: ${secondarySoft};
     border-color: ${secondary};
 }
 DashboardWindow QFrame#RecordColumn {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 ${surfaceSunken}, stop:1 ${appBg});
+    background: ${surfaceSunken};
     border: 1px solid ${border};
-    border-top: 3px solid ${primary};
+    border-top: 2px solid ${primary};
     border-radius: ${radiusM};
 }
 DashboardWindow QFrame#RecordColumn[memoKind="todo"] {
     border-top-color: ${secondary};
 }
 DashboardWindow QScrollArea#RecordsScrollArea {
-    background: ${surfaceSunken};
+    background: transparent;
     border: none;
 }
 DashboardWindow QWidget#RecordsList {
-    background: ${surfaceSunken};
+    background: transparent;
     border: none;
 }
 DashboardWindow QFrame#DashboardRecordCard {
     background: ${surface};
     border: 1px solid ${border};
-    border-left: 3px solid ${primary};
     border-top-color: ${surfaceHighlight};
     border-radius: ${radiusM};
 }
 DashboardWindow QFrame#DashboardRecordCard[memoKind="todo"] {
-    border-left-color: ${secondary};
+    border-color: ${border};
 }
 DashboardWindow QFrame#DashboardRecordCard:hover {
     background: ${surfaceRaised};
     border-color: ${borderStrong};
-    border-left-color: ${primaryHover};
 }
 DashboardWindow QFrame#DashboardRecordCard[memoKind="todo"]:hover {
-    border-left-color: ${secondaryHover};
+    border-color: ${borderStrong};
+}
+DashboardWindow QFrame#RecordAccentDot {
+    background: ${primary};
+    border: none;
+    border-radius: 3px;
+}
+DashboardWindow QFrame#RecordAccentDot[memoKind="todo"] {
+    background: ${secondary};
 }
 DashboardWindow QLabel#DashboardRecordText {
     color: ${textPrimary};
     background: transparent;
-    font-size: ${bodySize};
-    font-weight: ${weightRegular};
-    line-height: ${lineBody};
+    font-size: ${bodyLargeSize};
+    font-weight: ${weightMedium};
+    line-height: ${lineBodyLarge};
 }
 DashboardWindow QLabel#DashboardRecordTime {
-    color: ${textSecondary};
+    color: ${textMuted};
     background: transparent;
     font-size: ${captionSize};
     font-weight: ${weightRegular};
     line-height: ${lineCaption};
 }
 DashboardWindow QFrame#EmptyState {
-    background: ${primarySoft};
-    border: 1px dashed ${borderStrong};
+    background: ${surface};
+    border: 1px dashed ${border};
     border-radius: ${radiusM};
 }
 DashboardWindow QFrame#EmptyState[memoKind="todo"] {
-    background: ${secondarySoft};
+    border-color: ${border};
 }
 DashboardWindow QLabel#EmptyStateText {
-    color: ${textSecondary};
+    color: ${textMuted};
     background: transparent;
-    font-size: ${bodySize};
+    font-size: ${captionSize};
     font-weight: ${weightRegular};
-    line-height: ${lineBody};
+    line-height: ${lineCaption};
+}
+DashboardWindow QFrame#EmptyStateRule {
+    background: transparent;
+    border: none;
+    border-top: 1px dashed ${borderStrong};
+    min-height: 1px;
+    max-height: 1px;
 }
 DashboardWindow QFrame#MemoControlCard {
-    background: ${surfaceSunken};
+    background: ${surface};
     border: 1px solid ${border};
-    border-left: 3px solid ${primary};
+    border-left: 2px solid ${primary};
     border-radius: ${radiusM};
 }
 DashboardWindow QFrame#MemoControlCard[memoKind="todo"] {
@@ -986,16 +1018,21 @@ DashboardWindow QPushButton#PrimaryButton:focus {
     border-color: ${primaryHover};
 }
 DashboardWindow QPushButton#SecondaryButton {
-    min-width: 64px;
+    color: ${textSecondary};
+    background: transparent;
+    border-color: ${border};
+    min-width: 56px;
+    min-height: 26px;
+    padding: ${spaceXs} ${spaceM};
 }
 DashboardWindow QPushButton#SecondaryButton[active="true"] {
-    color: ${primaryText};
-    background: ${primary};
+    color: ${primary};
+    background: ${primarySoft};
     border-color: ${primary};
 }
 DashboardWindow QFrame#MemoControlCard[memoKind="todo"] QPushButton#SecondaryButton[active="true"] {
-    color: ${secondaryText};
-    background: ${secondary};
+    color: ${secondary};
+    background: ${secondarySoft};
     border-color: ${secondary};
 }
 DashboardWindow QFrame#MemoControlCard[memoKind="todo"] QPushButton:focus {
@@ -1046,6 +1083,24 @@ DashboardWindow QCheckBox {
     font-weight: ${weightRegular};
     line-height: ${lineBody};
 }
+DashboardWindow QCheckBox#PinToggle {
+    color: ${textSecondary};
+    background: ${surfaceSunken};
+    border: 1px solid ${border};
+    border-radius: ${radiusM};
+    padding: ${spaceS} ${spaceM};
+    font-size: ${captionSize};
+}
+DashboardWindow QCheckBox#PinToggle:checked {
+    color: ${primary};
+    background: ${primarySoft};
+    border-color: ${primary};
+}
+DashboardWindow QCheckBox#PinToggle[memoKind="todo"]:checked {
+    color: ${secondary};
+    background: ${secondarySoft};
+    border-color: ${secondary};
+}
 DashboardWindow QCheckBox:disabled {
     color: ${textDisabled};
 }
@@ -1055,6 +1110,11 @@ DashboardWindow QCheckBox::indicator {
     border: 1px solid ${borderStrong};
     border-radius: ${radiusM};
     background: ${surface};
+}
+DashboardWindow QCheckBox#PinToggle::indicator {
+    width: 14px;
+    height: 14px;
+    border-radius: 7px;
 }
 DashboardWindow QCheckBox::indicator:hover {
     border-color: ${primary};
