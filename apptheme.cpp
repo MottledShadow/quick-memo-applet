@@ -874,26 +874,6 @@ DashboardWindow QLabel#MemoControlTitle {
     font-weight: ${weightTitle};
     line-height: ${lineBody};
 }
-DashboardWindow QLabel#WindowStatusBadge {
-    color: ${textMuted};
-    background: ${surfaceSunken};
-    border: 1px solid ${border};
-    border-radius: ${radiusS};
-    padding: 1px ${spaceS};
-    font-size: ${captionSize};
-    font-weight: ${weightRegular};
-    line-height: ${lineCaption};
-}
-DashboardWindow QLabel#WindowStatusBadge[active="true"] {
-    color: ${primary};
-    background: ${primarySoft};
-    border-color: ${primary};
-}
-DashboardWindow QLabel#WindowStatusBadge[memoKind="todo"][active="true"] {
-    color: ${secondary};
-    background: ${secondarySoft};
-    border-color: ${secondary};
-}
 DashboardWindow QLabel#CountBadge {
     color: ${primary};
     background: ${surface};
@@ -963,28 +943,6 @@ DashboardWindow QLabel#DashboardRecordTime {
     font-size: ${captionSize};
     font-weight: ${weightRegular};
     line-height: ${lineCaption};
-}
-DashboardWindow QFrame#EmptyState {
-    background: ${surface};
-    border: 1px dashed ${border};
-    border-radius: ${radiusM};
-}
-DashboardWindow QFrame#EmptyState[memoKind="todo"] {
-    border-color: ${border};
-}
-DashboardWindow QLabel#EmptyStateText {
-    color: ${textMuted};
-    background: transparent;
-    font-size: ${captionSize};
-    font-weight: ${weightRegular};
-    line-height: ${lineCaption};
-}
-DashboardWindow QFrame#EmptyStateRule {
-    background: transparent;
-    border: none;
-    border-top: 1px dashed ${borderStrong};
-    min-height: 1px;
-    max-height: 1px;
 }
 DashboardWindow QFrame#MemoControlCard {
     background: ${surface};
@@ -1113,27 +1071,6 @@ DashboardWindow QKeySequenceEdit QLineEdit {
 DashboardWindow QKeySequenceEdit QLineEdit:focus {
     background: transparent;
     border: none;
-}
-DashboardWindow QWidget#HotkeyPreview {
-    background: transparent;
-    border: none;
-    min-height: 24px;
-}
-DashboardWindow QLabel#Keycap {
-    color: ${textSecondary};
-    background: ${surfaceSunken};
-    border: 1px solid ${border};
-    border-radius: ${radiusS};
-    padding: 2px 7px;
-    min-height: 18px;
-    font-size: ${captionSize};
-    font-weight: ${weightControl};
-    line-height: ${lineCaption};
-}
-DashboardWindow QLabel#Keycap[empty="true"] {
-    color: ${textMuted};
-    background: transparent;
-    border-style: dashed;
 }
 DashboardWindow QCheckBox {
     color: ${textPrimary};

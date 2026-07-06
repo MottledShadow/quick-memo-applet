@@ -10,12 +10,12 @@
 #include <QHBoxLayout>
 #include <QKeySequenceEdit>
 #include <QLabel>
+#include <QLayout>
 #include <QPushButton>
 #include <QScrollArea>
 #include <QSignalBlocker>
 #include <QSizePolicy>
 #include <QStyle>
-#include <QStringList>
 #include <QVBoxLayout>
 
 namespace {
@@ -32,14 +32,11 @@ DashboardWindow::DashboardWindow(MemoStore *store, QWidget *parent)
     , store(store)
     , questionVisibilityButton(nullptr)
     , todoVisibilityButton(nullptr)
-    , questionWindowStatusLabel(nullptr)
-    , todoWindowStatusLabel(nullptr)
     , questionTopCheck(nullptr)
     , todoTopCheck(nullptr)
     , autostartCheck(nullptr)
     , themeCombo(nullptr)
     , hotkeyEdit(nullptr)
-    , hotkeyPreviewLayout(nullptr)
     , questionCountLabel(nullptr)
     , todoCountLabel(nullptr)
     , questionRecordsLayout(nullptr)
@@ -74,7 +71,6 @@ void DashboardWindow::refresh()
         const QSignalBlocker blocker(hotkeyEdit);
         hotkeyEdit->setKeySequence(QKeySequence(store->hotkey()));
     }
-    refreshHotkeyPreview(QKeySequence(store->hotkey()));
 
     refreshRecords();
 }
@@ -153,11 +149,11 @@ void DashboardWindow::setupUi()
 
     auto *sideContent = new QWidget(sideScrollArea);
     sideContent->setObjectName("SideContent");
-    sideContent->setMinimumHeight(760);
 
     auto *sideLayout = new QVBoxLayout(sideContent);
     sideLayout->setContentsMargins(16, 16, 16, 16);
     sideLayout->setSpacing(16);
+    sideLayout->setSizeConstraint(QLayout::SetMinimumSize);
 
     auto *memoSectionTitle = new QLabel(QStringLiteral("便签窗口"), sideContent);
     memoSectionTitle->setObjectName("SideSectionTitle");
@@ -184,26 +180,17 @@ void DashboardWindow::setupUi()
     connect(applyHotkeyButton, &QPushButton::clicked, this, [this]() {
         emit hotkeyChangeRequested(hotkeyEdit->keySequence());
     });
-    connect(hotkeyEdit, &QKeySequenceEdit::keySequenceChanged,
-            this, &DashboardWindow::refreshHotkeyPreview);
 
-    auto *hotkeyFooter = new QWidget(hotkeyGroup);
-    auto *hotkeyFooterLayout = new QHBoxLayout(hotkeyFooter);
-    hotkeyFooterLayout->setContentsMargins(0, 0, 0, 0);
-    hotkeyFooterLayout->setSpacing(8);
-
-    auto *hotkeyPreview = new QWidget(hotkeyFooter);
-    hotkeyPreview->setObjectName("HotkeyPreview");
-    hotkeyPreviewLayout = new QHBoxLayout(hotkeyPreview);
-    hotkeyPreviewLayout->setContentsMargins(0, 0, 0, 0);
-    hotkeyPreviewLayout->setSpacing(6);
-    hotkeyFooterLayout->addWidget(hotkeyPreview, 1);
-    hotkeyFooterLayout->addWidget(applyHotkeyButton, 0, Qt::AlignRight);
+    auto *hotkeyActionRow = new QWidget(hotkeyGroup);
+    auto *hotkeyActionLayout = new QHBoxLayout(hotkeyActionRow);
+    hotkeyActionLayout->setContentsMargins(0, 0, 0, 0);
+    hotkeyActionLayout->addStretch(1);
+    hotkeyActionLayout->addWidget(applyHotkeyButton);
 
     hotkeyGroupLayout->addWidget(hotkeyLabel);
     hotkeyGroupLayout->addWidget(hotkeyEdit);
-    hotkeyGroupLayout->addWidget(hotkeyFooter);
-    hotkeyGroup->setMinimumHeight(154);
+    hotkeyGroupLayout->addWidget(hotkeyActionRow);
+    hotkeyGroup->setFixedHeight(156);
 
     QBoxLayout *appearanceGroupLayout = nullptr;
     auto *appearanceGroup = createSettingsGroup(QStringLiteral("外观"), sideContent, &appearanceGroupLayout);
@@ -225,7 +212,7 @@ void DashboardWindow::setupUi()
     });
     appearanceGroupLayout->addWidget(themeLabel);
     appearanceGroupLayout->addWidget(themeCombo);
-    appearanceGroup->setMinimumHeight(124);
+    appearanceGroup->setFixedHeight(124);
 
     QBoxLayout *systemGroupLayout = nullptr;
     auto *systemGroup = createSettingsGroup(QStringLiteral("系统"), sideContent, &systemGroupLayout);
@@ -235,7 +222,7 @@ void DashboardWindow::setupUi()
     autostartCheck->setToolTip(QStringLiteral("开机后自动启动 Quick Memo"));
     connect(autostartCheck, &QCheckBox::toggled, this, &DashboardWindow::autostartChanged);
     systemGroupLayout->addWidget(autostartCheck);
-    systemGroup->setMinimumHeight(112);
+    systemGroup->setFixedHeight(112);
 
     auto *exitButton = new QPushButton(QStringLiteral("退出程序"), sideContent);
     exitButton->setObjectName("DangerButton");
@@ -357,35 +344,6 @@ QWidget *DashboardWindow::createRecordCard(const MemoItem &memo, QWidget *parent
     return card;
 }
 
-QWidget *DashboardWindow::createEmptyState(MemoType type, QWidget *parent) const
-{
-    auto *emptyState = new QFrame(parent);
-    emptyState->setObjectName("EmptyState");
-    emptyState->setProperty("memoKind", MemoStore::typeToString(type));
-
-    auto *layout = new QVBoxLayout(emptyState);
-    layout->setContentsMargins(18, 18, 18, 18);
-    layout->setSpacing(10);
-
-    auto *label = new QLabel(type == MemoType::Question
-                                 ? QStringLiteral("这里还没有问题")
-                                 : QStringLiteral("这里还没有待办"),
-                             emptyState);
-    label->setObjectName("EmptyStateText");
-    label->setAlignment(Qt::AlignCenter);
-
-    for (int i = 0; i < 3; ++i) {
-        auto *rule = new QFrame(emptyState);
-        rule->setObjectName("EmptyStateRule");
-        rule->setProperty("memoKind", MemoStore::typeToString(type));
-        layout->addWidget(rule);
-    }
-
-    layout->addWidget(label);
-
-    return emptyState;
-}
-
 QWidget *DashboardWindow::createMemoControls(MemoType type, QWidget *parent)
 {
     auto *container = new QFrame(parent);
@@ -406,11 +364,6 @@ QWidget *DashboardWindow::createMemoControls(MemoType type, QWidget *parent)
 
     auto *label = new QLabel(MemoStore::displayName(type), topRow);
     label->setObjectName("MemoControlTitle");
-
-    auto *statusLabel = new QLabel(topRow);
-    statusLabel->setObjectName("WindowStatusBadge");
-    statusLabel->setProperty("memoKind", MemoStore::typeToString(type));
-    statusLabel->setAlignment(Qt::AlignCenter);
 
     auto *visibilityButton = new QPushButton(topRow);
     visibilityButton->setObjectName("SecondaryButton");
@@ -437,16 +390,13 @@ QWidget *DashboardWindow::createMemoControls(MemoType type, QWidget *parent)
 
     if (type == MemoType::Question) {
         questionVisibilityButton = visibilityButton;
-        questionWindowStatusLabel = statusLabel;
         questionTopCheck = topCheck;
     } else {
         todoVisibilityButton = visibilityButton;
-        todoWindowStatusLabel = statusLabel;
         todoTopCheck = topCheck;
     }
 
     topRowLayout->addWidget(label);
-    topRowLayout->addWidget(statusLabel);
     topRowLayout->addStretch(1);
     topRowLayout->addWidget(visibilityButton);
 
@@ -481,7 +431,6 @@ void DashboardWindow::refreshMemoControls(MemoType type)
 {
     const MemoWindowState state = store->windowState(type);
     QPushButton *visibilityButton = type == MemoType::Question ? questionVisibilityButton : todoVisibilityButton;
-    QLabel *statusLabel = type == MemoType::Question ? questionWindowStatusLabel : todoWindowStatusLabel;
     QCheckBox *topCheck = type == MemoType::Question ? questionTopCheck : todoTopCheck;
 
     visibilityButton->setText(state.visible ? QStringLiteral("隐藏") : QStringLiteral("显示"));
@@ -490,47 +439,9 @@ void DashboardWindow::refreshMemoControls(MemoType type)
     visibilityButton->setProperty("active", state.visible);
     refreshDynamicStyle(visibilityButton);
 
-    statusLabel->setText(state.visible ? QStringLiteral("已显示") : QStringLiteral("已隐藏"));
-    statusLabel->setProperty("active", state.visible);
-    refreshDynamicStyle(statusLabel);
-
     const QSignalBlocker blocker(topCheck);
     topCheck->setChecked(state.alwaysOnTop);
     refreshDynamicStyle(topCheck);
-}
-
-void DashboardWindow::refreshHotkeyPreview(const QKeySequence &sequence)
-{
-    if (hotkeyPreviewLayout == nullptr) {
-        return;
-    }
-
-    clearLayout(hotkeyPreviewLayout);
-
-    const QString text = sequence.toString(QKeySequence::NativeText).trimmed();
-    QWidget *parent = hotkeyPreviewLayout->parentWidget();
-    if (parent == nullptr) {
-        return;
-    }
-
-    if (text.isEmpty()) {
-        auto *emptyLabel = new QLabel(QStringLiteral("未设置"), parent);
-        emptyLabel->setObjectName("Keycap");
-        emptyLabel->setProperty("empty", true);
-        emptyLabel->setAlignment(Qt::AlignCenter);
-        hotkeyPreviewLayout->addWidget(emptyLabel);
-        hotkeyPreviewLayout->addStretch(1);
-        return;
-    }
-
-    const QStringList parts = text.split(QLatin1Char('+'), Qt::SkipEmptyParts);
-    for (const QString &part : parts) {
-        auto *keycap = new QLabel(part.trimmed(), parent);
-        keycap->setObjectName("Keycap");
-        keycap->setAlignment(Qt::AlignCenter);
-        hotkeyPreviewLayout->addWidget(keycap);
-    }
-    hotkeyPreviewLayout->addStretch(1);
 }
 
 void DashboardWindow::refreshRecords()
@@ -547,12 +458,8 @@ void DashboardWindow::refreshRecordColumn(MemoType type, const QVector<MemoItem>
     countLabel->setText(QString::number(records.size()));
     clearLayout(layout);
 
-    if (records.isEmpty()) {
-        layout->addWidget(createEmptyState(type, layout->parentWidget()));
-    } else {
-        for (const MemoItem &memo : records) {
-            layout->addWidget(createRecordCard(memo, layout->parentWidget()));
-        }
+    for (const MemoItem &memo : records) {
+        layout->addWidget(createRecordCard(memo, layout->parentWidget()));
     }
 
     layout->addStretch();
