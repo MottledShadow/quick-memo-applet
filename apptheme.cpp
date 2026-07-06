@@ -408,11 +408,11 @@ ElevationSpec elevationSpec(ThemeMode mode, ElevationLevel level)
     if (mode == ThemeMode::Dark) {
         switch (level) {
         case ElevationLevel::E1:
-            return {16, 0, 4, QColor(8, 13, 24, 110)};
+            return {12, 0, 2, QColor(8, 13, 24, 78)};
         case ElevationLevel::E2:
-            return {26, 0, 10, QColor(8, 13, 24, 140)};
+            return {18, 0, 5, QColor(8, 13, 24, 96)};
         case ElevationLevel::E3:
-            return {34, 0, 14, QColor(2, 6, 23, 165)};
+            return {24, 0, 7, QColor(2, 6, 23, 118)};
         case ElevationLevel::E0:
             break;
         }
@@ -420,11 +420,11 @@ ElevationSpec elevationSpec(ThemeMode mode, ElevationLevel level)
 
     switch (level) {
     case ElevationLevel::E1:
-        return {14, 0, 4, QColor(71, 85, 105, 42)};
+        return {10, 0, 2, QColor(71, 85, 105, 28)};
     case ElevationLevel::E2:
-        return {24, 0, 8, QColor(71, 85, 105, 58)};
+        return {16, 0, 4, QColor(71, 85, 105, 38)};
     case ElevationLevel::E3:
-        return {32, 0, 12, QColor(51, 65, 85, 70)};
+        return {22, 0, 6, QColor(51, 65, 85, 48)};
     case ElevationLevel::E0:
         break;
     }
@@ -873,6 +873,12 @@ DashboardWindow QLabel#RecordColumnTitle {
     font-weight: ${weightTitle};
     line-height: ${lineTitle};
 }
+DashboardWindow QFrame#RecordColumn[memoKind="question"] QLabel#RecordColumnTitle {
+    color: ${primary};
+}
+DashboardWindow QFrame#RecordColumn[memoKind="todo"] QLabel#RecordColumnTitle {
+    color: ${secondary};
+}
 DashboardWindow QLabel#FieldLabel,
 DashboardWindow QLabel#StatusLabel {
     color: ${textSecondary};
@@ -893,9 +899,9 @@ DashboardWindow QLabel#MemoControlTitle {
     line-height: ${lineBody};
 }
 DashboardWindow QLabel#CountBadge {
-    color: ${textSecondary};
-    background: ${surface};
-    border: 1px solid ${borderStrong};
+    color: ${primary};
+    background: ${primarySoft};
+    border: 1px solid ${primary};
     border-radius: ${radiusM};
     padding: 0 ${spaceS};
     min-width: ${spaceL};
@@ -904,23 +910,26 @@ DashboardWindow QLabel#CountBadge {
     line-height: ${lineCaption};
 }
 DashboardWindow QLabel#CountBadge[memoKind="todo"] {
-    color: ${textSecondary};
-    border-color: ${borderStrong};
+    color: ${secondary};
+    background: ${secondarySoft};
+    border-color: ${secondary};
 }
 DashboardWindow QFrame#RecordColumn {
     background: ${surfaceSunken};
     border: 1px solid ${border};
+    border-top: 2px solid ${primary};
     border-radius: ${radiusM};
 }
 DashboardWindow QFrame#RecordColumn[memoKind="todo"] {
-    border-color: ${border};
+    border-top-color: ${secondary};
 }
 DashboardWindow QFrame#RecordColumn:hover {
     background: ${surfaceSunken};
     border-color: ${border};
+    border-top-color: ${primary};
 }
 DashboardWindow QFrame#RecordColumn[memoKind="todo"]:hover {
-    border-color: ${border};
+    border-top-color: ${secondary};
 }
 DashboardWindow QScrollArea#RecordsScrollArea {
     background: transparent;
