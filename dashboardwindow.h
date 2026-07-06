@@ -13,6 +13,7 @@ class QFrame;
 class QKeySequenceEdit;
 class QLabel;
 class QPushButton;
+class QScrollArea;
 
 class DashboardWindow : public QWidget
 {
@@ -48,6 +49,7 @@ private:
     void refreshRecords();
     void refreshRecordColumn(MemoType type, const QVector<MemoItem> &records);
     void clearLayout(QBoxLayout *layout) const;
+    void configureScrollArea(QScrollArea *scrollArea) const;
 
     MemoStore *store;
     QPushButton *questionVisibilityButton;

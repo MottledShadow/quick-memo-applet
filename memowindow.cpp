@@ -171,7 +171,6 @@ public:
     explicit MemoRecordCard(QWidget *parent = nullptr)
         : QFrame(parent)
         , textLabel(nullptr)
-        , marker(nullptr)
         , strikeLine(new QFrame(this))
         , strikeProgressValue(0.0)
     {
@@ -185,11 +184,6 @@ public:
     {
         textLabel = label;
         updateStrikeGeometry();
-    }
-
-    void setMarker(QFrame *markerFrame)
-    {
-        marker = markerFrame;
     }
 
     void setMemoKind(const QString &memoKind)
@@ -219,11 +213,6 @@ public:
     {
         setProperty("deleting", deleting);
         refreshDynamicStyle(this);
-
-        if (marker != nullptr) {
-            marker->setProperty("deleting", deleting);
-            refreshDynamicStyle(marker);
-        }
     }
 
 protected:
@@ -250,7 +239,6 @@ private:
     }
 
     QLabel *textLabel;
-    QFrame *marker;
     QFrame *strikeLine;
     qreal strikeProgressValue;
 };
@@ -557,16 +545,7 @@ void MemoWindow::rebuildList()
 
         auto *recordLayout = new QHBoxLayout(recordFrame);
         recordLayout->setContentsMargins(0, 0, 0, 0);
-        recordLayout->setSpacing(8);
-
-        auto *marker = new QFrame(recordFrame);
-        marker->setObjectName("RecordMarker");
-        marker->setProperty("memoKind", MemoStore::typeToString(memo.type));
-        marker->setProperty("deleting", false);
-        marker->setFixedSize(8, 8);
-        marker->setAttribute(Qt::WA_TransparentForMouseEvents);
-        recordFrame->setMarker(marker);
-        recordLayout->addWidget(marker, 0, Qt::AlignVCenter);
+        recordLayout->setSpacing(0);
 
         auto *textLabel = new QLabel(memo.text, recordFrame);
         textLabel->setObjectName("RecordText");

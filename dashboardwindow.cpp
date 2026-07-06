@@ -13,6 +13,7 @@
 #include <QLayout>
 #include <QPushButton>
 #include <QScrollArea>
+#include <QScrollBar>
 #include <QSignalBlocker>
 #include <QSizePolicy>
 #include <QStyle>
@@ -144,8 +145,7 @@ void DashboardWindow::setupUi()
     sideScrollArea->setObjectName("SideContentScrollArea");
     sideScrollArea->setWidgetResizable(true);
     sideScrollArea->setFrameShape(QFrame::NoFrame);
-    sideScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    sideScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    configureScrollArea(sideScrollArea);
 
     auto *sideContent = new QWidget(sideScrollArea);
     sideContent->setObjectName("SideContent");
@@ -285,6 +285,7 @@ QWidget *DashboardWindow::createRecordsColumn(MemoType type, QWidget *parent)
     scrollArea->setObjectName("RecordsScrollArea");
     scrollArea->setWidgetResizable(true);
     scrollArea->setFrameShape(QFrame::NoFrame);
+    configureScrollArea(scrollArea);
 
     auto *listWidget = new QWidget(scrollArea);
     listWidget->setObjectName("RecordsList");
@@ -471,4 +472,16 @@ void DashboardWindow::clearLayout(QBoxLayout *layout) const
         delete item->widget();
         delete item;
     }
+}
+
+void DashboardWindow::configureScrollArea(QScrollArea *scrollArea) const
+{
+    if (scrollArea == nullptr) {
+        return;
+    }
+
+    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    scrollArea->verticalScrollBar()->setSingleStep(32);
+    scrollArea->verticalScrollBar()->setPageStep(160);
 }

@@ -11,6 +11,7 @@ class HotkeyManager;
 class InputWindow;
 class MemoWindow;
 class TrayController;
+class QWidget;
 
 class MainWindow : public QObject
 {
@@ -24,7 +25,8 @@ private:
     void setupConnections();
     void restoreWindows();
     void registerStoredHotkey();
-    void applyTheme(ThemeMode mode);
+    void applyTheme(ThemeMode mode, bool animate);
+    void playThemeTransition(QWidget *widget);
     bool applyAutostart(bool enabled);
     MemoWindow *memoWindow(MemoType type) const;
     void quitApplication();
@@ -36,6 +38,7 @@ private:
     DashboardWindow *dashboardWindow;
     HotkeyManager *hotkeyManager;
     TrayController *trayController;
+    ThemeMode appliedTheme;
 };
 
 #endif // MAINWINDOW_H

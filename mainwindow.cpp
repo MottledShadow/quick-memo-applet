@@ -7,11 +7,21 @@
 #include "memowindow.h"
 #include "traycontroller.h"
 
+#include <QAbstractAnimation>
 #include <QApplication>
 #include <QCoreApplication>
 #include <QDir>
+#include <QEasingCurve>
 #include <QKeySequence>
+#include <QPropertyAnimation>
 #include <QSettings>
+#include <QWidget>
+
+namespace {
+constexpr int kThemeTransitionDurationMs = 110;
+constexpr qreal kThemeTransitionStartOpacity = 0.92;
+constexpr qreal kThemeTransitionMinimumIdleOpacity = 0.99;
+}
 
 MainWindow::MainWindow(QObject *parent)
     : QObject(parent)
@@ -22,6 +32,7 @@ MainWindow::MainWindow(QObject *parent)
     , dashboardWindow(nullptr)
     , hotkeyManager(new HotkeyManager(this))
     , trayController(new TrayController(this))
+    , appliedTheme(ThemeMode::Light)
 {
     store->load();
 
@@ -33,7 +44,7 @@ MainWindow::MainWindow(QObject *parent)
     questionWindow->setRecords(store->records(MemoType::Question));
     todoWindow->setRecords(store->records(MemoType::Todo));
     inputWindow->setCurrentType(store->currentType());
-    applyTheme(store->themeMode());
+    applyTheme(store->themeMode(), false);
 
     restoreWindows();
     setupConnections();
@@ -57,8 +68,12 @@ void MainWindow::setupConnections()
     });
 
     connect(store, &MemoStore::settingsChanged, this, [this]() {
+        const ThemeMode mode = store->themeMode();
+        const bool themeChanged = mode != appliedTheme;
         inputWindow->setCurrentType(store->currentType());
-        applyTheme(store->themeMode());
+        if (themeChanged) {
+            applyTheme(mode, true);
+        }
     });
 
     connect(questionWindow, &MemoWindow::memoClicked, store, &MemoStore::deleteMemo);
@@ -115,7 +130,6 @@ void MainWindow::setupConnections()
 
     connect(dashboardWindow, &DashboardWindow::themeChangeRequested, this, [this](ThemeMode mode) {
         store->setThemeMode(mode);
-        applyTheme(mode);
         dashboardWindow->setStatusMessage(QStringLiteral("主题已切换为：%1")
                                               .arg(MemoStore::themeDisplayName(mode)));
     });
@@ -149,13 +163,43 @@ void MainWindow::registerStoredHotkey()
     }
 }
 
-void MainWindow::applyTheme(ThemeMode mode)
+void MainWindow::applyTheme(ThemeMode mode, bool animate)
 {
     qApp->setStyleSheet(AppTheme::applicationStyleSheet(mode));
     inputWindow->applyTheme(mode);
     questionWindow->applyTheme(mode);
     todoWindow->applyTheme(mode);
     dashboardWindow->applyTheme(mode);
+    appliedTheme = mode;
+
+    if (!animate) {
+        return;
+    }
+
+    playThemeTransition(inputWindow);
+    playThemeTransition(questionWindow);
+    playThemeTransition(todoWindow);
+    playThemeTransition(dashboardWindow);
+}
+
+void MainWindow::playThemeTransition(QWidget *widget)
+{
+    if (widget == nullptr || !widget->isVisible()) {
+        return;
+    }
+
+    if (widget->windowOpacity() < kThemeTransitionMinimumIdleOpacity) {
+        return;
+    }
+
+    widget->setWindowOpacity(kThemeTransitionStartOpacity);
+
+    auto *animation = new QPropertyAnimation(widget, "windowOpacity", widget);
+    animation->setDuration(kThemeTransitionDurationMs);
+    animation->setEasingCurve(QEasingCurve::OutCubic);
+    animation->setStartValue(kThemeTransitionStartOpacity);
+    animation->setEndValue(1.0);
+    animation->start(QAbstractAnimation::DeleteWhenStopped);
 }
 
 bool MainWindow::applyAutostart(bool enabled)

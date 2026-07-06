@@ -650,34 +650,6 @@ MemoWindow QFrame#MemoRecordCard[pressed="true"] {
     background: rgba(253, 230, 138, 42);
     border-color: transparent;
 }
-MemoWindow QFrame#RecordMarker {
-    background: transparent;
-    border: 1px solid ${primary};
-    border-radius: 4px;
-    max-width: 8px;
-    max-height: 8px;
-    min-width: 8px;
-    min-height: 8px;
-}
-MemoWindow QFrame#RecordMarker[memoKind="todo"] {
-    border-color: ${secondary};
-}
-MemoWindow QFrame#MemoRecordCard[pressed="true"] QFrame#RecordMarker {
-    background: rgba(37, 99, 235, 40);
-}
-MemoWindow QFrame#MemoRecordCard[pressed="true"] QFrame#RecordMarker[memoKind="todo"] {
-    background: rgba(4, 120, 87, 40);
-}
-MemoWindow QFrame#MemoRecordCard[deleting="true"] QFrame#RecordMarker,
-MemoWindow QFrame#RecordMarker[deleting="true"] {
-    background: ${primary};
-    border-color: ${primary};
-}
-MemoWindow QFrame#MemoRecordCard[deleting="true"] QFrame#RecordMarker[memoKind="todo"],
-MemoWindow QFrame#RecordMarker[memoKind="todo"][deleting="true"] {
-    background: ${secondary};
-    border-color: ${secondary};
-}
 MemoWindow QFrame#StrikeLine {
     background: ${primary};
     border: none;
@@ -865,7 +837,9 @@ DashboardWindow QFrame#SettingsGroup {
     border-radius: ${radiusM};
 }
 DashboardWindow QFrame#SettingsGroup:hover {
+    background: ${surfaceRaised};
     border-color: ${borderStrong};
+    border-top-color: ${surfaceHighlight};
 }
 DashboardWindow QLabel#PageTitle {
     color: ${textPrimary};
@@ -923,6 +897,14 @@ DashboardWindow QFrame#RecordColumn {
 DashboardWindow QFrame#RecordColumn[memoKind="todo"] {
     border-top-color: ${secondary};
 }
+DashboardWindow QFrame#RecordColumn:hover {
+    background: ${surfaceRaised};
+    border-color: ${borderStrong};
+    border-top-color: ${primary};
+}
+DashboardWindow QFrame#RecordColumn[memoKind="todo"]:hover {
+    border-top-color: ${secondary};
+}
 DashboardWindow QScrollArea#RecordsScrollArea {
     background: transparent;
     border: none;
@@ -946,6 +928,15 @@ DashboardWindow QFrame#DashboardRecordCard:hover {
 }
 DashboardWindow QFrame#DashboardRecordCard[memoKind="todo"]:hover {
     border-color: ${borderStrong};
+}
+DashboardWindow QFrame#DashboardRecordCard:hover QLabel#DashboardRecordTime {
+    color: ${textSecondary};
+}
+DashboardWindow QFrame#DashboardRecordCard:hover QFrame#RecordAccentDot {
+    background: ${primaryHover};
+}
+DashboardWindow QFrame#DashboardRecordCard[memoKind="todo"]:hover QFrame#RecordAccentDot {
+    background: ${secondaryHover};
 }
 DashboardWindow QFrame#RecordAccentDot {
     background: ${primary};
@@ -976,6 +967,14 @@ DashboardWindow QFrame#MemoControlCard {
     border-radius: ${radiusM};
 }
 DashboardWindow QFrame#MemoControlCard[memoKind="todo"] {
+    border-left-color: ${secondary};
+}
+DashboardWindow QFrame#MemoControlCard:hover {
+    background: ${surfaceRaised};
+    border-color: ${borderStrong};
+    border-left-color: ${primary};
+}
+DashboardWindow QFrame#MemoControlCard[memoKind="todo"]:hover {
     border-left-color: ${secondary};
 }
 DashboardWindow QPushButton {
