@@ -7,6 +7,7 @@ class QAction;
 class QMenu;
 class QString;
 class QSystemTrayIcon;
+class QWidget;
 
 class TrayController : public QObject
 {
@@ -26,6 +27,7 @@ private:
     QMenu *trayMenu;
     QAction *openDashboardAction;
     QAction *exitAction;
+    QWidget *startupToast;
 };
 
 #endif // TRAYCONTROLLER_H

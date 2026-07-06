@@ -2,10 +2,16 @@
 
 #include <QAction>
 #include <QApplication>
+#include <QFrame>
+#include <QGuiApplication>
+#include <QLabel>
 #include <QMenu>
+#include <QScreen>
 #include <QString>
 #include <QStyle>
 #include <QSystemTrayIcon>
+#include <QTimer>
+#include <QVBoxLayout>
 
 TrayController::TrayController(QObject *parent)
     : QObject(parent)
@@ -13,6 +19,7 @@ TrayController::TrayController(QObject *parent)
     , trayMenu(new QMenu())
     , openDashboardAction(new QAction(QStringLiteral("打开后台"), this))
     , exitAction(new QAction(QStringLiteral("退出程序"), this))
+    , startupToast(nullptr)
 {
     trayIcon->setIcon(qApp->style()->standardIcon(QStyle::SP_FileDialogDetailedView));
     trayIcon->setToolTip(QStringLiteral("Quick Memo Applet"));
@@ -35,18 +42,75 @@ TrayController::TrayController(QObject *parent)
 
 TrayController::~TrayController()
 {
+    if (startupToast != nullptr) {
+        startupToast->close();
+    }
     trayIcon->hide();
     delete trayMenu;
 }
 
 void TrayController::showStartupMessage(const QString &hotkeyText)
 {
-    if (!QSystemTrayIcon::supportsMessages()) {
-        return;
+    if (startupToast != nullptr) {
+        startupToast->close();
+        startupToast = nullptr;
     }
 
-    trayIcon->showMessage(QStringLiteral("Quick Memo 已在后台运行"),
-                          QStringLiteral("按 %1 呼出输入框，点击托盘图标可打开后台。").arg(hotkeyText),
-                          QSystemTrayIcon::Information,
-                          4200);
+    startupToast = new QFrame();
+    startupToast->setObjectName("StartupToast");
+    startupToast->setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
+    startupToast->setAttribute(Qt::WA_DeleteOnClose, true);
+    startupToast->setStyleSheet(QStringLiteral(R"(
+QFrame#StartupToast {
+    color: #111827;
+    background: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+}
+QLabel#StartupToastTitle {
+    color: #111827;
+    font-family: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+}
+QLabel#StartupToastBody {
+    color: #4B5563;
+    font-family: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+    font-size: 12px;
+    line-height: 16px;
+}
+)"));
+
+    auto *layout = new QVBoxLayout(startupToast);
+    layout->setContentsMargins(16, 12, 16, 12);
+    layout->setSpacing(6);
+
+    auto *titleLabel = new QLabel(QStringLiteral("Quick Memo 已在后台运行"), startupToast);
+    titleLabel->setObjectName("StartupToastTitle");
+
+    auto *bodyLabel = new QLabel(QStringLiteral("按 %1 呼出输入框\n点击托盘图标可打开后台").arg(hotkeyText),
+                                 startupToast);
+    bodyLabel->setObjectName("StartupToastBody");
+    bodyLabel->setWordWrap(true);
+
+    layout->addWidget(titleLabel);
+    layout->addWidget(bodyLabel);
+
+    startupToast->setFixedWidth(280);
+    startupToast->adjustSize();
+
+    const QScreen *screen = QGuiApplication::primaryScreen();
+    if (screen != nullptr) {
+        const QRect area = screen->availableGeometry();
+        const QPoint position(area.right() - startupToast->width() - 24,
+                              area.bottom() - startupToast->height() - 24);
+        startupToast->move(position);
+    }
+
+    connect(startupToast, &QObject::destroyed, this, [this]() {
+        startupToast = nullptr;
+    });
+
+    startupToast->show();
+    QTimer::singleShot(5200, startupToast, &QWidget::close);
 }

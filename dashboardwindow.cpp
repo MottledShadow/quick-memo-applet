@@ -114,7 +114,7 @@ void DashboardWindow::applyTheme(ThemeMode mode)
 {
     setStyleSheet(AppTheme::dashboardStyleSheet(mode));
     AppTheme::applyElevation(recordsPanel, mode, ElevationLevel::E2);
-    AppTheme::applyElevation(sidePanel, mode, ElevationLevel::E2);
+    AppTheme::applyElevation(sidePanel, mode, ElevationLevel::E1);
 }
 
 bool DashboardWindow::eventFilter(QObject *object, QEvent *event)
@@ -207,7 +207,7 @@ void DashboardWindow::setupUi()
 
     sidePanel = new QFrame(content);
     sidePanel->setObjectName("SidePanel");
-    sidePanel->setFixedWidth(320);
+    sidePanel->setFixedWidth(300);
     auto *sidePanelLayout = new QVBoxLayout(sidePanel);
     sidePanelLayout->setContentsMargins(0, 0, 0, 0);
     sidePanelLayout->setSpacing(0);
@@ -222,8 +222,8 @@ void DashboardWindow::setupUi()
     sideContent->setObjectName("SideContent");
 
     auto *sideLayout = new QVBoxLayout(sideContent);
-    sideLayout->setContentsMargins(16, 16, 16, 16);
-    sideLayout->setSpacing(16);
+    sideLayout->setContentsMargins(12, 12, 12, 12);
+    sideLayout->setSpacing(12);
     sideLayout->setSizeConstraint(QLayout::SetMinimumSize);
 
     auto *memoSectionTitle = new QLabel(QStringLiteral("便签窗口"), sideContent);
@@ -234,7 +234,7 @@ void DashboardWindow::setupUi()
 
     auto *settingsSectionTitle = new QLabel(QStringLiteral("设置"), sideContent);
     settingsSectionTitle->setObjectName("SideSectionTitle");
-    sideLayout->addSpacing(8);
+    sideLayout->addSpacing(4);
     sideLayout->addWidget(settingsSectionTitle);
 
     QBoxLayout *hotkeyGroupLayout = nullptr;
@@ -242,26 +242,26 @@ void DashboardWindow::setupUi()
     auto *hotkeyLabel = new QLabel(QStringLiteral("全局快捷键"), hotkeyGroup);
     hotkeyLabel->setObjectName("FieldLabel");
     hotkeyEdit = new QKeySequenceEdit(hotkeyGroup);
-    hotkeyEdit->setMinimumHeight(38);
+    hotkeyEdit->setMinimumHeight(34);
 
     auto *applyHotkeyButton = new QPushButton(QStringLiteral("应用"), hotkeyGroup);
     applyHotkeyButton->setObjectName("PrimaryButton");
-    applyHotkeyButton->setMinimumSize(76, 34);
+    applyHotkeyButton->setMinimumSize(68, 34);
     applyHotkeyButton->setToolTip(QStringLiteral("应用新的全局快捷键"));
     connect(applyHotkeyButton, &QPushButton::clicked, this, [this]() {
         emit hotkeyChangeRequested(hotkeyEdit->keySequence());
     });
 
-    auto *hotkeyActionRow = new QWidget(hotkeyGroup);
-    auto *hotkeyActionLayout = new QHBoxLayout(hotkeyActionRow);
-    hotkeyActionLayout->setContentsMargins(0, 0, 0, 0);
-    hotkeyActionLayout->addStretch(1);
-    hotkeyActionLayout->addWidget(applyHotkeyButton);
+    auto *hotkeyInputRow = new QWidget(hotkeyGroup);
+    auto *hotkeyInputLayout = new QHBoxLayout(hotkeyInputRow);
+    hotkeyInputLayout->setContentsMargins(0, 0, 0, 0);
+    hotkeyInputLayout->setSpacing(8);
+    hotkeyInputLayout->addWidget(hotkeyEdit, 1);
+    hotkeyInputLayout->addWidget(applyHotkeyButton);
 
     hotkeyGroupLayout->addWidget(hotkeyLabel);
-    hotkeyGroupLayout->addWidget(hotkeyEdit);
-    hotkeyGroupLayout->addWidget(hotkeyActionRow);
-    hotkeyGroup->setFixedHeight(156);
+    hotkeyGroupLayout->addWidget(hotkeyInputRow);
+    hotkeyGroup->setMinimumHeight(120);
 
     QBoxLayout *appearanceGroupLayout = nullptr;
     auto *appearanceGroup = createSettingsGroup(QStringLiteral("外观"), sideContent, &appearanceGroupLayout);
@@ -283,7 +283,7 @@ void DashboardWindow::setupUi()
     });
     appearanceGroupLayout->addWidget(themeLabel);
     appearanceGroupLayout->addWidget(themeCombo);
-    appearanceGroup->setFixedHeight(124);
+    appearanceGroup->setMinimumHeight(96);
 
     QBoxLayout *inputGroupLayout = nullptr;
     auto *inputGroup = createSettingsGroup(QStringLiteral("输入"), sideContent, &inputGroupLayout);
@@ -293,7 +293,7 @@ void DashboardWindow::setupUi()
     hideInputAfterSaveCheck->setToolTip(QStringLiteral("保存成功后短暂显示反馈并自动收起输入框"));
     connect(hideInputAfterSaveCheck, &QCheckBox::toggled, this, &DashboardWindow::inputAutoHideChanged);
     inputGroupLayout->addWidget(hideInputAfterSaveCheck);
-    inputGroup->setFixedHeight(112);
+    inputGroup->setMinimumHeight(80);
 
     QBoxLayout *systemGroupLayout = nullptr;
     auto *systemGroup = createSettingsGroup(QStringLiteral("系统"), sideContent, &systemGroupLayout);
@@ -303,19 +303,13 @@ void DashboardWindow::setupUi()
     autostartCheck->setToolTip(QStringLiteral("开机后自动启动 Quick Memo"));
     connect(autostartCheck, &QCheckBox::toggled, this, &DashboardWindow::autostartChanged);
     systemGroupLayout->addWidget(autostartCheck);
-    systemGroup->setFixedHeight(112);
-
-    auto *exitButton = new QPushButton(QStringLiteral("退出程序"), sideContent);
-    exitButton->setObjectName("DangerButton");
-    exitButton->setToolTip(QStringLiteral("保存状态并退出程序"));
-    connect(exitButton, &QPushButton::clicked, this, &DashboardWindow::exitRequested);
+    systemGroup->setMinimumHeight(80);
 
     sideLayout->addWidget(hotkeyGroup);
     sideLayout->addWidget(appearanceGroup);
     sideLayout->addWidget(inputGroup);
     sideLayout->addWidget(systemGroup);
     sideLayout->addStretch(1);
-    sideLayout->addWidget(exitButton);
 
     sideScrollArea->setWidget(sideContent);
     sidePanelLayout->addWidget(sideScrollArea);
@@ -499,12 +493,12 @@ QFrame *DashboardWindow::createSettingsGroup(const QString &title, QWidget *pare
 {
     auto *group = new QFrame(parent);
     group->setObjectName("SettingsGroup");
-    group->setMinimumHeight(92);
+    group->setMinimumHeight(72);
     group->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
 
     auto *layout = new QVBoxLayout(group);
-    layout->setContentsMargins(12, 12, 12, 12);
-    layout->setSpacing(8);
+    layout->setContentsMargins(10, 10, 10, 10);
+    layout->setSpacing(6);
 
     auto *titleLabel = new QLabel(title, group);
     titleLabel->setObjectName("SettingGroupTitle");

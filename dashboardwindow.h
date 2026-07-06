@@ -37,7 +37,6 @@ signals:
     void inputAutoHideChanged(bool enabled);
     void recordDeleteRequested(const QString &id, MemoType type);
     void autostartChanged(bool enabled);
-    void exitRequested();
 
 protected:
     bool eventFilter(QObject *object, QEvent *event) override;

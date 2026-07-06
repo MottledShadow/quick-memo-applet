@@ -827,12 +827,16 @@ DashboardWindow QLabel {
 DashboardWindow QLabel:disabled {
     color: ${textDisabled};
 }
-DashboardWindow QFrame#RecordsPanel,
-DashboardWindow QFrame#SidePanel {
+DashboardWindow QFrame#RecordsPanel {
     background: ${surfaceGradient};
     border: 1px solid ${border};
     border-top-color: ${surfaceHighlight};
     border-left-color: ${surfaceHighlight};
+    border-radius: ${radiusL};
+}
+DashboardWindow QFrame#SidePanel {
+    background: ${surface};
+    border: 1px solid ${border};
     border-radius: ${radiusL};
 }
 DashboardWindow QFrame#StatusBar {
@@ -850,13 +854,11 @@ DashboardWindow QWidget#SideContent {
 DashboardWindow QFrame#SettingsGroup {
     background: ${surface};
     border: 1px solid ${border};
-    border-top-color: ${surfaceHighlight};
     border-radius: ${radiusM};
 }
 DashboardWindow QFrame#SettingsGroup:hover {
     background: ${surfaceRaised};
-    border-color: ${borderStrong};
-    border-top-color: ${surfaceHighlight};
+    border-color: ${border};
 }
 DashboardWindow QLabel#PageTitle {
     color: ${textPrimary};
@@ -1069,21 +1071,6 @@ DashboardWindow QFrame#MemoControlCard[memoKind="todo"] QPushButton#SecondaryBut
 DashboardWindow QFrame#MemoControlCard[memoKind="todo"] QPushButton:focus {
     border-color: ${secondary};
 }
-DashboardWindow QPushButton#DangerButton {
-    color: ${danger};
-    background: ${surface};
-    border-color: ${danger};
-}
-DashboardWindow QPushButton#DangerButton:hover {
-    color: ${danger};
-    background: ${dangerSoft};
-    border-color: ${danger};
-}
-DashboardWindow QPushButton#DangerButton:focus {
-    color: ${danger};
-    background: ${dangerSoft};
-    border-color: ${danger};
-}
 DashboardWindow QLineEdit,
 DashboardWindow QKeySequenceEdit {
     color: ${textPrimary};
@@ -1219,7 +1206,10 @@ DashboardWindow QComboBox {
     selection-color: ${primaryText};
     selection-background-color: ${primary};
 }
-DashboardWindow QComboBox:hover,
+DashboardWindow QComboBox:hover {
+    border-color: ${borderStrong};
+    background: ${surfaceRaised};
+}
 DashboardWindow QComboBox:focus {
     border-color: ${primary};
     background: ${surfaceRaised};

@@ -168,7 +168,6 @@ void MainWindow::setupConnections()
                                                   : QStringLiteral("已关闭开机自启。"));
     });
 
-    connect(dashboardWindow, &DashboardWindow::exitRequested, this, &MainWindow::quitApplication);
 }
 
 void MainWindow::restoreWindows()
