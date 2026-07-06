@@ -893,9 +893,9 @@ DashboardWindow QLabel#MemoControlTitle {
     line-height: ${lineBody};
 }
 DashboardWindow QLabel#CountBadge {
-    color: ${primary};
+    color: ${textSecondary};
     background: ${surface};
-    border: 1px solid ${primary};
+    border: 1px solid ${borderStrong};
     border-radius: ${radiusM};
     padding: 0 ${spaceS};
     min-width: ${spaceL};
@@ -904,25 +904,23 @@ DashboardWindow QLabel#CountBadge {
     line-height: ${lineCaption};
 }
 DashboardWindow QLabel#CountBadge[memoKind="todo"] {
-    color: ${secondary};
-    border-color: ${secondary};
+    color: ${textSecondary};
+    border-color: ${borderStrong};
 }
 DashboardWindow QFrame#RecordColumn {
     background: ${surfaceSunken};
     border: 1px solid ${border};
-    border-top: 2px solid ${primary};
     border-radius: ${radiusM};
 }
 DashboardWindow QFrame#RecordColumn[memoKind="todo"] {
-    border-top-color: ${secondary};
+    border-color: ${border};
 }
 DashboardWindow QFrame#RecordColumn:hover {
-    background: ${surfaceRaised};
-    border-color: ${borderStrong};
-    border-top-color: ${primary};
+    background: ${surfaceSunken};
+    border-color: ${border};
 }
 DashboardWindow QFrame#RecordColumn[memoKind="todo"]:hover {
-    border-top-color: ${secondary};
+    border-color: ${border};
 }
 DashboardWindow QScrollArea#RecordsScrollArea {
     background: transparent;
@@ -989,19 +987,17 @@ DashboardWindow QLabel#DashboardRecordTime {
 DashboardWindow QFrame#MemoControlCard {
     background: ${surface};
     border: 1px solid ${border};
-    border-left: 2px solid ${primary};
     border-radius: ${radiusM};
 }
 DashboardWindow QFrame#MemoControlCard[memoKind="todo"] {
-    border-left-color: ${secondary};
+    border-color: ${border};
 }
 DashboardWindow QFrame#MemoControlCard:hover {
-    background: ${surfaceRaised};
-    border-color: ${borderStrong};
-    border-left-color: ${primary};
+    background: ${surface};
+    border-color: ${border};
 }
 DashboardWindow QFrame#MemoControlCard[memoKind="todo"]:hover {
-    border-left-color: ${secondary};
+    border-color: ${border};
 }
 DashboardWindow QPushButton {
     color: ${textPrimary};
@@ -1054,9 +1050,9 @@ DashboardWindow QPushButton#SecondaryButton {
     color: ${textSecondary};
     background: transparent;
     border-color: ${border};
-    min-width: 64px;
+    min-width: 52px;
     min-height: ${compactControlHeight};
-    padding: ${spaceXs} ${spaceM};
+    padding: ${spaceXs} ${spaceS};
 }
 DashboardWindow QPushButton#SecondaryButton[active="true"] {
     color: ${primary};
@@ -1126,10 +1122,10 @@ DashboardWindow QCheckBox#InputToggle {
 }
 DashboardWindow QCheckBox#PinToggle {
     color: ${textSecondary};
-    background: ${surfaceSunken};
+    background: transparent;
     border: 1px solid ${border};
     border-radius: ${radiusM};
-    padding: ${spaceS} ${spaceM};
+    padding: ${spaceXs} ${spaceS};
     font-size: ${captionSize};
 }
 DashboardWindow QCheckBox#PinToggle:checked {

@@ -207,7 +207,7 @@ void DashboardWindow::setupUi()
 
     sidePanel = new QFrame(content);
     sidePanel->setObjectName("SidePanel");
-    sidePanel->setFixedWidth(300);
+    sidePanel->setFixedWidth(280);
     auto *sidePanelLayout = new QVBoxLayout(sidePanel);
     sidePanelLayout->setContentsMargins(0, 0, 0, 0);
     sidePanelLayout->setSpacing(0);
@@ -222,8 +222,8 @@ void DashboardWindow::setupUi()
     sideContent->setObjectName("SideContent");
 
     auto *sideLayout = new QVBoxLayout(sideContent);
-    sideLayout->setContentsMargins(12, 12, 12, 12);
-    sideLayout->setSpacing(12);
+    sideLayout->setContentsMargins(10, 10, 10, 10);
+    sideLayout->setSpacing(8);
     sideLayout->setSizeConstraint(QLayout::SetMinimumSize);
 
     auto *memoSectionTitle = new QLabel(QStringLiteral("便签窗口"), sideContent);
@@ -234,7 +234,7 @@ void DashboardWindow::setupUi()
 
     auto *settingsSectionTitle = new QLabel(QStringLiteral("设置"), sideContent);
     settingsSectionTitle->setObjectName("SideSectionTitle");
-    sideLayout->addSpacing(4);
+    sideLayout->addSpacing(2);
     sideLayout->addWidget(settingsSectionTitle);
 
     QBoxLayout *hotkeyGroupLayout = nullptr;
@@ -255,13 +255,13 @@ void DashboardWindow::setupUi()
     auto *hotkeyInputRow = new QWidget(hotkeyGroup);
     auto *hotkeyInputLayout = new QHBoxLayout(hotkeyInputRow);
     hotkeyInputLayout->setContentsMargins(0, 0, 0, 0);
-    hotkeyInputLayout->setSpacing(8);
+    hotkeyInputLayout->setSpacing(6);
     hotkeyInputLayout->addWidget(hotkeyEdit, 1);
     hotkeyInputLayout->addWidget(applyHotkeyButton);
 
     hotkeyGroupLayout->addWidget(hotkeyLabel);
     hotkeyGroupLayout->addWidget(hotkeyInputRow);
-    hotkeyGroup->setMinimumHeight(120);
+    hotkeyGroup->setMinimumHeight(104);
 
     QBoxLayout *appearanceGroupLayout = nullptr;
     auto *appearanceGroup = createSettingsGroup(QStringLiteral("外观"), sideContent, &appearanceGroupLayout);
@@ -283,7 +283,7 @@ void DashboardWindow::setupUi()
     });
     appearanceGroupLayout->addWidget(themeLabel);
     appearanceGroupLayout->addWidget(themeCombo);
-    appearanceGroup->setMinimumHeight(96);
+    appearanceGroup->setMinimumHeight(84);
 
     QBoxLayout *inputGroupLayout = nullptr;
     auto *inputGroup = createSettingsGroup(QStringLiteral("输入"), sideContent, &inputGroupLayout);
@@ -293,7 +293,7 @@ void DashboardWindow::setupUi()
     hideInputAfterSaveCheck->setToolTip(QStringLiteral("保存成功后短暂显示反馈并自动收起输入框"));
     connect(hideInputAfterSaveCheck, &QCheckBox::toggled, this, &DashboardWindow::inputAutoHideChanged);
     inputGroupLayout->addWidget(hideInputAfterSaveCheck);
-    inputGroup->setMinimumHeight(80);
+    inputGroup->setMinimumHeight(68);
 
     QBoxLayout *systemGroupLayout = nullptr;
     auto *systemGroup = createSettingsGroup(QStringLiteral("系统"), sideContent, &systemGroupLayout);
@@ -303,7 +303,7 @@ void DashboardWindow::setupUi()
     autostartCheck->setToolTip(QStringLiteral("开机后自动启动 Quick Memo"));
     connect(autostartCheck, &QCheckBox::toggled, this, &DashboardWindow::autostartChanged);
     systemGroupLayout->addWidget(autostartCheck);
-    systemGroup->setMinimumHeight(80);
+    systemGroup->setMinimumHeight(68);
 
     sideLayout->addWidget(hotkeyGroup);
     sideLayout->addWidget(appearanceGroup);
@@ -433,18 +433,18 @@ QWidget *DashboardWindow::createMemoControls(MemoType type, QWidget *parent)
     auto *container = new QFrame(parent);
     container->setObjectName("MemoControlCard");
     container->setProperty("memoKind", MemoStore::typeToString(type));
-    container->setMinimumHeight(112);
+    container->setMinimumHeight(56);
     container->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
 
     auto *layout = new QVBoxLayout(container);
-    layout->setContentsMargins(12, 12, 12, 12);
-    layout->setSpacing(8);
+    layout->setContentsMargins(8, 8, 8, 8);
+    layout->setSpacing(0);
 
     auto *topRow = new QWidget(container);
-    topRow->setMinimumHeight(38);
+    topRow->setMinimumHeight(34);
     auto *topRowLayout = new QHBoxLayout(topRow);
     topRowLayout->setContentsMargins(0, 0, 0, 0);
-    topRowLayout->setSpacing(8);
+    topRowLayout->setSpacing(6);
 
     auto *label = new QLabel(MemoStore::displayName(type), topRow);
     label->setObjectName("MemoControlTitle");
@@ -452,13 +452,13 @@ QWidget *DashboardWindow::createMemoControls(MemoType type, QWidget *parent)
     auto *visibilityButton = new QPushButton(topRow);
     visibilityButton->setObjectName("SecondaryButton");
     visibilityButton->setCursor(Qt::PointingHandCursor);
-    visibilityButton->setMinimumSize(72, 34);
-    auto *topCheck = new QCheckBox(QStringLiteral("置顶"), container);
+    visibilityButton->setMinimumSize(56, 30);
+    auto *topCheck = new QCheckBox(QStringLiteral("置顶"), topRow);
     topCheck->setObjectName("PinToggle");
     topCheck->setProperty("memoKind", MemoStore::typeToString(type));
     topCheck->setCursor(Qt::PointingHandCursor);
     topCheck->setToolTip(QStringLiteral("保持便签窗口置顶"));
-    topCheck->setMinimumHeight(36);
+    topCheck->setMinimumHeight(30);
 
     connect(visibilityButton, &QPushButton::clicked, this, [this, type]() {
         const MemoWindowState state = store->windowState(type);
@@ -482,10 +482,10 @@ QWidget *DashboardWindow::createMemoControls(MemoType type, QWidget *parent)
 
     topRowLayout->addWidget(label);
     topRowLayout->addStretch(1);
+    topRowLayout->addWidget(topCheck);
     topRowLayout->addWidget(visibilityButton);
 
     layout->addWidget(topRow);
-    layout->addWidget(topCheck);
     return container;
 }
 
@@ -493,12 +493,12 @@ QFrame *DashboardWindow::createSettingsGroup(const QString &title, QWidget *pare
 {
     auto *group = new QFrame(parent);
     group->setObjectName("SettingsGroup");
-    group->setMinimumHeight(72);
+    group->setMinimumHeight(64);
     group->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
 
     auto *layout = new QVBoxLayout(group);
-    layout->setContentsMargins(10, 10, 10, 10);
-    layout->setSpacing(6);
+    layout->setContentsMargins(8, 8, 8, 8);
+    layout->setSpacing(5);
 
     auto *titleLabel = new QLabel(title, group);
     titleLabel->setObjectName("SettingGroupTitle");
