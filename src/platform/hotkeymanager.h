@@ -1,7 +1,7 @@
 #ifndef HOTKEYMANAGER_H
 #define HOTKEYMANAGER_H
 
-#include "memostore.h"
+#include "core/memostore.h"
 
 #include <QAbstractNativeEventFilter>
 #include <QObject>

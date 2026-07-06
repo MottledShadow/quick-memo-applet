@@ -1,7 +1,7 @@
 #ifndef MEMOWINDOW_H
 #define MEMOWINDOW_H
 
-#include "memostore.h"
+#include "core/memostore.h"
 
 #include <QPoint>
 #include <QVector>

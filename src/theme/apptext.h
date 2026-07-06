@@ -1,7 +1,7 @@
 #ifndef APPTEXT_H
 #define APPTEXT_H
 
-#include "memostore.h"
+#include "core/memostore.h"
 
 #include <QString>
 #include <QtGlobal>

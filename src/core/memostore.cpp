@@ -583,13 +583,6 @@ MemoType MemoStore::typeFromString(const QString &value)
     return value == "todo" ? MemoType::Todo : MemoType::Question;
 }
 
-QString MemoStore::displayName(MemoType type)
-{
-    return defaultCategoryName(type);
-
-    return type == MemoType::Question ? QStringLiteral("问题") : QStringLiteral("待办");
-}
-
 QString MemoStore::themeToString(ThemeMode mode)
 {
     switch (mode) {
@@ -613,17 +606,6 @@ ThemeMode MemoStore::themeFromString(const QString &value)
         return ThemeMode::Light;
     }
     return ThemeMode::System;
-}
-
-QString MemoStore::themeDisplayName(ThemeMode mode)
-{
-    if (mode == ThemeMode::Dark) {
-        return QStringLiteral("暗色");
-    }
-    if (mode == ThemeMode::Light) {
-        return QStringLiteral("亮色");
-    }
-    return QStringLiteral("跟随系统");
 }
 
 QString MemoStore::languageToString(AppLanguage language)

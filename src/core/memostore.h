@@ -137,10 +137,8 @@ public:
 
     static QString typeToString(MemoType type);
     static MemoType typeFromString(const QString &value);
-    static QString displayName(MemoType type);
     static QString themeToString(ThemeMode mode);
     static ThemeMode themeFromString(const QString &value);
-    static QString themeDisplayName(ThemeMode mode);
     static QString languageToString(AppLanguage language);
     static AppLanguage languageFromString(const QString &value);
     static QString fontSizeToString(FontSizeMode mode);

@@ -1,7 +1,7 @@
 #ifndef TRAYCONTROLLER_H
 #define TRAYCONTROLLER_H
 
-#include "memostore.h"
+#include "core/memostore.h"
 
 #include <QObject>
 

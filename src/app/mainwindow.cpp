@@ -1,12 +1,12 @@
 #include "mainwindow.h"
 
-#include "apptheme.h"
-#include "apptext.h"
-#include "dashboardwindow.h"
-#include "hotkeymanager.h"
-#include "inputwindow.h"
-#include "memowindow.h"
-#include "traycontroller.h"
+#include "platform/hotkeymanager.h"
+#include "theme/apptext.h"
+#include "theme/apptheme.h"
+#include "ui/dashboardwindow.h"
+#include "ui/inputwindow.h"
+#include "ui/memowindow.h"
+#include "ui/traycontroller.h"
 
 #include <QAbstractAnimation>
 #include <QApplication>

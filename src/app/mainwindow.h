@@ -1,7 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "memostore.h"
+#include "core/memostore.h"
 
 #include <QObject>
 #include <QKeySequence>

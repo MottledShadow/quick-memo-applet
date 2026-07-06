@@ -1,20 +1,27 @@
 # Build output
-build/
-build-*/
-cmake-build-*/
-CMakeFiles/
-CMakeCache.txt
-cmake_install.cmake
-compile_commands.json
+/build/
+/build-*/
+/cmake-build-*/
+/CMakeFiles/
+/CMakeCache.txt
+/cmake_install.cmake
+/compile_commands.json
+/install_manifest.txt
+/.ninja_deps
+/.ninja_log
 
 # Qt Creator local state
-.qtcreator/
+/.qtcreator/
 *.user
 *.user.*
+*.autosave
+*.pro.user
+*.pro.user.*
+/.qmake.stash
 
 # Local agent/tool state
-.agents/
-.codex/
+/.agents/
+/.codex/
 
 # Qt / CMake generated files
 *_autogen/
@@ -42,11 +49,13 @@ networkinformation/
 tls/
 translations/
 
-# Logs and temporary files
+# Logs, archives, and temporary files
 *.log
 *.tmp
 *.bak
 *.orig
+*.zip
+*.7z
 
 # OS / editor noise
 .DS_Store

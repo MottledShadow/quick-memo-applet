@@ -1,7 +1,7 @@
 #include "inputwindow.h"
 
-#include "apptheme.h"
-#include "apptext.h"
+#include "theme/apptext.h"
+#include "theme/apptheme.h"
 
 #include <QAbstractAnimation>
 #include <QCursor>

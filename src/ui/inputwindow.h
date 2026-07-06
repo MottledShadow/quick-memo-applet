@@ -1,7 +1,7 @@
 #ifndef INPUTWINDOW_H
 #define INPUTWINDOW_H
 
-#include "memostore.h"
+#include "core/memostore.h"
 
 #include <QPoint>
 #include <QWidget>

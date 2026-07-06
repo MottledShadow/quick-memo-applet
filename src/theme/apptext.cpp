@@ -9,28 +9,22 @@ QString text(AppLanguage language, const char *zhText, const char *enText)
 
 QString AppText::memoTypeName(MemoType type, AppLanguage language)
 {
+    Q_UNUSED(language)
+
     if (type == MemoType::Todo) {
         return QStringLiteral("ToDo");
     }
     return QStringLiteral("Idea");
-
-    if (type == MemoType::Todo) {
-        return text(language, "待办", "Todos");
-    }
-    return text(language, "问题", "Questions");
 }
 
 QString AppText::memoTypeSingular(MemoType type, AppLanguage language)
 {
+    Q_UNUSED(language)
+
     if (type == MemoType::Todo) {
         return QStringLiteral("ToDo");
     }
     return QStringLiteral("Idea");
-
-    if (type == MemoType::Todo) {
-        return text(language, "待办", "todo");
-    }
-    return text(language, "问题", "question");
 }
 
 QString AppText::languageDisplayName(AppLanguage language)

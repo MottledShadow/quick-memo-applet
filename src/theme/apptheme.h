@@ -1,7 +1,7 @@
 #ifndef APPTHEME_H
 #define APPTHEME_H
 
-#include "memostore.h"
+#include "core/memostore.h"
 
 #include <QColor>
 #include <QString>

@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.16)
 
 project(Quick_Memo_Applet VERSION 0.1 LANGUAGES CXX)
 
-set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
@@ -13,25 +12,25 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
 set(PROJECT_SOURCES
-        main.cpp
-        apptext.cpp
-        apptext.h
-        apptheme.cpp
-        apptheme.h
-        dashboardwindow.cpp
-        dashboardwindow.h
-        hotkeymanager.cpp
-        hotkeymanager.h
-        inputwindow.cpp
-        inputwindow.h
-        mainwindow.cpp
-        mainwindow.h
-        memostore.cpp
-        memostore.h
-        memowindow.cpp
-        memowindow.h
-        traycontroller.cpp
-        traycontroller.h
+        src/app/main.cpp
+        src/app/mainwindow.cpp
+        src/app/mainwindow.h
+        src/core/memostore.cpp
+        src/core/memostore.h
+        src/platform/hotkeymanager.cpp
+        src/platform/hotkeymanager.h
+        src/theme/apptext.cpp
+        src/theme/apptext.h
+        src/theme/apptheme.cpp
+        src/theme/apptheme.h
+        src/ui/dashboardwindow.cpp
+        src/ui/dashboardwindow.h
+        src/ui/inputwindow.cpp
+        src/ui/inputwindow.h
+        src/ui/memowindow.cpp
+        src/ui/memowindow.h
+        src/ui/traycontroller.cpp
+        src/ui/traycontroller.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -58,6 +57,7 @@ else()
 endif()
 
 target_link_libraries(Quick_Memo_Applet PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_include_directories(Quick_Memo_Applet PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 if(WIN32)
     target_link_libraries(Quick_Memo_Applet PRIVATE user32)

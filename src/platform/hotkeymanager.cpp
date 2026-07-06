@@ -1,6 +1,6 @@
 #include "hotkeymanager.h"
 
-#include "apptext.h"
+#include "theme/apptext.h"
 
 #include <QApplication>
 

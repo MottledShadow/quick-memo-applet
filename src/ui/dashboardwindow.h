@@ -1,7 +1,7 @@
 #ifndef DASHBOARDWINDOW_H
 #define DASHBOARDWINDOW_H
 
-#include "memostore.h"
+#include "core/memostore.h"
 
 #include <QKeySequence>
 #include <QWidget>

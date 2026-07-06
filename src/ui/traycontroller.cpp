@@ -1,6 +1,6 @@
 #include "traycontroller.h"
 
-#include "apptext.h"
+#include "theme/apptext.h"
 
 #include <QAction>
 #include <QApplication>
