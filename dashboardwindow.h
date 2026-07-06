@@ -38,8 +38,13 @@ signals:
     void fontSizeChangeRequested(FontSizeMode mode);
     void densityChangeRequested(DensityMode mode);
     void memoStartupDisplayChangeRequested(MemoStartupDisplayMode mode);
+    void defaultInputTypeChangeRequested(DefaultInputTypeMode mode);
+    void recordClickActionChangeRequested(RecordClickAction action);
+    void recordSortOrderChangeRequested(RecordSortOrder order);
+    void exportJsonRequested();
+    void importJsonRequested();
     void inputAutoHideChanged(bool enabled);
-    void recordDeleteRequested(const QString &id, MemoType type);
+    void recordClickRequested(const QString &id, MemoType type);
     void autostartChanged(bool enabled);
 
 protected:
@@ -72,8 +77,13 @@ private:
     QComboBox *fontSizeCombo;
     QComboBox *densityCombo;
     QComboBox *memoStartupDisplayCombo;
+    QComboBox *defaultInputTypeCombo;
+    QComboBox *recordClickActionCombo;
+    QComboBox *recordSortOrderCombo;
     QKeySequenceEdit *hotkeyEdit;
     QPushButton *applyHotkeyButton;
+    QPushButton *exportJsonButton;
+    QPushButton *importJsonButton;
     QLabel *recordsTitleLabel;
     QLabel *memoSectionTitleLabel;
     QLabel *settingsSectionTitleLabel;
@@ -93,6 +103,11 @@ private:
     QLabel *memoDisplayGroupTitleLabel;
     QLabel *memoStartupDisplayFieldLabel;
     QLabel *inputGroupTitleLabel;
+    QLabel *defaultInputTypeFieldLabel;
+    QLabel *recordGroupTitleLabel;
+    QLabel *recordClickActionFieldLabel;
+    QLabel *recordSortOrderFieldLabel;
+    QLabel *dataGroupTitleLabel;
     QLabel *systemGroupTitleLabel;
     QBoxLayout *questionRecordsLayout;
     QBoxLayout *todoRecordsLayout;

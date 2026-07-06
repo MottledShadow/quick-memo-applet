@@ -219,6 +219,16 @@ QString AppText::clickToDelete(AppLanguage language)
     return text(language, "点击删除", "Click to delete");
 }
 
+QString AppText::clickToComplete(AppLanguage language)
+{
+    return text(language, "点击完成", "Click to complete");
+}
+
+QString AppText::memoClickDisabledTooltip(AppLanguage language)
+{
+    return text(language, "便签内点击不执行操作", "Memo clicks are disabled");
+}
+
 QString AppText::ready(AppLanguage language)
 {
     return text(language, "就绪", "Ready");
@@ -238,6 +248,14 @@ QString AppText::deletedRecord(const QString &categoryName, AppLanguage language
         return QStringLiteral("Deleted one %1.").arg(categoryName);
     }
     return QString::fromUtf8("已删除一条%1。").arg(categoryName);
+}
+
+QString AppText::completedRecord(const QString &categoryName, AppLanguage language)
+{
+    if (language == AppLanguage::English) {
+        return QStringLiteral("Completed one %1.").arg(categoryName);
+    }
+    return QString::fromUtf8("已完成一条%1。").arg(categoryName);
 }
 
 QString AppText::inputWindowTitle(AppLanguage language)
@@ -446,6 +464,163 @@ QString AppText::categoryNameChanged(const QString &categoryName, AppLanguage la
         return QStringLiteral("Category renamed: %1").arg(categoryName);
     }
     return QString::fromUtf8("分类已重命名：%1").arg(categoryName);
+}
+
+QString AppText::defaultInputTypeLabel(AppLanguage language)
+{
+    return text(language, "默认分类", "Default type");
+}
+
+QString AppText::defaultInputTypeTooltip(AppLanguage language)
+{
+    return text(language, "设置每次呼出输入框时默认选中的分类",
+                "Choose the type selected when the input window opens");
+}
+
+QString AppText::defaultInputTypeName(DefaultInputTypeMode mode,
+                                      const QString &questionName,
+                                      const QString &todoName,
+                                      AppLanguage language)
+{
+    switch (mode) {
+    case DefaultInputTypeMode::Question:
+        return language == AppLanguage::English ? QStringLiteral("Fixed: %1").arg(questionName)
+                                                : QString::fromUtf8("固定：%1").arg(questionName);
+    case DefaultInputTypeMode::Todo:
+        return language == AppLanguage::English ? QStringLiteral("Fixed: %1").arg(todoName)
+                                                : QString::fromUtf8("固定：%1").arg(todoName);
+    case DefaultInputTypeMode::LastUsed:
+        return text(language, "保持上次选择", "Last used");
+    }
+
+    return text(language, "保持上次选择", "Last used");
+}
+
+QString AppText::defaultInputTypeChanged(DefaultInputTypeMode mode,
+                                         const QString &questionName,
+                                         const QString &todoName,
+                                         AppLanguage language)
+{
+    const QString name = defaultInputTypeName(mode, questionName, todoName, language);
+    if (language == AppLanguage::English) {
+        return QStringLiteral("Default input type: %1").arg(name);
+    }
+    return QString::fromUtf8("默认输入分类：%1").arg(name);
+}
+
+QString AppText::recordTitle(AppLanguage language)
+{
+    return text(language, "记录", "Records");
+}
+
+QString AppText::recordClickActionLabel(AppLanguage language)
+{
+    return text(language, "点击行为", "Click action");
+}
+
+QString AppText::recordClickActionTooltip(AppLanguage language)
+{
+    return text(language, "设置点击记录时删除、完成或仅允许后台删除",
+                "Choose whether record clicks delete, complete, or only work in Dashboard");
+}
+
+QString AppText::recordClickActionName(RecordClickAction action, AppLanguage language)
+{
+    switch (action) {
+    case RecordClickAction::Complete:
+        return text(language, "点击完成", "Complete");
+    case RecordClickAction::DashboardOnly:
+        return text(language, "只在后台删除", "Dashboard delete only");
+    case RecordClickAction::Delete:
+        return text(language, "点击删除", "Delete");
+    }
+
+    return text(language, "点击删除", "Delete");
+}
+
+QString AppText::recordClickActionChanged(RecordClickAction action, AppLanguage language)
+{
+    if (language == AppLanguage::English) {
+        return QStringLiteral("Record click action: %1").arg(recordClickActionName(action, language));
+    }
+    return QString::fromUtf8("记录点击行为：%1").arg(recordClickActionName(action, language));
+}
+
+QString AppText::recordSortOrderLabel(AppLanguage language)
+{
+    return text(language, "排序", "Sort");
+}
+
+QString AppText::recordSortOrderTooltip(AppLanguage language)
+{
+    return text(language, "设置普通记录列表的展示顺序", "Choose the display order for active records");
+}
+
+QString AppText::recordSortOrderName(RecordSortOrder order, AppLanguage language)
+{
+    return order == RecordSortOrder::OldestFirst ? text(language, "最旧在上", "Oldest first")
+                                                 : text(language, "最新在上", "Newest first");
+}
+
+QString AppText::recordSortOrderChanged(RecordSortOrder order, AppLanguage language)
+{
+    if (language == AppLanguage::English) {
+        return QStringLiteral("Record sort order: %1").arg(recordSortOrderName(order, language));
+    }
+    return QString::fromUtf8("记录排序：%1").arg(recordSortOrderName(order, language));
+}
+
+QString AppText::dataTitle(AppLanguage language)
+{
+    return text(language, "数据", "Data");
+}
+
+QString AppText::exportJson(AppLanguage language)
+{
+    return text(language, "导出 JSON", "Export JSON");
+}
+
+QString AppText::importJson(AppLanguage language)
+{
+    return text(language, "导入 JSON", "Import JSON");
+}
+
+QString AppText::exportJsonTooltip(AppLanguage language)
+{
+    return text(language, "导出完整本地数据，包含设置、窗口状态和已完成记录",
+                "Export all local data, including settings, window state, and completed records");
+}
+
+QString AppText::importJsonTooltip(AppLanguage language)
+{
+    return text(language, "选择 JSON 文件替换当前数据，导入前会自动备份当前数据",
+                "Replace current data from a JSON file after backing up the current data");
+}
+
+QString AppText::exportJsonSuccess(AppLanguage language)
+{
+    return text(language, "JSON 已导出。", "JSON exported.");
+}
+
+QString AppText::exportJsonFailed(const QString &reason, AppLanguage language)
+{
+    if (language == AppLanguage::English) {
+        return QStringLiteral("JSON export failed: %1").arg(reason);
+    }
+    return QString::fromUtf8("JSON 导出失败：%1").arg(reason);
+}
+
+QString AppText::importJsonSuccess(AppLanguage language)
+{
+    return text(language, "JSON 已导入，当前数据已替换。", "JSON imported. Current data was replaced.");
+}
+
+QString AppText::importJsonFailed(const QString &reason, AppLanguage language)
+{
+    if (language == AppLanguage::English) {
+        return QStringLiteral("JSON import failed: %1").arg(reason);
+    }
+    return QString::fromUtf8("JSON 导入失败：%1").arg(reason);
 }
 
 QString AppText::inputAutoHideEnabled(AppLanguage language)

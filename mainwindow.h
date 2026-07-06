@@ -26,6 +26,12 @@ private:
     void restoreWindows();
     void registerStoredHotkey();
     void syncLanguage();
+    void syncRecordClickAction();
+    void refreshRecordViews();
+    void applyDefaultInputType();
+    void handleRecordClick(const QString &id, MemoType type, bool fromDashboard);
+    void exportJson();
+    void importJson();
     void applyAppearance(bool animate);
     void playThemeTransition(QWidget *widget);
     bool applyAutostart(bool enabled);

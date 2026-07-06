@@ -13,6 +13,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QEasingCurve>
+#include <QFileDialog>
 #include <QKeySequence>
 #include <QPropertyAnimation>
 #include <QSettings>
@@ -51,6 +52,7 @@ MainWindow::MainWindow(QObject *parent)
     inputWindow->setCurrentType(store->currentType());
     inputWindow->setHideAfterSave(store->hideInputAfterSave());
     syncLanguage();
+    syncRecordClickAction();
     applyAppearance(false);
 
     restoreWindows();
@@ -78,8 +80,7 @@ MainWindow::~MainWindow()
 void MainWindow::setupConnections()
 {
     connect(store, &MemoStore::recordsChanged, this, [this]() {
-        questionWindow->setRecords(store->records(MemoType::Question));
-        todoWindow->setRecords(store->records(MemoType::Todo));
+        refreshRecordViews();
     });
 
     connect(store, &MemoStore::settingsChanged, this, [this]() {
@@ -89,13 +90,18 @@ void MainWindow::setupConnections()
         inputWindow->setCurrentType(store->currentType());
         inputWindow->setHideAfterSave(store->hideInputAfterSave());
         syncLanguage();
+        syncRecordClickAction();
         if (appearanceChanged) {
             applyAppearance(true);
         }
     });
 
-    connect(questionWindow, &MemoWindow::memoClicked, store, &MemoStore::deleteMemo);
-    connect(todoWindow, &MemoWindow::memoClicked, store, &MemoStore::deleteMemo);
+    connect(questionWindow, &MemoWindow::memoClicked, this, [this](const QString &id) {
+        handleRecordClick(id, MemoType::Question, false);
+    });
+    connect(todoWindow, &MemoWindow::memoClicked, this, [this](const QString &id) {
+        handleRecordClick(id, MemoType::Todo, false);
+    });
     connect(questionWindow, &MemoWindow::categoryNameChangeRequested, this, [this](MemoType type, const QString &name) {
         store->setCategoryName(type, name);
         dashboardWindow->setStatusMessage(AppText::categoryNameChanged(store->categoryName(type), store->language()));
@@ -114,6 +120,8 @@ void MainWindow::setupConnections()
     connect(hotkeyManager, &HotkeyManager::activated, this, [this]() {
         if (inputWindow->isOpenForCapture()) {
             inputWindow->toggleCurrentType();
+        } else {
+            applyDefaultInputType();
         }
         inputWindow->showAndFocus();
     });
@@ -136,9 +144,8 @@ void MainWindow::setupConnections()
         memoWindow(type)->hide();
     });
 
-    connect(dashboardWindow, &DashboardWindow::recordDeleteRequested, this, [this](const QString &id, MemoType type) {
-        Q_UNUSED(type)
-        store->deleteMemo(id);
+    connect(dashboardWindow, &DashboardWindow::recordClickRequested, this, [this](const QString &id, MemoType type) {
+        handleRecordClick(id, type, true);
     }, Qt::QueuedConnection);
 
     connect(dashboardWindow, &DashboardWindow::alwaysOnTopChanged, this, [this](MemoType type, bool enabled) {
@@ -183,6 +190,27 @@ void MainWindow::setupConnections()
         store->setMemoStartupDisplayMode(mode);
         dashboardWindow->setStatusMessage(AppText::memoStartupDisplayChanged(mode, store->language()));
     });
+
+    connect(dashboardWindow, &DashboardWindow::defaultInputTypeChangeRequested, this, [this](DefaultInputTypeMode mode) {
+        store->setDefaultInputTypeMode(mode);
+        dashboardWindow->setStatusMessage(AppText::defaultInputTypeChanged(mode,
+                                                                           store->categoryName(MemoType::Question),
+                                                                           store->categoryName(MemoType::Todo),
+                                                                           store->language()));
+    });
+
+    connect(dashboardWindow, &DashboardWindow::recordClickActionChangeRequested, this, [this](RecordClickAction action) {
+        store->setRecordClickAction(action);
+        dashboardWindow->setStatusMessage(AppText::recordClickActionChanged(action, store->language()));
+    });
+
+    connect(dashboardWindow, &DashboardWindow::recordSortOrderChangeRequested, this, [this](RecordSortOrder order) {
+        store->setRecordSortOrder(order);
+        dashboardWindow->setStatusMessage(AppText::recordSortOrderChanged(order, store->language()));
+    });
+
+    connect(dashboardWindow, &DashboardWindow::exportJsonRequested, this, &MainWindow::exportJson);
+    connect(dashboardWindow, &DashboardWindow::importJsonRequested, this, &MainWindow::importJson);
 
     connect(dashboardWindow, &DashboardWindow::inputAutoHideChanged, this, [this](bool enabled) {
         store->setHideInputAfterSave(enabled);
@@ -248,6 +276,102 @@ void MainWindow::syncLanguage()
     todoWindow->setCategoryName(store->categoryName(MemoType::Todo));
     hotkeyManager->setLanguage(language);
     trayController->setLanguage(language);
+}
+
+void MainWindow::syncRecordClickAction()
+{
+    questionWindow->setRecordClickAction(store->recordClickAction());
+    todoWindow->setRecordClickAction(store->recordClickAction());
+}
+
+void MainWindow::refreshRecordViews()
+{
+    questionWindow->setRecords(store->records(MemoType::Question));
+    todoWindow->setRecords(store->records(MemoType::Todo));
+}
+
+void MainWindow::applyDefaultInputType()
+{
+    switch (store->defaultInputTypeMode()) {
+    case DefaultInputTypeMode::Question:
+        inputWindow->setCurrentType(MemoType::Question);
+        break;
+    case DefaultInputTypeMode::Todo:
+        inputWindow->setCurrentType(MemoType::Todo);
+        break;
+    case DefaultInputTypeMode::LastUsed:
+        inputWindow->setCurrentType(store->currentType());
+        break;
+    }
+}
+
+void MainWindow::handleRecordClick(const QString &id, MemoType type, bool fromDashboard)
+{
+    const RecordClickAction action = store->recordClickAction();
+    if (action == RecordClickAction::DashboardOnly && !fromDashboard) {
+        return;
+    }
+
+    if (action == RecordClickAction::Complete) {
+        store->completeMemo(id);
+        dashboardWindow->setStatusMessage(AppText::completedRecord(store->categoryName(type), store->language()));
+        return;
+    }
+
+    store->deleteMemo(id);
+    dashboardWindow->setStatusMessage(AppText::deletedRecord(store->categoryName(type), store->language()));
+}
+
+void MainWindow::exportJson()
+{
+    QString filePath = QFileDialog::getSaveFileName(dashboardWindow,
+                                                    AppText::exportJson(store->language()),
+                                                    QDir::home().filePath("quick-memo-export.json"),
+                                                    QStringLiteral("JSON (*.json);;All Files (*)"));
+    if (filePath.isEmpty()) {
+        return;
+    }
+
+    if (!filePath.endsWith(QStringLiteral(".json"), Qt::CaseInsensitive)) {
+        filePath.append(QStringLiteral(".json"));
+    }
+
+    QString error;
+    if (!store->exportToFile(filePath, &error)) {
+        dashboardWindow->setStatusMessage(AppText::exportJsonFailed(error, store->language()));
+        return;
+    }
+
+    dashboardWindow->setStatusMessage(AppText::exportJsonSuccess(store->language()));
+}
+
+void MainWindow::importJson()
+{
+    const QString filePath = QFileDialog::getOpenFileName(dashboardWindow,
+                                                          AppText::importJson(store->language()),
+                                                          QDir::homePath(),
+                                                          QStringLiteral("JSON (*.json);;All Files (*)"));
+    if (filePath.isEmpty()) {
+        return;
+    }
+
+    QString error;
+    if (!store->importFromFile(filePath, &error)) {
+        dashboardWindow->setStatusMessage(AppText::importJsonFailed(error, store->language()));
+        return;
+    }
+
+    inputWindow->setCurrentType(store->currentType());
+    inputWindow->setHideAfterSave(store->hideInputAfterSave());
+    refreshRecordViews();
+    syncLanguage();
+    syncRecordClickAction();
+    applyAppearance(false);
+    restoreWindows();
+    registerStoredHotkey();
+    applyAutostart(store->autostartEnabled());
+    dashboardWindow->refresh();
+    dashboardWindow->setStatusMessage(AppText::importJsonSuccess(store->language()));
 }
 
 void MainWindow::applyAppearance(bool animate)

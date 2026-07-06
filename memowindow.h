@@ -30,6 +30,7 @@ public slots:
     void setAlwaysOnTop(bool enabled);
     void setLanguage(AppLanguage language);
     void setCategoryName(const QString &name);
+    void setRecordClickAction(RecordClickAction action);
     void applyTheme(ThemeMode mode, FontSizeMode fontSize, DensityMode density);
 
 signals:
@@ -71,6 +72,7 @@ private:
     QString deletingMemoId;
     QString categoryName;
     AppLanguage appLanguage;
+    RecordClickAction clickAction;
     bool alwaysOnTop;
     bool dragging;
     bool editingTitle;

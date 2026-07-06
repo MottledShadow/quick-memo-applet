@@ -46,9 +46,12 @@ public:
     static QString showMemoTooltip(AppLanguage language);
     static QString hideMemoTooltip(AppLanguage language);
     static QString clickToDelete(AppLanguage language);
+    static QString clickToComplete(AppLanguage language);
+    static QString memoClickDisabledTooltip(AppLanguage language);
     static QString ready(AppLanguage language);
     static QString deletedRecord(MemoType type, AppLanguage language);
     static QString deletedRecord(const QString &categoryName, AppLanguage language);
+    static QString completedRecord(const QString &categoryName, AppLanguage language);
 
     static QString inputWindowTitle(AppLanguage language);
     static QString switchTypeTooltip(AppLanguage language);
@@ -86,6 +89,34 @@ public:
     static QString memoStartupDisplayName(MemoStartupDisplayMode mode, AppLanguage language);
     static QString memoStartupDisplayChanged(MemoStartupDisplayMode mode, AppLanguage language);
     static QString categoryNameChanged(const QString &categoryName, AppLanguage language);
+    static QString defaultInputTypeLabel(AppLanguage language);
+    static QString defaultInputTypeTooltip(AppLanguage language);
+    static QString defaultInputTypeName(DefaultInputTypeMode mode,
+                                        const QString &questionName,
+                                        const QString &todoName,
+                                        AppLanguage language);
+    static QString defaultInputTypeChanged(DefaultInputTypeMode mode,
+                                           const QString &questionName,
+                                           const QString &todoName,
+                                           AppLanguage language);
+    static QString recordTitle(AppLanguage language);
+    static QString recordClickActionLabel(AppLanguage language);
+    static QString recordClickActionTooltip(AppLanguage language);
+    static QString recordClickActionName(RecordClickAction action, AppLanguage language);
+    static QString recordClickActionChanged(RecordClickAction action, AppLanguage language);
+    static QString recordSortOrderLabel(AppLanguage language);
+    static QString recordSortOrderTooltip(AppLanguage language);
+    static QString recordSortOrderName(RecordSortOrder order, AppLanguage language);
+    static QString recordSortOrderChanged(RecordSortOrder order, AppLanguage language);
+    static QString dataTitle(AppLanguage language);
+    static QString exportJson(AppLanguage language);
+    static QString importJson(AppLanguage language);
+    static QString exportJsonTooltip(AppLanguage language);
+    static QString importJsonTooltip(AppLanguage language);
+    static QString exportJsonSuccess(AppLanguage language);
+    static QString exportJsonFailed(const QString &reason, AppLanguage language);
+    static QString importJsonSuccess(AppLanguage language);
+    static QString importJsonFailed(const QString &reason, AppLanguage language);
     static QString inputAutoHideEnabled(AppLanguage language);
     static QString inputAutoHideDisabled(AppLanguage language);
     static QString autostartFailed(AppLanguage language);

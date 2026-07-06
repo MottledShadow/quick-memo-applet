@@ -269,6 +269,7 @@ MemoWindow::MemoWindow(MemoType type, QWidget *parent)
     , deletingMemoId()
     , categoryName(type == MemoType::Question ? QStringLiteral("Idea") : QStringLiteral("ToDo"))
     , appLanguage(AppLanguage::ZhCn)
+    , clickAction(RecordClickAction::Delete)
     , alwaysOnTop(true)
     , dragging(false)
     , editingTitle(false)
@@ -354,6 +355,16 @@ void MemoWindow::setCategoryName(const QString &name)
     rebuildList();
 }
 
+void MemoWindow::setRecordClickAction(RecordClickAction action)
+{
+    if (clickAction == action) {
+        return;
+    }
+
+    clickAction = action;
+    rebuildList();
+}
+
 void MemoWindow::applyTheme(ThemeMode mode, FontSizeMode fontSize, DensityMode density)
 {
     setStyleSheet(AppTheme::memoWindowStyleSheet(mode, fontSize, density));
@@ -417,6 +428,10 @@ bool MemoWindow::eventFilter(QObject *object, QEvent *event)
     }
 
     const QVariant memoId = object->property("memoId");
+    if (memoId.isValid() && clickAction == RecordClickAction::DashboardOnly) {
+        return QWidget::eventFilter(object, event);
+    }
+
     if (memoId.isValid() && event->type() == QEvent::MouseButtonPress) {
         auto *mouseEvent = static_cast<QMouseEvent *>(event);
         if (mouseEvent->button() == Qt::LeftButton) {
@@ -622,9 +637,16 @@ void MemoWindow::rebuildList()
         recordFrame->setProperty("memoId", memo.id);
         recordFrame->setMemoKind(MemoStore::typeToString(memo.type));
         recordFrame->setProperty("deleting", false);
-        recordFrame->setCursor(Qt::PointingHandCursor);
-        recordFrame->setToolTip(AppText::clickToDelete(appLanguage));
-        recordFrame->installEventFilter(this);
+        if (clickAction == RecordClickAction::DashboardOnly) {
+            recordFrame->setCursor(Qt::ArrowCursor);
+            recordFrame->setToolTip(AppText::memoClickDisabledTooltip(appLanguage));
+        } else {
+            recordFrame->setCursor(Qt::PointingHandCursor);
+            recordFrame->setToolTip(clickAction == RecordClickAction::Complete
+                                        ? AppText::clickToComplete(appLanguage)
+                                        : AppText::clickToDelete(appLanguage));
+            recordFrame->installEventFilter(this);
+        }
         recordFrame->setFixedHeight(kPaperLineSpacing);
 
         auto *recordLayout = new QHBoxLayout(recordFrame);

@@ -2,6 +2,7 @@
 #define MEMOSTORE_H
 
 #include <QDateTime>
+#include <QJsonObject>
 #include <QObject>
 #include <QRect>
 #include <QString>
@@ -40,11 +41,29 @@ enum class MemoStartupDisplayMode {
     HideAll
 };
 
+enum class DefaultInputTypeMode {
+    LastUsed,
+    Question,
+    Todo
+};
+
+enum class RecordClickAction {
+    Delete,
+    Complete,
+    DashboardOnly
+};
+
+enum class RecordSortOrder {
+    NewestFirst,
+    OldestFirst
+};
+
 struct MemoItem {
     QString id;
     MemoType type;
     QString text;
     QDateTime createdAt;
+    QDateTime completedAt;
 };
 
 struct MemoWindowState {
@@ -96,13 +115,25 @@ public:
     MemoStartupDisplayMode memoStartupDisplayMode() const;
     void setMemoStartupDisplayMode(MemoStartupDisplayMode mode);
 
+    DefaultInputTypeMode defaultInputTypeMode() const;
+    void setDefaultInputTypeMode(DefaultInputTypeMode mode);
+
+    RecordClickAction recordClickAction() const;
+    void setRecordClickAction(RecordClickAction action);
+
+    RecordSortOrder recordSortOrder() const;
+    void setRecordSortOrder(RecordSortOrder order);
+
     MemoWindowState windowState(MemoType type) const;
     void setWindowState(MemoType type, const MemoWindowState &state);
 
     void addMemo(MemoType type, const QString &text);
     void deleteMemo(const QString &id);
+    void completeMemo(const QString &id);
 
     QString dataFilePath() const;
+    bool exportToFile(const QString &filePath, QString *errorMessage = nullptr) const;
+    bool importFromFile(const QString &filePath, QString *errorMessage = nullptr);
 
     static QString typeToString(MemoType type);
     static MemoType typeFromString(const QString &value);
@@ -118,6 +149,12 @@ public:
     static DensityMode densityFromString(const QString &value);
     static QString memoStartupDisplayToString(MemoStartupDisplayMode mode);
     static MemoStartupDisplayMode memoStartupDisplayFromString(const QString &value);
+    static QString defaultInputTypeToString(DefaultInputTypeMode mode);
+    static DefaultInputTypeMode defaultInputTypeFromString(const QString &value);
+    static QString recordClickActionToString(RecordClickAction action);
+    static RecordClickAction recordClickActionFromString(const QString &value);
+    static QString recordSortOrderToString(RecordSortOrder order);
+    static RecordSortOrder recordSortOrderFromString(const QString &value);
 
 signals:
     void recordsChanged();
@@ -127,6 +164,9 @@ signals:
 private:
     MemoWindowState defaultWindowState(MemoType type) const;
     QString appDataDir() const;
+    QJsonObject toJson() const;
+    bool applyJsonObject(const QJsonObject &root, QString *errorMessage = nullptr);
+    QString nextBackupFilePath() const;
 
     QVector<MemoItem> memoRecords;
     MemoType activeType;
@@ -140,6 +180,9 @@ private:
     QString questionCategoryName;
     QString todoCategoryName;
     MemoStartupDisplayMode memoStartupDisplay;
+    DefaultInputTypeMode defaultInputType;
+    RecordClickAction clickAction;
+    RecordSortOrder sortOrder;
     MemoWindowState questionState;
     MemoWindowState todoState;
 };

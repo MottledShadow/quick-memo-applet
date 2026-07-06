@@ -67,8 +67,13 @@ DashboardWindow::DashboardWindow(MemoStore *store, QWidget *parent)
     , fontSizeCombo(nullptr)
     , densityCombo(nullptr)
     , memoStartupDisplayCombo(nullptr)
+    , defaultInputTypeCombo(nullptr)
+    , recordClickActionCombo(nullptr)
+    , recordSortOrderCombo(nullptr)
     , hotkeyEdit(nullptr)
     , applyHotkeyButton(nullptr)
+    , exportJsonButton(nullptr)
+    , importJsonButton(nullptr)
     , recordsTitleLabel(nullptr)
     , memoSectionTitleLabel(nullptr)
     , settingsSectionTitleLabel(nullptr)
@@ -88,6 +93,11 @@ DashboardWindow::DashboardWindow(MemoStore *store, QWidget *parent)
     , memoDisplayGroupTitleLabel(nullptr)
     , memoStartupDisplayFieldLabel(nullptr)
     , inputGroupTitleLabel(nullptr)
+    , defaultInputTypeFieldLabel(nullptr)
+    , recordGroupTitleLabel(nullptr)
+    , recordClickActionFieldLabel(nullptr)
+    , recordSortOrderFieldLabel(nullptr)
+    , dataGroupTitleLabel(nullptr)
     , systemGroupTitleLabel(nullptr)
     , questionRecordsLayout(nullptr)
     , todoRecordsLayout(nullptr)
@@ -145,6 +155,24 @@ void DashboardWindow::refresh()
     }
 
     {
+        const QSignalBlocker blocker(defaultInputTypeCombo);
+        defaultInputTypeCombo->setCurrentIndex(
+            defaultInputTypeCombo->findData(static_cast<int>(store->defaultInputTypeMode())));
+    }
+
+    {
+        const QSignalBlocker blocker(recordClickActionCombo);
+        recordClickActionCombo->setCurrentIndex(
+            recordClickActionCombo->findData(static_cast<int>(store->recordClickAction())));
+    }
+
+    {
+        const QSignalBlocker blocker(recordSortOrderCombo);
+        recordSortOrderCombo->setCurrentIndex(
+            recordSortOrderCombo->findData(static_cast<int>(store->recordSortOrder())));
+    }
+
+    {
         const QSignalBlocker blocker(hotkeyEdit);
         hotkeyEdit->setKeySequence(QKeySequence(store->hotkey()));
     }
@@ -192,8 +220,7 @@ bool DashboardWindow::eventFilter(QObject *object, QEvent *event)
 
         if (mouseEvent->button() == Qt::LeftButton && widget->rect().contains(mouseEvent->pos())) {
             const MemoType type = MemoStore::typeFromString(widget->property("memoKind").toString());
-            emit recordDeleteRequested(memoId.toString(), type);
-            setStatusMessage(AppText::deletedRecord(store->categoryName(type), store->language()));
+            emit recordClickRequested(memoId.toString(), type);
         }
         return true;
     }
@@ -417,12 +444,103 @@ void DashboardWindow::setupUi()
 
     QBoxLayout *inputGroupLayout = nullptr;
     auto *inputGroup = createSettingsGroup(&inputGroupTitleLabel, sideContent, &inputGroupLayout);
+    auto *inputGrid = new QGridLayout();
+    inputGrid->setContentsMargins(0, 0, 0, 0);
+    inputGrid->setHorizontalSpacing(8);
+    inputGrid->setVerticalSpacing(6);
+
+    defaultInputTypeFieldLabel = new QLabel(inputGroup);
+    defaultInputTypeFieldLabel->setObjectName("FieldLabel");
+    defaultInputTypeCombo = new NoWheelComboBox(inputGroup);
+    defaultInputTypeCombo->setObjectName("DefaultInputTypeCombo");
+    defaultInputTypeCombo->setCursor(Qt::PointingHandCursor);
+    defaultInputTypeCombo->setMinimumHeight(30);
+
+    inputGrid->addWidget(defaultInputTypeFieldLabel, 0, 0);
+    inputGrid->addWidget(defaultInputTypeCombo, 0, 1);
+    inputGrid->setColumnStretch(1, 1);
+    inputGroupLayout->addLayout(inputGrid);
+
     hideInputAfterSaveCheck = new QCheckBox(inputGroup);
     hideInputAfterSaveCheck->setObjectName("InputToggle");
     hideInputAfterSaveCheck->setMinimumHeight(28);
+    connect(defaultInputTypeCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
+        const QVariant data = defaultInputTypeCombo->itemData(index);
+        if (!data.isValid()) {
+            return;
+        }
+        emit defaultInputTypeChangeRequested(static_cast<DefaultInputTypeMode>(data.toInt()));
+    });
     connect(hideInputAfterSaveCheck, &QCheckBox::toggled, this, &DashboardWindow::inputAutoHideChanged);
     inputGroupLayout->addWidget(hideInputAfterSaveCheck);
-    inputGroup->setMinimumHeight(68);
+    inputGroup->setMinimumHeight(104);
+
+    QBoxLayout *recordGroupLayout = nullptr;
+    auto *recordGroup = createSettingsGroup(&recordGroupTitleLabel, sideContent, &recordGroupLayout);
+    auto *recordGrid = new QGridLayout();
+    recordGrid->setContentsMargins(0, 0, 0, 0);
+    recordGrid->setHorizontalSpacing(8);
+    recordGrid->setVerticalSpacing(6);
+
+    recordClickActionFieldLabel = new QLabel(recordGroup);
+    recordClickActionFieldLabel->setObjectName("FieldLabel");
+    recordSortOrderFieldLabel = new QLabel(recordGroup);
+    recordSortOrderFieldLabel->setObjectName("FieldLabel");
+
+    recordClickActionCombo = new NoWheelComboBox(recordGroup);
+    recordClickActionCombo->setObjectName("RecordClickActionCombo");
+    recordClickActionCombo->setCursor(Qt::PointingHandCursor);
+    recordClickActionCombo->setMinimumHeight(30);
+    recordSortOrderCombo = new NoWheelComboBox(recordGroup);
+    recordSortOrderCombo->setObjectName("RecordSortOrderCombo");
+    recordSortOrderCombo->setCursor(Qt::PointingHandCursor);
+    recordSortOrderCombo->setMinimumHeight(30);
+
+    recordGrid->addWidget(recordClickActionFieldLabel, 0, 0);
+    recordGrid->addWidget(recordClickActionCombo, 0, 1);
+    recordGrid->addWidget(recordSortOrderFieldLabel, 1, 0);
+    recordGrid->addWidget(recordSortOrderCombo, 1, 1);
+    recordGrid->setColumnStretch(1, 1);
+    recordGroupLayout->addLayout(recordGrid);
+    recordGroup->setMinimumHeight(104);
+
+    connect(recordClickActionCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
+        const QVariant data = recordClickActionCombo->itemData(index);
+        if (!data.isValid()) {
+            return;
+        }
+        emit recordClickActionChangeRequested(static_cast<RecordClickAction>(data.toInt()));
+    });
+    connect(recordSortOrderCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
+        const QVariant data = recordSortOrderCombo->itemData(index);
+        if (!data.isValid()) {
+            return;
+        }
+        emit recordSortOrderChangeRequested(static_cast<RecordSortOrder>(data.toInt()));
+    });
+
+    QBoxLayout *dataGroupLayout = nullptr;
+    auto *dataGroup = createSettingsGroup(&dataGroupTitleLabel, sideContent, &dataGroupLayout);
+    auto *dataButtonRow = new QWidget(dataGroup);
+    auto *dataButtonLayout = new QHBoxLayout(dataButtonRow);
+    dataButtonLayout->setContentsMargins(0, 0, 0, 0);
+    dataButtonLayout->setSpacing(6);
+
+    exportJsonButton = new QPushButton(dataGroup);
+    exportJsonButton->setObjectName("SecondaryButton");
+    exportJsonButton->setCursor(Qt::PointingHandCursor);
+    exportJsonButton->setMinimumHeight(30);
+    importJsonButton = new QPushButton(dataGroup);
+    importJsonButton->setObjectName("SecondaryButton");
+    importJsonButton->setCursor(Qt::PointingHandCursor);
+    importJsonButton->setMinimumHeight(30);
+    connect(exportJsonButton, &QPushButton::clicked, this, &DashboardWindow::exportJsonRequested);
+    connect(importJsonButton, &QPushButton::clicked, this, &DashboardWindow::importJsonRequested);
+
+    dataButtonLayout->addWidget(exportJsonButton, 1);
+    dataButtonLayout->addWidget(importJsonButton, 1);
+    dataGroupLayout->addWidget(dataButtonRow);
+    dataGroup->setMinimumHeight(76);
 
     QBoxLayout *systemGroupLayout = nullptr;
     auto *systemGroup = createSettingsGroup(&systemGroupTitleLabel, sideContent, &systemGroupLayout);
@@ -437,6 +555,8 @@ void DashboardWindow::setupUi()
     sideLayout->addWidget(personalizationGroup);
     sideLayout->addWidget(memoDisplayGroup);
     sideLayout->addWidget(inputGroup);
+    sideLayout->addWidget(recordGroup);
+    sideLayout->addWidget(dataGroup);
     sideLayout->addWidget(systemGroup);
     sideLayout->addStretch(1);
 
@@ -524,7 +644,9 @@ QWidget *DashboardWindow::createRecordCard(const MemoItem &memo, QWidget *parent
     card->setProperty("memoId", memo.id);
     card->setProperty("pressed", false);
     card->setCursor(Qt::PointingHandCursor);
-    card->setToolTip(AppText::clickToDelete(store->language()));
+    card->setToolTip(store->recordClickAction() == RecordClickAction::Complete
+                         ? AppText::clickToComplete(store->language())
+                         : AppText::clickToDelete(store->language()));
     card->installEventFilter(this);
 
     auto *layout = new QHBoxLayout(card);
@@ -681,8 +803,22 @@ void DashboardWindow::retranslateUi()
     memoStartupDisplayCombo->setToolTip(AppText::memoStartupDisplayTooltip(language));
 
     inputGroupTitleLabel->setText(AppText::inputTitle(language));
+    defaultInputTypeFieldLabel->setText(AppText::defaultInputTypeLabel(language));
+    defaultInputTypeCombo->setToolTip(AppText::defaultInputTypeTooltip(language));
     hideInputAfterSaveCheck->setText(AppText::hideInputAfterSave(language));
     hideInputAfterSaveCheck->setToolTip(AppText::hideInputAfterSaveTooltip(language));
+
+    recordGroupTitleLabel->setText(AppText::recordTitle(language));
+    recordClickActionFieldLabel->setText(AppText::recordClickActionLabel(language));
+    recordClickActionCombo->setToolTip(AppText::recordClickActionTooltip(language));
+    recordSortOrderFieldLabel->setText(AppText::recordSortOrderLabel(language));
+    recordSortOrderCombo->setToolTip(AppText::recordSortOrderTooltip(language));
+
+    dataGroupTitleLabel->setText(AppText::dataTitle(language));
+    exportJsonButton->setText(AppText::exportJson(language));
+    exportJsonButton->setToolTip(AppText::exportJsonTooltip(language));
+    importJsonButton->setText(AppText::importJson(language));
+    importJsonButton->setToolTip(AppText::importJsonTooltip(language));
 
     systemGroupTitleLabel->setText(AppText::systemTitle(language));
     autostartCheck->setText(AppText::autostart(language));
@@ -757,6 +893,55 @@ void DashboardWindow::rebuildComboLabels()
             static_cast<int>(MemoStartupDisplayMode::HideAll));
         memoStartupDisplayCombo->setCurrentIndex(
             memoStartupDisplayCombo->findData(static_cast<int>(store->memoStartupDisplayMode())));
+    }
+
+    {
+        const QSignalBlocker blocker(defaultInputTypeCombo);
+        defaultInputTypeCombo->clear();
+        defaultInputTypeCombo->addItem(
+            AppText::defaultInputTypeName(DefaultInputTypeMode::LastUsed,
+                                          store->categoryName(MemoType::Question),
+                                          store->categoryName(MemoType::Todo),
+                                          language),
+            static_cast<int>(DefaultInputTypeMode::LastUsed));
+        defaultInputTypeCombo->addItem(
+            AppText::defaultInputTypeName(DefaultInputTypeMode::Question,
+                                          store->categoryName(MemoType::Question),
+                                          store->categoryName(MemoType::Todo),
+                                          language),
+            static_cast<int>(DefaultInputTypeMode::Question));
+        defaultInputTypeCombo->addItem(
+            AppText::defaultInputTypeName(DefaultInputTypeMode::Todo,
+                                          store->categoryName(MemoType::Question),
+                                          store->categoryName(MemoType::Todo),
+                                          language),
+            static_cast<int>(DefaultInputTypeMode::Todo));
+        defaultInputTypeCombo->setCurrentIndex(
+            defaultInputTypeCombo->findData(static_cast<int>(store->defaultInputTypeMode())));
+    }
+
+    {
+        const QSignalBlocker blocker(recordClickActionCombo);
+        recordClickActionCombo->clear();
+        recordClickActionCombo->addItem(AppText::recordClickActionName(RecordClickAction::Delete, language),
+                                        static_cast<int>(RecordClickAction::Delete));
+        recordClickActionCombo->addItem(AppText::recordClickActionName(RecordClickAction::Complete, language),
+                                        static_cast<int>(RecordClickAction::Complete));
+        recordClickActionCombo->addItem(AppText::recordClickActionName(RecordClickAction::DashboardOnly, language),
+                                        static_cast<int>(RecordClickAction::DashboardOnly));
+        recordClickActionCombo->setCurrentIndex(
+            recordClickActionCombo->findData(static_cast<int>(store->recordClickAction())));
+    }
+
+    {
+        const QSignalBlocker blocker(recordSortOrderCombo);
+        recordSortOrderCombo->clear();
+        recordSortOrderCombo->addItem(AppText::recordSortOrderName(RecordSortOrder::NewestFirst, language),
+                                      static_cast<int>(RecordSortOrder::NewestFirst));
+        recordSortOrderCombo->addItem(AppText::recordSortOrderName(RecordSortOrder::OldestFirst, language),
+                                      static_cast<int>(RecordSortOrder::OldestFirst));
+        recordSortOrderCombo->setCurrentIndex(
+            recordSortOrderCombo->findData(static_cast<int>(store->recordSortOrder())));
     }
 }
 
