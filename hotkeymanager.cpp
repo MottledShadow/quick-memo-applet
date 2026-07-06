@@ -1,5 +1,7 @@
 #include "hotkeymanager.h"
 
+#include "apptext.h"
+
 #include <QApplication>
 
 #ifdef Q_OS_WIN
@@ -11,6 +13,7 @@ HotkeyManager::HotkeyManager(QObject *parent)
     : QObject(parent)
     , hotkeyId(0x514d)
     , registered(false)
+    , appLanguage(AppLanguage::ZhCn)
 {
     qApp->installNativeEventFilter(this);
 }
@@ -34,8 +37,7 @@ bool HotkeyManager::registerHotkey(const QKeySequence &sequence, QString *errorM
 #ifdef Q_OS_WIN
     if (!RegisterHotKey(nullptr, hotkeyId, modifiers, virtualKey)) {
         if (errorMessage != nullptr) {
-            *errorMessage = QStringLiteral("快捷键注册失败，可能已被其他程序占用。Windows 错误码：%1")
-                                .arg(GetLastError());
+            *errorMessage = AppText::hotkeyRegistrationFailed(GetLastError(), appLanguage);
         }
         return false;
     }
@@ -46,10 +48,15 @@ bool HotkeyManager::registerHotkey(const QKeySequence &sequence, QString *errorM
     Q_UNUSED(modifiers)
     Q_UNUSED(virtualKey)
     if (errorMessage != nullptr) {
-        *errorMessage = QStringLiteral("全局快捷键当前只支持 Windows。");
+        *errorMessage = AppText::hotkeyWindowsOnly(appLanguage);
     }
     return false;
 #endif
+}
+
+void HotkeyManager::setLanguage(AppLanguage language)
+{
+    appLanguage = language;
 }
 
 void HotkeyManager::unregisterHotkey()
@@ -90,7 +97,7 @@ bool HotkeyManager::sequenceToNative(const QKeySequence &sequence,
 {
     if (sequence.isEmpty() || sequence.count() != 1) {
         if (errorMessage != nullptr) {
-            *errorMessage = QStringLiteral("快捷键必须是一个组合键。");
+            *errorMessage = AppText::hotkeyNeedsSingleSequence(appLanguage);
         }
         return false;
     }
@@ -109,7 +116,7 @@ bool HotkeyManager::sequenceToNative(const QKeySequence &sequence,
         && !qtModifiers.testFlag(Qt::ShiftModifier)
         && !qtModifiers.testFlag(Qt::MetaModifier)) {
         if (errorMessage != nullptr) {
-            *errorMessage = QStringLiteral("快捷键至少需要一个修饰键，比如 Ctrl 或 Alt。");
+            *errorMessage = AppText::hotkeyNeedsModifier(appLanguage);
         }
         return false;
     }
@@ -145,7 +152,7 @@ bool HotkeyManager::sequenceToNative(const QKeySequence &sequence,
 
     if (nativeKey == 0) {
         if (errorMessage != nullptr) {
-            *errorMessage = QStringLiteral("快捷键主键只支持字母、数字、空格或 F1-F24。");
+            *errorMessage = AppText::hotkeyUnsupportedKey(appLanguage);
         }
         return false;
     }

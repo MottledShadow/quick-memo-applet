@@ -14,6 +14,8 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
 set(PROJECT_SOURCES
         main.cpp
+        apptext.cpp
+        apptext.h
         apptheme.cpp
         apptheme.h
         dashboardwindow.cpp

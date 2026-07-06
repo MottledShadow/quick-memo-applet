@@ -2,6 +2,7 @@
 
 #include <QColor>
 #include <QGraphicsDropShadowEffect>
+#include <QSettings>
 #include <QWidget>
 
 namespace {
@@ -100,8 +101,27 @@ struct ElevationSpec {
     QColor color;
 };
 
+ThemeMode resolveThemeMode(ThemeMode mode)
+{
+    if (mode != ThemeMode::System) {
+        return mode;
+    }
+
+#ifdef Q_OS_WIN
+    QSettings settings(QStringLiteral("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"),
+                       QSettings::NativeFormat);
+    const QVariant value = settings.value(QStringLiteral("AppsUseLightTheme"));
+    if (value.isValid()) {
+        return value.toInt() == 0 ? ThemeMode::Dark : ThemeMode::Light;
+    }
+#endif
+
+    return ThemeMode::Light;
+}
+
 Palette palette(ThemeMode mode)
 {
+    mode = resolveThemeMode(mode);
     if (mode == ThemeMode::Dark) {
         return {
             "#60A5FA", // primary
@@ -217,8 +237,23 @@ Palette palette(ThemeMode mode)
     };
 }
 
-SpacingScale spacing()
+SpacingScale spacing(DensityMode density)
 {
+    if (density == DensityMode::Compact) {
+        return {
+            "4px", // xs
+            "6px", // s
+            "12px", // m
+            "20px", // l
+            "28px", // xl
+            "30px", // controlHeight
+            "26px", // compactControlHeight
+            "8px", // radiusS
+            "8px", // radiusM
+            "8px"  // radiusL
+        };
+    }
+
     return {
         "4px", // xs
         "8px", // s
@@ -233,8 +268,50 @@ SpacingScale spacing()
     };
 }
 
-TypeScale typography()
+TypeScale typography(FontSizeMode fontSize)
 {
+    if (fontSize == FontSizeMode::Small) {
+        return {
+            "\"Segoe UI\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", sans-serif", // fontFamily
+            "10px", // captionSize
+            "12px", // bodySize
+            "13px", // bodyLargeSize
+            "15px", // memoTitleSize
+            "14px", // sectionSize
+            "17px", // titleSize
+            "20px", // pageTitleSize
+            "400", // weightRegular
+            "500", // weightMedium
+            "600", // weightControl
+            "700", // weightTitle
+            "15px", // lineCaption
+            "17px", // lineBody
+            "19px", // lineBodyLarge
+            "22px"  // lineTitle
+        };
+    }
+
+    if (fontSize == FontSizeMode::Large) {
+        return {
+            "\"Segoe UI\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", sans-serif", // fontFamily
+            "12px", // captionSize
+            "14px", // bodySize
+            "15px", // bodyLargeSize
+            "17px", // memoTitleSize
+            "16px", // sectionSize
+            "19px", // titleSize
+            "23px", // pageTitleSize
+            "400", // weightRegular
+            "500", // weightMedium
+            "600", // weightControl
+            "700", // weightTitle
+            "17px", // lineCaption
+            "20px", // lineBody
+            "22px", // lineBodyLarge
+            "26px"  // lineTitle
+        };
+    }
+
     return {
         "\"Segoe UI\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", sans-serif", // fontFamily
         "11px", // captionSize
@@ -255,10 +332,10 @@ TypeScale typography()
     };
 }
 
-QString themed(QString style, const Palette &p)
+QString themed(QString style, const Palette &p, FontSizeMode fontSize, DensityMode density)
 {
-    const TypeScale t = typography();
-    const SpacingScale s = spacing();
+    const TypeScale t = typography(fontSize);
+    const SpacingScale s = spacing(density);
     return style
         .replace("${primary}", p.primary)
         .replace("${primaryHover}", p.primaryHover)
@@ -336,7 +413,7 @@ QString themed(QString style, const Palette &p)
         .replace("${radiusL}", s.radiusL);
 }
 
-QString scrollBars(const Palette &p)
+QString scrollBars(const Palette &p, FontSizeMode fontSize, DensityMode density)
 {
     return themed(R"(
 QScrollBar:vertical {
@@ -396,11 +473,12 @@ QScrollBar::sub-page:horizontal {
 QAbstractScrollArea::corner {
     background: transparent;
 }
-)", p);
+)", p, fontSize, density);
 }
 
 ElevationSpec elevationSpec(ThemeMode mode, ElevationLevel level)
 {
+    mode = resolveThemeMode(mode);
     if (level == ElevationLevel::E0) {
         return {0, 0, 0, QColor(0, 0, 0, 0)};
     }
@@ -433,6 +511,11 @@ ElevationSpec elevationSpec(ThemeMode mode, ElevationLevel level)
 }
 }
 
+ThemeMode AppTheme::effectiveThemeMode(ThemeMode mode)
+{
+    return resolveThemeMode(mode);
+}
+
 void AppTheme::applyElevation(QWidget *widget, ThemeMode mode, ElevationLevel level)
 {
     if (widget == nullptr || level == ElevationLevel::E0) {
@@ -461,7 +544,7 @@ QColor AppTheme::memoPaperLineColor(ThemeMode mode)
     return QColor(palette(mode).memoPaperLine);
 }
 
-QString AppTheme::applicationStyleSheet(ThemeMode mode)
+QString AppTheme::applicationStyleSheet(ThemeMode mode, FontSizeMode fontSize, DensityMode density)
 {
     const Palette p = palette(mode);
     return themed(R"(
@@ -498,10 +581,10 @@ QMenu::separator {
     background: ${border};
     margin: ${spaceXs} ${spaceS};
 }
-)", p) + scrollBars(p);
+)", p, fontSize, density) + scrollBars(p, fontSize, density);
 }
 
-QString AppTheme::memoWindowStyleSheet(ThemeMode mode)
+QString AppTheme::memoWindowStyleSheet(ThemeMode mode, FontSizeMode fontSize, DensityMode density)
 {
     const Palette p = palette(mode);
     return themed(R"(
@@ -672,10 +755,10 @@ MemoWindow QSizeGrip#ResizeGrip {
     width: ${spaceM};
     height: ${spaceM};
 }
-)", p);
+)", p, fontSize, density);
 }
 
-QString AppTheme::inputWindowStyleSheet(ThemeMode mode)
+QString AppTheme::inputWindowStyleSheet(ThemeMode mode, FontSizeMode fontSize, DensityMode density)
 {
     const Palette p = palette(mode);
     return themed(R"(
@@ -806,10 +889,10 @@ InputWindow QLabel#FeedbackLabel[feedbackKind="warning"] {
     background: ${warningSoft};
     border-color: ${warning};
 }
-)", p);
+)", p, fontSize, density);
 }
 
-QString AppTheme::dashboardStyleSheet(ThemeMode mode)
+QString AppTheme::dashboardStyleSheet(ThemeMode mode, FontSizeMode fontSize, DensityMode density)
 {
     const Palette p = palette(mode);
     return themed(R"(
@@ -1257,5 +1340,5 @@ DashboardWindow QComboBox QAbstractItemView {
     selection-background-color: ${primary};
     outline: none;
 }
-)", p);
+)", p, fontSize, density);
 }

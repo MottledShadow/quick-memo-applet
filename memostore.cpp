@@ -5,6 +5,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QLocale>
 #include <QStandardPaths>
 #include <QUuid>
 
@@ -53,6 +54,11 @@ MemoWindowState windowStateFromJson(const QJsonObject &object, const MemoWindowS
     state.alwaysOnTop = object.value("alwaysOnTop").toBool(fallback.alwaysOnTop);
     return state;
 }
+
+AppLanguage defaultLanguage()
+{
+    return QLocale::system().language() == QLocale::Chinese ? AppLanguage::ZhCn : AppLanguage::English;
+}
 }
 
 MemoStore::MemoStore(QObject *parent)
@@ -61,7 +67,10 @@ MemoStore::MemoStore(QObject *parent)
     , hotkeyText(kDefaultHotkey)
     , autostart(false)
     , hideInputOnSave(false)
-    , theme(ThemeMode::Light)
+    , theme(ThemeMode::System)
+    , appLanguage(defaultLanguage())
+    , fontSize(FontSizeMode::Default)
+    , density(DensityMode::Comfortable)
     , questionState(defaultWindowState(MemoType::Question))
     , todoState(defaultWindowState(MemoType::Todo))
 {
@@ -89,7 +98,10 @@ bool MemoStore::load()
     hotkeyText = root.value("hotkey").toString(kDefaultHotkey);
     autostart = root.value("autostart").toBool(false);
     hideInputOnSave = root.value("hideInputAfterSave").toBool(false);
-    theme = themeFromString(root.value("theme").toString(themeToString(ThemeMode::Light)));
+    theme = themeFromString(root.value("theme").toString(themeToString(ThemeMode::System)));
+    appLanguage = languageFromString(root.value("language").toString(languageToString(defaultLanguage())));
+    fontSize = fontSizeFromString(root.value("fontSize").toString(fontSizeToString(FontSizeMode::Default)));
+    density = densityFromString(root.value("density").toString(densityToString(DensityMode::Comfortable)));
 
     const QJsonObject windows = root.value("windows").toObject();
     questionState = windowStateFromJson(windows.value(typeToString(MemoType::Question)).toObject(),
@@ -149,6 +161,9 @@ bool MemoStore::save() const
         {"autostart", autostart},
         {"hideInputAfterSave", hideInputOnSave},
         {"theme", themeToString(theme)},
+        {"language", languageToString(appLanguage)},
+        {"fontSize", fontSizeToString(fontSize)},
+        {"density", densityToString(density)},
         {"windows", windows},
         {"records", records}
     };
@@ -258,6 +273,54 @@ void MemoStore::setThemeMode(ThemeMode mode)
     emit settingsChanged();
 }
 
+AppLanguage MemoStore::language() const
+{
+    return appLanguage;
+}
+
+void MemoStore::setLanguage(AppLanguage language)
+{
+    if (appLanguage == language) {
+        return;
+    }
+
+    appLanguage = language;
+    save();
+    emit settingsChanged();
+}
+
+FontSizeMode MemoStore::fontSizeMode() const
+{
+    return fontSize;
+}
+
+void MemoStore::setFontSizeMode(FontSizeMode mode)
+{
+    if (fontSize == mode) {
+        return;
+    }
+
+    fontSize = mode;
+    save();
+    emit settingsChanged();
+}
+
+DensityMode MemoStore::densityMode() const
+{
+    return density;
+}
+
+void MemoStore::setDensityMode(DensityMode mode)
+{
+    if (density == mode) {
+        return;
+    }
+
+    density = mode;
+    save();
+    emit settingsChanged();
+}
+
 MemoWindowState MemoStore::windowState(MemoType type) const
 {
     return type == MemoType::Question ? questionState : todoState;
@@ -328,17 +391,83 @@ QString MemoStore::displayName(MemoType type)
 
 QString MemoStore::themeToString(ThemeMode mode)
 {
-    return mode == ThemeMode::Dark ? "dark" : "light";
+    switch (mode) {
+    case ThemeMode::System:
+        return "system";
+    case ThemeMode::Dark:
+        return "dark";
+    case ThemeMode::Light:
+        return "light";
+    }
+
+    return "system";
 }
 
 ThemeMode MemoStore::themeFromString(const QString &value)
 {
-    return value == "dark" ? ThemeMode::Dark : ThemeMode::Light;
+    if (value == "dark") {
+        return ThemeMode::Dark;
+    }
+    if (value == "light") {
+        return ThemeMode::Light;
+    }
+    return ThemeMode::System;
 }
 
 QString MemoStore::themeDisplayName(ThemeMode mode)
 {
-    return mode == ThemeMode::Dark ? QStringLiteral("暗色") : QStringLiteral("亮色");
+    if (mode == ThemeMode::Dark) {
+        return QStringLiteral("暗色");
+    }
+    if (mode == ThemeMode::Light) {
+        return QStringLiteral("亮色");
+    }
+    return QStringLiteral("跟随系统");
+}
+
+QString MemoStore::languageToString(AppLanguage language)
+{
+    return language == AppLanguage::English ? "en" : "zh-CN";
+}
+
+AppLanguage MemoStore::languageFromString(const QString &value)
+{
+    return value == "en" ? AppLanguage::English : AppLanguage::ZhCn;
+}
+
+QString MemoStore::fontSizeToString(FontSizeMode mode)
+{
+    switch (mode) {
+    case FontSizeMode::Small:
+        return "small";
+    case FontSizeMode::Large:
+        return "large";
+    case FontSizeMode::Default:
+        return "default";
+    }
+
+    return "default";
+}
+
+FontSizeMode MemoStore::fontSizeFromString(const QString &value)
+{
+    if (value == "small") {
+        return FontSizeMode::Small;
+    }
+    if (value == "large") {
+        return FontSizeMode::Large;
+    }
+    return FontSizeMode::Default;
+}
+
+QString MemoStore::densityToString(DensityMode mode)
+{
+    return mode == DensityMode::Compact ? "compact" : "comfortable";
+}
+
+DensityMode MemoStore::densityFromString(const QString &value)
+{
+    return value == "compact" ? DensityMode::Compact : DensityMode::Comfortable;
 }
 
 MemoWindowState MemoStore::defaultWindowState(MemoType type) const

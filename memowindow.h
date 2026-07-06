@@ -27,7 +27,8 @@ public slots:
     void setRecords(const QVector<MemoItem> &records);
     void restoreState(const MemoWindowState &state);
     void setAlwaysOnTop(bool enabled);
-    void applyTheme(ThemeMode mode);
+    void setLanguage(AppLanguage language);
+    void applyTheme(ThemeMode mode, FontSizeMode fontSize, DensityMode density);
 
 signals:
     void memoClicked(const QString &id);
@@ -43,6 +44,7 @@ protected:
 
 private:
     void setupUi();
+    void retranslateUi();
     void rebuildList();
     void startDeleteAnimation(QWidget *recordWidget, const QString &id);
     void updateWindowFlags(bool keepVisible);
@@ -57,9 +59,11 @@ private:
     QLabel *titleLabel;
     QLabel *titleCountLabel;
     QPushButton *topButton;
+    QPushButton *hideButton;
     QSizeGrip *resizeGrip;
     QBoxLayout *listLayout;
     QString deletingMemoId;
+    AppLanguage appLanguage;
     bool alwaysOnTop;
     bool dragging;
     bool deleteAnimationActive;

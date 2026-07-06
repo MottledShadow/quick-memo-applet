@@ -25,7 +25,8 @@ private:
     void setupConnections();
     void restoreWindows();
     void registerStoredHotkey();
-    void applyTheme(ThemeMode mode, bool animate);
+    void syncLanguage();
+    void applyAppearance(bool animate);
     void playThemeTransition(QWidget *widget);
     bool applyAutostart(bool enabled);
     MemoWindow *memoWindow(MemoType type) const;
@@ -39,6 +40,8 @@ private:
     HotkeyManager *hotkeyManager;
     TrayController *trayController;
     ThemeMode appliedTheme;
+    FontSizeMode appliedFontSize;
+    DensityMode appliedDensity;
 };
 
 #endif // MAINWINDOW_H

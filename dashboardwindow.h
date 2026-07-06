@@ -26,7 +26,7 @@ public:
 public slots:
     void refresh();
     void setStatusMessage(const QString &message);
-    void applyTheme(ThemeMode mode);
+    void applyTheme(ThemeMode mode, FontSizeMode fontSize, DensityMode density);
 
 signals:
     void showMemoRequested(MemoType type);
@@ -34,6 +34,9 @@ signals:
     void alwaysOnTopChanged(MemoType type, bool enabled);
     void hotkeyChangeRequested(const QKeySequence &sequence);
     void themeChangeRequested(ThemeMode mode);
+    void languageChangeRequested(AppLanguage language);
+    void fontSizeChangeRequested(FontSizeMode mode);
+    void densityChangeRequested(DensityMode mode);
     void inputAutoHideChanged(bool enabled);
     void recordDeleteRequested(const QString &id, MemoType type);
     void autostartChanged(bool enabled);
@@ -47,7 +50,9 @@ private:
     QWidget *createRecordsColumn(MemoType type, QWidget *parent);
     QWidget *createRecordCard(const MemoItem &memo, QWidget *parent);
     QWidget *createMemoControls(MemoType type, QWidget *parent);
-    QFrame *createSettingsGroup(const QString &title, QWidget *parent, QBoxLayout **contentLayout) const;
+    QFrame *createSettingsGroup(QLabel **titleLabel, QWidget *parent, QBoxLayout **contentLayout) const;
+    void retranslateUi();
+    void rebuildComboLabels();
     void refreshMemoControls(MemoType type);
     void refreshRecords();
     void refreshRecordColumn(MemoType type, const QVector<MemoItem> &records);
@@ -61,10 +66,30 @@ private:
     QCheckBox *todoTopCheck;
     QCheckBox *autostartCheck;
     QCheckBox *hideInputAfterSaveCheck;
+    QComboBox *languageCombo;
     QComboBox *themeCombo;
+    QComboBox *fontSizeCombo;
+    QComboBox *densityCombo;
     QKeySequenceEdit *hotkeyEdit;
+    QPushButton *applyHotkeyButton;
+    QLabel *recordsTitleLabel;
+    QLabel *memoSectionTitleLabel;
+    QLabel *settingsSectionTitleLabel;
+    QLabel *questionColumnTitleLabel;
+    QLabel *todoColumnTitleLabel;
     QLabel *questionCountLabel;
     QLabel *todoCountLabel;
+    QLabel *questionControlTitleLabel;
+    QLabel *todoControlTitleLabel;
+    QLabel *hotkeyGroupTitleLabel;
+    QLabel *hotkeyFieldLabel;
+    QLabel *personalizationGroupTitleLabel;
+    QLabel *languageFieldLabel;
+    QLabel *themeFieldLabel;
+    QLabel *fontSizeFieldLabel;
+    QLabel *densityFieldLabel;
+    QLabel *inputGroupTitleLabel;
+    QLabel *systemGroupTitleLabel;
     QBoxLayout *questionRecordsLayout;
     QBoxLayout *todoRecordsLayout;
     QLabel *statusLabel;

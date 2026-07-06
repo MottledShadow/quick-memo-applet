@@ -13,8 +13,25 @@ enum class MemoType {
 };
 
 enum class ThemeMode {
+    System,
     Light,
     Dark
+};
+
+enum class AppLanguage {
+    ZhCn,
+    English
+};
+
+enum class FontSizeMode {
+    Small,
+    Default,
+    Large
+};
+
+enum class DensityMode {
+    Compact,
+    Comfortable
 };
 
 struct MemoItem {
@@ -58,6 +75,15 @@ public:
     ThemeMode themeMode() const;
     void setThemeMode(ThemeMode mode);
 
+    AppLanguage language() const;
+    void setLanguage(AppLanguage language);
+
+    FontSizeMode fontSizeMode() const;
+    void setFontSizeMode(FontSizeMode mode);
+
+    DensityMode densityMode() const;
+    void setDensityMode(DensityMode mode);
+
     MemoWindowState windowState(MemoType type) const;
     void setWindowState(MemoType type, const MemoWindowState &state);
 
@@ -72,6 +98,12 @@ public:
     static QString themeToString(ThemeMode mode);
     static ThemeMode themeFromString(const QString &value);
     static QString themeDisplayName(ThemeMode mode);
+    static QString languageToString(AppLanguage language);
+    static AppLanguage languageFromString(const QString &value);
+    static QString fontSizeToString(FontSizeMode mode);
+    static FontSizeMode fontSizeFromString(const QString &value);
+    static QString densityToString(DensityMode mode);
+    static DensityMode densityFromString(const QString &value);
 
 signals:
     void recordsChanged();
@@ -88,6 +120,9 @@ private:
     bool autostart;
     bool hideInputOnSave;
     ThemeMode theme;
+    AppLanguage appLanguage;
+    FontSizeMode fontSize;
+    DensityMode density;
     MemoWindowState questionState;
     MemoWindowState todoState;
 };

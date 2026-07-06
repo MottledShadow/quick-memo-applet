@@ -1,6 +1,8 @@
 #ifndef TRAYCONTROLLER_H
 #define TRAYCONTROLLER_H
 
+#include "memostore.h"
+
 #include <QObject>
 
 class QAction;
@@ -16,6 +18,7 @@ class TrayController : public QObject
 public:
     explicit TrayController(QObject *parent = nullptr);
     ~TrayController() override;
+    void setLanguage(AppLanguage language);
     void showStartupMessage(const QString &hotkeyText);
 
 signals:
@@ -28,6 +31,7 @@ private:
     QAction *openDashboardAction;
     QAction *exitAction;
     QWidget *startupToast;
+    AppLanguage appLanguage;
 };
 
 #endif // TRAYCONTROLLER_H

@@ -1,6 +1,8 @@
 #ifndef HOTKEYMANAGER_H
 #define HOTKEYMANAGER_H
 
+#include "memostore.h"
+
 #include <QAbstractNativeEventFilter>
 #include <QObject>
 #include <QKeySequence>
@@ -14,6 +16,7 @@ public:
     ~HotkeyManager() override;
 
     bool registerHotkey(const QKeySequence &sequence, QString *errorMessage = nullptr);
+    void setLanguage(AppLanguage language);
     void unregisterHotkey();
 
     bool nativeEventFilter(const QByteArray &eventType, void *message, qintptr *result) override;
@@ -26,6 +29,7 @@ private:
 
     int hotkeyId;
     bool registered;
+    AppLanguage appLanguage;
 };
 
 #endif // HOTKEYMANAGER_H

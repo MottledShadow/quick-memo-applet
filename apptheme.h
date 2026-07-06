@@ -18,10 +18,19 @@ enum class ElevationLevel {
 class AppTheme
 {
 public:
-    static QString applicationStyleSheet(ThemeMode mode);
-    static QString memoWindowStyleSheet(ThemeMode mode);
-    static QString inputWindowStyleSheet(ThemeMode mode);
-    static QString dashboardStyleSheet(ThemeMode mode);
+    static ThemeMode effectiveThemeMode(ThemeMode mode);
+    static QString applicationStyleSheet(ThemeMode mode,
+                                         FontSizeMode fontSize,
+                                         DensityMode density);
+    static QString memoWindowStyleSheet(ThemeMode mode,
+                                        FontSizeMode fontSize,
+                                        DensityMode density);
+    static QString inputWindowStyleSheet(ThemeMode mode,
+                                         FontSizeMode fontSize,
+                                         DensityMode density);
+    static QString dashboardStyleSheet(ThemeMode mode,
+                                       FontSizeMode fontSize,
+                                       DensityMode density);
     static void applyElevation(QWidget *widget, ThemeMode mode, ElevationLevel level);
     static QColor memoAccentColor(MemoType type, ThemeMode mode);
     static QColor memoPaperLineColor(ThemeMode mode);

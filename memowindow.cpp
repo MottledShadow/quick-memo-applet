@@ -1,6 +1,7 @@
 #include "memowindow.h"
 
 #include "apptheme.h"
+#include "apptext.h"
 
 #include <QBoxLayout>
 #include <QColor>
@@ -259,9 +260,11 @@ MemoWindow::MemoWindow(MemoType type, QWidget *parent)
     , titleLabel(nullptr)
     , titleCountLabel(nullptr)
     , topButton(nullptr)
+    , hideButton(nullptr)
     , resizeGrip(nullptr)
     , listLayout(nullptr)
     , deletingMemoId()
+    , appLanguage(AppLanguage::ZhCn)
     , alwaysOnTop(true)
     , dragging(false)
     , deleteAnimationActive(false)
@@ -324,9 +327,20 @@ void MemoWindow::setAlwaysOnTop(bool enabled)
     emitStateChanged();
 }
 
-void MemoWindow::applyTheme(ThemeMode mode)
+void MemoWindow::setLanguage(AppLanguage language)
 {
-    setStyleSheet(AppTheme::memoWindowStyleSheet(mode));
+    if (appLanguage == language) {
+        return;
+    }
+
+    appLanguage = language;
+    retranslateUi();
+    rebuildList();
+}
+
+void MemoWindow::applyTheme(ThemeMode mode, FontSizeMode fontSize, DensityMode density)
+{
+    setStyleSheet(AppTheme::memoWindowStyleSheet(mode, fontSize, density));
     AppTheme::applyElevation(panel, mode, ElevationLevel::E3);
     panel->setProperty("accentColor", QVariant::fromValue(AppTheme::memoAccentColor(type, mode)));
     panel->setProperty("paperLineColor", QVariant::fromValue(AppTheme::memoPaperLineColor(mode)));
@@ -434,7 +448,7 @@ void MemoWindow::closeEvent(QCloseEvent *event)
 void MemoWindow::setupUi()
 {
     setMinimumSize(256, 240);
-    setWindowTitle(MemoStore::displayName(type));
+    setWindowTitle(AppText::memoTypeName(type, appLanguage));
     setProperty("memoKind", MemoStore::typeToString(type));
     setAttribute(Qt::WA_DeleteOnClose, false);
     setAttribute(Qt::WA_TranslucentBackground, true);
@@ -459,7 +473,7 @@ void MemoWindow::setupUi()
     titleLayout->setContentsMargins(18, 14, 12, 4);
     titleLayout->setSpacing(8);
 
-    titleLabel = new QLabel(MemoStore::displayName(type), titleBar);
+    titleLabel = new QLabel(AppText::memoTypeName(type, appLanguage), titleBar);
     titleLabel->setObjectName("TitleLabel");
 
     titleCountLabel = new QLabel(QStringLiteral("0"), titleBar);
@@ -474,9 +488,9 @@ void MemoWindow::setupUi()
         setAlwaysOnTop(!alwaysOnTop);
     });
 
-    auto *hideButton = new QPushButton(QStringLiteral("×"), titleBar);
+    hideButton = new QPushButton(QStringLiteral("×"), titleBar);
     hideButton->setObjectName("HideButton");
-    hideButton->setToolTip(QStringLiteral("隐藏便签"));
+    hideButton->setToolTip(AppText::hideMemoButtonTooltip(appLanguage));
     hideButton->setFixedSize(24, 24);
     connect(hideButton, &QPushButton::clicked, this, &MemoWindow::hide);
 
@@ -512,13 +526,26 @@ void MemoWindow::setupUi()
     panelLayout->addWidget(scrollArea, 1);
     rootLayout->addWidget(panel);
 
-    applyTheme(ThemeMode::Light);
+    retranslateUi();
+    applyTheme(ThemeMode::Light, FontSizeMode::Default, DensityMode::Comfortable);
     updateResizeGripGeometry();
+}
+
+void MemoWindow::retranslateUi()
+{
+    setWindowTitle(AppText::memoTypeName(type, appLanguage));
+    titleLabel->setText(AppText::memoTypeName(type, appLanguage));
+    hideButton->setToolTip(AppText::hideMemoButtonTooltip(appLanguage));
+    topButton->setText(QString(QChar(alwaysOnTop ? 0x25CF : 0x25CB)));
+    topButton->setToolTip(alwaysOnTop ? AppText::cancelOnTopTooltip(appLanguage)
+                                      : AppText::keepOnTopTooltip(appLanguage));
+    topButton->setProperty("active", alwaysOnTop);
+    refreshDynamicStyle(topButton);
 }
 
 void MemoWindow::rebuildList()
 {
-    titleLabel->setText(MemoStore::displayName(type));
+    titleLabel->setText(AppText::memoTypeName(type, appLanguage));
     titleCountLabel->setText(QString::number(currentRecords.size()));
 
     while (QLayoutItem *item = listLayout->takeAt(0)) {
@@ -539,7 +566,7 @@ void MemoWindow::rebuildList()
         recordFrame->setMemoKind(MemoStore::typeToString(memo.type));
         recordFrame->setProperty("deleting", false);
         recordFrame->setCursor(Qt::PointingHandCursor);
-        recordFrame->setToolTip(QStringLiteral("点击删除"));
+        recordFrame->setToolTip(AppText::clickToDelete(appLanguage));
         recordFrame->installEventFilter(this);
         recordFrame->setFixedHeight(kPaperLineSpacing);
 
@@ -636,8 +663,8 @@ void MemoWindow::updateWindowFlags(bool keepVisible)
     setWindowFlags(flags);
 
     topButton->setText(QString(QChar(alwaysOnTop ? 0x25CF : 0x25CB)));
-    topButton->setToolTip(alwaysOnTop ? QStringLiteral("取消置顶")
-                                      : QStringLiteral("保持置顶"));
+    topButton->setToolTip(alwaysOnTop ? AppText::cancelOnTopTooltip(appLanguage)
+                                      : AppText::keepOnTopTooltip(appLanguage));
     topButton->setProperty("active", alwaysOnTop);
     refreshDynamicStyle(topButton);
 

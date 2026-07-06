@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 
 #include "apptheme.h"
+#include "apptext.h"
 #include "dashboardwindow.h"
 #include "hotkeymanager.h"
 #include "inputwindow.h"
@@ -34,7 +35,9 @@ MainWindow::MainWindow(QObject *parent)
     , dashboardWindow(nullptr)
     , hotkeyManager(new HotkeyManager(this))
     , trayController(new TrayController(this))
-    , appliedTheme(ThemeMode::Light)
+    , appliedTheme(ThemeMode::System)
+    , appliedFontSize(FontSizeMode::Default)
+    , appliedDensity(DensityMode::Comfortable)
 {
     store->load();
 
@@ -47,7 +50,8 @@ MainWindow::MainWindow(QObject *parent)
     todoWindow->setRecords(store->records(MemoType::Todo));
     inputWindow->setCurrentType(store->currentType());
     inputWindow->setHideAfterSave(store->hideInputAfterSave());
-    applyTheme(store->themeMode(), false);
+    syncLanguage();
+    applyAppearance(false);
 
     restoreWindows();
     setupConnections();
@@ -78,12 +82,14 @@ void MainWindow::setupConnections()
     });
 
     connect(store, &MemoStore::settingsChanged, this, [this]() {
-        const ThemeMode mode = store->themeMode();
-        const bool themeChanged = mode != appliedTheme;
+        const bool appearanceChanged = store->themeMode() != appliedTheme
+                                       || store->fontSizeMode() != appliedFontSize
+                                       || store->densityMode() != appliedDensity;
         inputWindow->setCurrentType(store->currentType());
         inputWindow->setHideAfterSave(store->hideInputAfterSave());
-        if (themeChanged) {
-            applyTheme(mode, true);
+        syncLanguage();
+        if (appearanceChanged) {
+            applyAppearance(true);
         }
     });
 
@@ -140,32 +146,46 @@ void MainWindow::setupConnections()
         }
 
         store->setHotkey(sequence.toString(QKeySequence::PortableText));
-        dashboardWindow->setStatusMessage(QStringLiteral("快捷键已更新：%1")
-                                              .arg(sequence.toString(QKeySequence::NativeText)));
+        dashboardWindow->setStatusMessage(AppText::hotkeyUpdated(sequence.toString(QKeySequence::NativeText),
+                                                                 store->language()));
     });
 
     connect(dashboardWindow, &DashboardWindow::themeChangeRequested, this, [this](ThemeMode mode) {
         store->setThemeMode(mode);
-        dashboardWindow->setStatusMessage(QStringLiteral("主题已切换为：%1")
-                                              .arg(MemoStore::themeDisplayName(mode)));
+        dashboardWindow->setStatusMessage(AppText::themeChanged(mode, store->language()));
+    });
+
+    connect(dashboardWindow, &DashboardWindow::languageChangeRequested, this, [this](AppLanguage language) {
+        store->setLanguage(language);
+        dashboardWindow->setStatusMessage(AppText::ready(store->language()));
+    });
+
+    connect(dashboardWindow, &DashboardWindow::fontSizeChangeRequested, this, [this](FontSizeMode mode) {
+        store->setFontSizeMode(mode);
+        dashboardWindow->setStatusMessage(AppText::fontSizeChanged(mode, store->language()));
+    });
+
+    connect(dashboardWindow, &DashboardWindow::densityChangeRequested, this, [this](DensityMode mode) {
+        store->setDensityMode(mode);
+        dashboardWindow->setStatusMessage(AppText::densityChanged(mode, store->language()));
     });
 
     connect(dashboardWindow, &DashboardWindow::inputAutoHideChanged, this, [this](bool enabled) {
         store->setHideInputAfterSave(enabled);
-        dashboardWindow->setStatusMessage(enabled ? QStringLiteral("保存后将自动收起输入框。")
-                                                  : QStringLiteral("保存后将继续输入。"));
+        dashboardWindow->setStatusMessage(enabled ? AppText::inputAutoHideEnabled(store->language())
+                                                  : AppText::inputAutoHideDisabled(store->language()));
     });
 
     connect(dashboardWindow, &DashboardWindow::autostartChanged, this, [this](bool enabled) {
         if (!applyAutostart(enabled)) {
-            dashboardWindow->setStatusMessage(QStringLiteral("开机自启设置失败。"));
+            dashboardWindow->setStatusMessage(AppText::autostartFailed(store->language()));
             dashboardWindow->refresh();
             return;
         }
 
         store->setAutostartEnabled(enabled);
-        dashboardWindow->setStatusMessage(enabled ? QStringLiteral("已开启开机自启。")
-                                                  : QStringLiteral("已关闭开机自启。"));
+        dashboardWindow->setStatusMessage(enabled ? AppText::autostartEnabled(store->language())
+                                                  : AppText::autostartDisabled(store->language()));
     });
 
 }
@@ -184,14 +204,30 @@ void MainWindow::registerStoredHotkey()
     }
 }
 
-void MainWindow::applyTheme(ThemeMode mode, bool animate)
+void MainWindow::syncLanguage()
 {
-    qApp->setStyleSheet(AppTheme::applicationStyleSheet(mode));
-    inputWindow->applyTheme(mode);
-    questionWindow->applyTheme(mode);
-    todoWindow->applyTheme(mode);
-    dashboardWindow->applyTheme(mode);
+    const AppLanguage language = store->language();
+    inputWindow->setLanguage(language);
+    questionWindow->setLanguage(language);
+    todoWindow->setLanguage(language);
+    hotkeyManager->setLanguage(language);
+    trayController->setLanguage(language);
+}
+
+void MainWindow::applyAppearance(bool animate)
+{
+    const ThemeMode mode = store->themeMode();
+    const FontSizeMode fontSize = store->fontSizeMode();
+    const DensityMode density = store->densityMode();
+
+    qApp->setStyleSheet(AppTheme::applicationStyleSheet(mode, fontSize, density));
+    inputWindow->applyTheme(mode, fontSize, density);
+    questionWindow->applyTheme(mode, fontSize, density);
+    todoWindow->applyTheme(mode, fontSize, density);
+    dashboardWindow->applyTheme(mode, fontSize, density);
     appliedTheme = mode;
+    appliedFontSize = fontSize;
+    appliedDensity = density;
 
     if (!animate) {
         return;

@@ -1,5 +1,7 @@
 #include "traycontroller.h"
 
+#include "apptext.h"
+
 #include <QAction>
 #include <QApplication>
 #include <QFrame>
@@ -17,9 +19,10 @@ TrayController::TrayController(QObject *parent)
     : QObject(parent)
     , trayIcon(new QSystemTrayIcon(this))
     , trayMenu(new QMenu())
-    , openDashboardAction(new QAction(QStringLiteral("打开后台"), this))
-    , exitAction(new QAction(QStringLiteral("退出程序"), this))
+    , openDashboardAction(new QAction(this))
+    , exitAction(new QAction(this))
     , startupToast(nullptr)
+    , appLanguage(AppLanguage::ZhCn)
 {
     trayIcon->setIcon(qApp->style()->standardIcon(QStyle::SP_FileDialogDetailedView));
     trayIcon->setToolTip(QStringLiteral("Quick Memo Applet"));
@@ -28,6 +31,7 @@ TrayController::TrayController(QObject *parent)
     trayMenu->addSeparator();
     trayMenu->addAction(exitAction);
     trayIcon->setContextMenu(trayMenu);
+    setLanguage(appLanguage);
 
     connect(openDashboardAction, &QAction::triggered, this, &TrayController::openDashboardRequested);
     connect(exitAction, &QAction::triggered, this, &TrayController::exitRequested);
@@ -47,6 +51,13 @@ TrayController::~TrayController()
     }
     trayIcon->hide();
     delete trayMenu;
+}
+
+void TrayController::setLanguage(AppLanguage language)
+{
+    appLanguage = language;
+    openDashboardAction->setText(AppText::openDashboard(appLanguage));
+    exitAction->setText(AppText::exitApplication(appLanguage));
 }
 
 void TrayController::showStartupMessage(const QString &hotkeyText)
@@ -85,11 +96,10 @@ QLabel#StartupToastBody {
     layout->setContentsMargins(16, 12, 16, 12);
     layout->setSpacing(6);
 
-    auto *titleLabel = new QLabel(QStringLiteral("Quick Memo 已在后台运行"), startupToast);
+    auto *titleLabel = new QLabel(AppText::startupTitle(appLanguage), startupToast);
     titleLabel->setObjectName("StartupToastTitle");
 
-    auto *bodyLabel = new QLabel(QStringLiteral("按 %1 呼出输入框\n点击托盘图标可打开后台").arg(hotkeyText),
-                                 startupToast);
+    auto *bodyLabel = new QLabel(AppText::startupBody(hotkeyText, appLanguage), startupToast);
     bodyLabel->setObjectName("StartupToastBody");
     bodyLabel->setWordWrap(true);
 

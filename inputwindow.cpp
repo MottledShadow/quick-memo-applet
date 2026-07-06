@@ -1,6 +1,7 @@
 #include "inputwindow.h"
 
 #include "apptheme.h"
+#include "apptext.h"
 
 #include <QAbstractAnimation>
 #include <QCursor>
@@ -55,6 +56,7 @@ InputWindow::InputWindow(QWidget *parent)
     , positionAnimation(nullptr)
     , visiblePosition()
     , activeType(MemoType::Question)
+    , appLanguage(AppLanguage::ZhCn)
     , hideAfterSave(false)
     , captureOpen(false)
     , hidingWithAnimation(false)
@@ -87,6 +89,17 @@ void InputWindow::setCurrentType(MemoType type)
 void InputWindow::setHideAfterSave(bool enabled)
 {
     hideAfterSave = enabled;
+}
+
+void InputWindow::setLanguage(AppLanguage language)
+{
+    if (appLanguage == language) {
+        return;
+    }
+
+    appLanguage = language;
+    clearFeedback();
+    retranslateUi();
 }
 
 void InputWindow::toggleCurrentType()
@@ -133,9 +146,9 @@ void InputWindow::showAndFocus()
     }
 }
 
-void InputWindow::applyTheme(ThemeMode mode)
+void InputWindow::applyTheme(ThemeMode mode, FontSizeMode fontSize, DensityMode density)
 {
-    setStyleSheet(AppTheme::inputWindowStyleSheet(mode));
+    setStyleSheet(AppTheme::inputWindowStyleSheet(mode, fontSize, density));
     AppTheme::applyElevation(inputPanel, mode, ElevationLevel::E3);
     updateTypeButton();
 }
@@ -175,7 +188,7 @@ void InputWindow::keyPressEvent(QKeyEvent *event)
 
 void InputWindow::setupUi()
 {
-    setWindowTitle(QStringLiteral("快速记录"));
+    setWindowTitle(AppText::inputWindowTitle(appLanguage));
     setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
     setAttribute(Qt::WA_TranslucentBackground, true);
     setAutoFillBackground(false);
@@ -223,19 +236,19 @@ void InputWindow::setupUi()
     typeButton = new QPushButton(inputPanel);
     typeButton->setObjectName("TypeButton");
     typeButton->setCursor(Qt::PointingHandCursor);
-    typeButton->setToolTip(QStringLiteral("切换记录类型"));
+    typeButton->setToolTip(AppText::switchTypeTooltip(appLanguage));
     typeButton->installEventFilter(this);
     connect(typeButton, &QPushButton::clicked, this, &InputWindow::toggleCurrentType);
 
     input = new QLineEdit(inputPanel);
     input->setClearButtonEnabled(true);
-    input->setToolTip(QStringLiteral("输入后按 Enter 保存"));
-    input->setPlaceholderText(QStringLiteral("记下一个问题..."));
+    input->setToolTip(AppText::inputTooltip(appLanguage));
+    input->setPlaceholderText(AppText::questionPlaceholder(appLanguage));
     input->installEventFilter(this);
     connect(input, &QLineEdit::returnPressed, this, [this]() {
         const QString text = input->text().trimmed();
         if (text.isEmpty()) {
-            showFeedback(QStringLiteral("请输入内容"),
+            showFeedback(AppText::emptyInputWarning(appLanguage),
                          QStringLiteral("warning"),
                          kWarningFeedbackDurationMs,
                          false);
@@ -243,17 +256,17 @@ void InputWindow::setupUi()
         }
         emit memoSubmitted(activeType, text);
         input->clear();
-        showFeedback(QStringLiteral("已保存到 %1").arg(MemoStore::displayName(activeType)),
+        showFeedback(AppText::savedTo(activeType, appLanguage),
                      QStringLiteral("success"),
                      kSuccessFeedbackDurationMs,
                      hideAfterSave);
     });
 
-    enterHint = new QLabel(QStringLiteral("Enter 保存"), inputPanel);
+    enterHint = new QLabel(AppText::enterSave(appLanguage), inputPanel);
     enterHint->setObjectName("ShortcutHint");
     enterHint->setAttribute(Qt::WA_TransparentForMouseEvents);
 
-    escHint = new QLabel(QStringLiteral("Esc 收起"), inputPanel);
+    escHint = new QLabel(AppText::escHide(appLanguage), inputPanel);
     escHint->setObjectName("ShortcutHint");
     escHint->setAttribute(Qt::WA_TransparentForMouseEvents);
 
@@ -277,19 +290,29 @@ void InputWindow::setupUi()
     panelLayout->addWidget(hintArea, 0, Qt::AlignVCenter);
     outerLayout->addWidget(inputPanel);
 
+    retranslateUi();
+    applyTheme(ThemeMode::Light, FontSizeMode::Default, DensityMode::Comfortable);
+}
+
+void InputWindow::retranslateUi()
+{
+    setWindowTitle(AppText::inputWindowTitle(appLanguage));
+    typeButton->setToolTip(AppText::switchTypeTooltip(appLanguage));
+    input->setToolTip(AppText::inputTooltip(appLanguage));
+    enterHint->setText(AppText::enterSave(appLanguage));
+    escHint->setText(AppText::escHide(appLanguage));
     updateTypeButton();
-    applyTheme(ThemeMode::Light);
 }
 
 void InputWindow::updateTypeButton()
 {
     typeButton->setText(QStringLiteral("%1 %2")
-                            .arg(QString(QChar(0x25CF)), MemoStore::displayName(activeType)));
+                            .arg(QString(QChar(0x25CF)), AppText::memoTypeName(activeType, appLanguage)));
     typeButton->setProperty("memoKind", MemoStore::typeToString(activeType));
     inputPanel->setProperty("memoKind", MemoStore::typeToString(activeType));
     input->setPlaceholderText(activeType == MemoType::Question
-                                  ? QStringLiteral("记下一个问题...")
-                                  : QStringLiteral("写下一件待办..."));
+                                  ? AppText::questionPlaceholder(appLanguage)
+                                  : AppText::todoPlaceholder(appLanguage));
     refreshDynamicStyle(typeButton);
     refreshDynamicStyle(inputPanel);
     input->update();
