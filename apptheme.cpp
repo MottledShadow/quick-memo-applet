@@ -943,8 +943,15 @@ DashboardWindow QFrame#DashboardRecordCard:hover {
     background: ${surfaceRaised};
     border-color: ${borderStrong};
 }
+DashboardWindow QFrame#DashboardRecordCard[pressed="true"] {
+    background: ${overlayPressed};
+    border-color: ${primary};
+}
 DashboardWindow QFrame#DashboardRecordCard[memoKind="todo"]:hover {
     border-color: ${borderStrong};
+}
+DashboardWindow QFrame#DashboardRecordCard[memoKind="todo"][pressed="true"] {
+    border-color: ${secondary};
 }
 DashboardWindow QFrame#DashboardRecordCard:hover QLabel#DashboardRecordTime {
     color: ${textSecondary};

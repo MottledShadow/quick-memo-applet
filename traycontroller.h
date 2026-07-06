@@ -5,6 +5,7 @@
 
 class QAction;
 class QMenu;
+class QString;
 class QSystemTrayIcon;
 
 class TrayController : public QObject
@@ -14,6 +15,7 @@ class TrayController : public QObject
 public:
     explicit TrayController(QObject *parent = nullptr);
     ~TrayController() override;
+    void showStartupMessage(const QString &hotkeyText);
 
 signals:
     void openDashboardRequested();

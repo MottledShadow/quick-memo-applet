@@ -15,12 +15,14 @@
 #include <QKeySequence>
 #include <QPropertyAnimation>
 #include <QSettings>
+#include <QTimer>
 #include <QWidget>
 
 namespace {
 constexpr int kThemeTransitionDurationMs = 180;
 constexpr qreal kThemeTransitionStartOpacity = 0.82;
 constexpr qreal kThemeTransitionMinimumIdleOpacity = 0.99;
+constexpr int kStartupMessageDelayMs = 700;
 }
 
 MainWindow::MainWindow(QObject *parent)
@@ -51,6 +53,13 @@ MainWindow::MainWindow(QObject *parent)
     setupConnections();
     registerStoredHotkey();
     applyAutostart(store->autostartEnabled());
+
+    const bool launchedFromAutostart = QCoreApplication::arguments().contains(QStringLiteral("--autostart"));
+    if (!launchedFromAutostart) {
+        QTimer::singleShot(kStartupMessageDelayMs, trayController, [this]() {
+            trayController->showStartupMessage(QKeySequence(store->hotkey()).toString(QKeySequence::NativeText));
+        });
+    }
 }
 
 MainWindow::~MainWindow()
@@ -111,6 +120,11 @@ void MainWindow::setupConnections()
     connect(dashboardWindow, &DashboardWindow::hideMemoRequested, this, [this](MemoType type) {
         memoWindow(type)->hide();
     });
+
+    connect(dashboardWindow, &DashboardWindow::recordDeleteRequested, this, [this](const QString &id, MemoType type) {
+        Q_UNUSED(type)
+        store->deleteMemo(id);
+    }, Qt::QueuedConnection);
 
     connect(dashboardWindow, &DashboardWindow::alwaysOnTopChanged, this, [this](MemoType type, bool enabled) {
         memoWindow(type)->setAlwaysOnTop(enabled);
@@ -218,7 +232,7 @@ bool MainWindow::applyAutostart(bool enabled)
     const QString appName = QStringLiteral("QuickMemoApplet");
     if (enabled) {
         const QString executable = QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
-        runKey.setValue(appName, QStringLiteral("\"%1\"").arg(executable));
+        runKey.setValue(appName, QStringLiteral("\"%1\" --autostart").arg(executable));
     } else {
         runKey.remove(appName);
     }

@@ -2,6 +2,7 @@
 
 #include "apptheme.h"
 
+#include <QAbstractItemView>
 #include <QBoxLayout>
 #include <QCheckBox>
 #include <QCloseEvent>
@@ -11,6 +12,7 @@
 #include <QKeySequenceEdit>
 #include <QLabel>
 #include <QLayout>
+#include <QMouseEvent>
 #include <QPushButton>
 #include <QScrollArea>
 #include <QScrollBar>
@@ -18,6 +20,7 @@
 #include <QSizePolicy>
 #include <QStyle>
 #include <QVBoxLayout>
+#include <QWheelEvent>
 
 namespace {
 void refreshDynamicStyle(QWidget *widget)
@@ -26,6 +29,26 @@ void refreshDynamicStyle(QWidget *widget)
     widget->style()->polish(widget);
     widget->update();
 }
+
+class NoWheelComboBox : public QComboBox
+{
+public:
+    explicit NoWheelComboBox(QWidget *parent = nullptr)
+        : QComboBox(parent)
+    {
+    }
+
+protected:
+    void wheelEvent(QWheelEvent *event) override
+    {
+        if (view() != nullptr && view()->isVisible()) {
+            QComboBox::wheelEvent(event);
+            return;
+        }
+
+        event->ignore();
+    }
+};
 }
 
 DashboardWindow::DashboardWindow(MemoStore *store, QWidget *parent)
@@ -92,6 +115,48 @@ void DashboardWindow::applyTheme(ThemeMode mode)
     setStyleSheet(AppTheme::dashboardStyleSheet(mode));
     AppTheme::applyElevation(recordsPanel, mode, ElevationLevel::E2);
     AppTheme::applyElevation(sidePanel, mode, ElevationLevel::E2);
+}
+
+bool DashboardWindow::eventFilter(QObject *object, QEvent *event)
+{
+    const QVariant memoId = object->property("memoId");
+    if (!memoId.isValid()) {
+        return QWidget::eventFilter(object, event);
+    }
+
+    auto *widget = qobject_cast<QWidget *>(object);
+    if (widget == nullptr) {
+        return QWidget::eventFilter(object, event);
+    }
+
+    if (event->type() == QEvent::MouseButtonPress) {
+        auto *mouseEvent = static_cast<QMouseEvent *>(event);
+        if (mouseEvent->button() == Qt::LeftButton) {
+            widget->setProperty("pressed", true);
+            refreshDynamicStyle(widget);
+            return true;
+        }
+    }
+
+    if (event->type() == QEvent::MouseButtonRelease) {
+        auto *mouseEvent = static_cast<QMouseEvent *>(event);
+        widget->setProperty("pressed", false);
+        refreshDynamicStyle(widget);
+
+        if (mouseEvent->button() == Qt::LeftButton && widget->rect().contains(mouseEvent->pos())) {
+            const MemoType type = MemoStore::typeFromString(widget->property("memoKind").toString());
+            emit recordDeleteRequested(memoId.toString(), type);
+            setStatusMessage(QStringLiteral("已删除一条%1。").arg(MemoStore::displayName(type)));
+        }
+        return true;
+    }
+
+    if (event->type() == QEvent::Leave) {
+        widget->setProperty("pressed", false);
+        refreshDynamicStyle(widget);
+    }
+
+    return QWidget::eventFilter(object, event);
 }
 
 void DashboardWindow::closeEvent(QCloseEvent *event)
@@ -202,7 +267,7 @@ void DashboardWindow::setupUi()
     auto *appearanceGroup = createSettingsGroup(QStringLiteral("外观"), sideContent, &appearanceGroupLayout);
     auto *themeLabel = new QLabel(QStringLiteral("主题"), appearanceGroup);
     themeLabel->setObjectName("FieldLabel");
-    themeCombo = new QComboBox(appearanceGroup);
+    themeCombo = new NoWheelComboBox(appearanceGroup);
     themeCombo->setObjectName("ThemeCombo");
     themeCombo->setCursor(Qt::PointingHandCursor);
     themeCombo->setMinimumHeight(38);
@@ -325,11 +390,16 @@ QWidget *DashboardWindow::createRecordsColumn(MemoType type, QWidget *parent)
     return column;
 }
 
-QWidget *DashboardWindow::createRecordCard(const MemoItem &memo, QWidget *parent) const
+QWidget *DashboardWindow::createRecordCard(const MemoItem &memo, QWidget *parent)
 {
     auto *card = new QFrame(parent);
     card->setObjectName("DashboardRecordCard");
     card->setProperty("memoKind", MemoStore::typeToString(memo.type));
+    card->setProperty("memoId", memo.id);
+    card->setProperty("pressed", false);
+    card->setCursor(Qt::PointingHandCursor);
+    card->setToolTip(QStringLiteral("点击删除"));
+    card->installEventFilter(this);
 
     auto *layout = new QHBoxLayout(card);
     layout->setContentsMargins(12, 10, 12, 10);
@@ -339,6 +409,7 @@ QWidget *DashboardWindow::createRecordCard(const MemoItem &memo, QWidget *parent
     accentDot->setObjectName("RecordAccentDot");
     accentDot->setProperty("memoKind", MemoStore::typeToString(memo.type));
     accentDot->setFixedSize(7, 7);
+    accentDot->setAttribute(Qt::WA_TransparentForMouseEvents);
 
     auto *contentLayout = new QVBoxLayout();
     contentLayout->setContentsMargins(0, 0, 0, 0);
@@ -348,12 +419,13 @@ QWidget *DashboardWindow::createRecordCard(const MemoItem &memo, QWidget *parent
     textLabel->setObjectName("DashboardRecordText");
     textLabel->setWordWrap(true);
     textLabel->setMinimumWidth(0);
-    textLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    textLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
 
     auto *timeLabel = new QLabel(memo.createdAt.toString("yyyy-MM-dd HH:mm"), card);
     timeLabel->setObjectName("DashboardRecordTime");
     timeLabel->setMinimumWidth(0);
     timeLabel->setAlignment(Qt::AlignRight);
+    timeLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
 
     contentLayout->addWidget(textLabel);
     contentLayout->addWidget(timeLabel);

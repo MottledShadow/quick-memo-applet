@@ -8,6 +8,7 @@
 
 class QCheckBox;
 class QComboBox;
+class QEvent;
 class QBoxLayout;
 class QFrame;
 class QKeySequenceEdit;
@@ -34,16 +35,18 @@ signals:
     void hotkeyChangeRequested(const QKeySequence &sequence);
     void themeChangeRequested(ThemeMode mode);
     void inputAutoHideChanged(bool enabled);
+    void recordDeleteRequested(const QString &id, MemoType type);
     void autostartChanged(bool enabled);
     void exitRequested();
 
 protected:
+    bool eventFilter(QObject *object, QEvent *event) override;
     void closeEvent(QCloseEvent *event) override;
 
 private:
     void setupUi();
     QWidget *createRecordsColumn(MemoType type, QWidget *parent);
-    QWidget *createRecordCard(const MemoItem &memo, QWidget *parent) const;
+    QWidget *createRecordCard(const MemoItem &memo, QWidget *parent);
     QWidget *createMemoControls(MemoType type, QWidget *parent);
     QFrame *createSettingsGroup(const QString &title, QWidget *parent, QBoxLayout **contentLayout) const;
     void refreshMemoControls(MemoType type);

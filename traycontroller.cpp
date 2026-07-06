@@ -3,6 +3,7 @@
 #include <QAction>
 #include <QApplication>
 #include <QMenu>
+#include <QString>
 #include <QStyle>
 #include <QSystemTrayIcon>
 
@@ -36,4 +37,16 @@ TrayController::~TrayController()
 {
     trayIcon->hide();
     delete trayMenu;
+}
+
+void TrayController::showStartupMessage(const QString &hotkeyText)
+{
+    if (!QSystemTrayIcon::supportsMessages()) {
+        return;
+    }
+
+    trayIcon->showMessage(QStringLiteral("Quick Memo 已在后台运行"),
+                          QStringLiteral("按 %1 呼出输入框，点击托盘图标可打开后台。").arg(hotkeyText),
+                          QSystemTrayIcon::Information,
+                          4200);
 }
