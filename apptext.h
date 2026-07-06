@@ -25,6 +25,9 @@ public:
     static QString globalHotkeyLabel(AppLanguage language);
     static QString applyButton(AppLanguage language);
     static QString applyHotkeyTooltip(AppLanguage language);
+    static QString hotkeyIdleHint(AppLanguage language);
+    static QString hotkeyRecordingHint(AppLanguage language);
+    static QString hotkeyPendingHint(AppLanguage language);
     static QString personalizationTitle(AppLanguage language);
     static QString languageLabel(AppLanguage language);
     static QString themeLabel(AppLanguage language);

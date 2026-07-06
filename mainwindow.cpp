@@ -157,13 +157,16 @@ void MainWindow::setupConnections()
         QString error;
         if (!hotkeyManager->registerHotkey(sequence, &error)) {
             hotkeyManager->registerHotkey(QKeySequence(oldHotkey));
+            dashboardWindow->setHotkeyChangeFailed(error);
             dashboardWindow->setStatusMessage(error);
             return;
         }
 
         store->setHotkey(sequence.toString(QKeySequence::PortableText));
-        dashboardWindow->setStatusMessage(AppText::hotkeyUpdated(sequence.toString(QKeySequence::NativeText),
-                                                                 store->language()));
+        const QString message = AppText::hotkeyUpdated(sequence.toString(QKeySequence::NativeText),
+                                                       store->language());
+        dashboardWindow->setHotkeyChangeSucceeded(sequence);
+        dashboardWindow->setStatusMessage(message);
     });
 
     connect(dashboardWindow, &DashboardWindow::themeChangeRequested, this, [this](ThemeMode mode) {

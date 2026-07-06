@@ -11,6 +11,7 @@
 #include <QFrame>
 #include <QGridLayout>
 #include <QHBoxLayout>
+#include <QKeyEvent>
 #include <QKeySequenceEdit>
 #include <QLabel>
 #include <QLayout>
@@ -22,8 +23,11 @@
 #include <QSizePolicy>
 #include <QStyle>
 #include <QToolButton>
+#include <QTimer>
 #include <QVBoxLayout>
 #include <QWheelEvent>
+
+#include <functional>
 
 namespace {
 void refreshDynamicStyle(QWidget *widget)
@@ -72,6 +76,7 @@ public:
         auto *rootLayout = new QVBoxLayout(this);
         rootLayout->setContentsMargins(0, 0, 0, 0);
         rootLayout->setSpacing(0);
+        rootLayout->setSizeConstraint(QLayout::SetMinimumSize);
 
         header->setObjectName("SettingsGroupHeader");
         header->setCursor(Qt::PointingHandCursor);
@@ -103,8 +108,10 @@ public:
         headerLayout->addWidget(arrowButton);
 
         content->setObjectName("SettingsGroupContent");
-        contentBox->setContentsMargins(12, 0, 12, 12);
-        contentBox->setSpacing(9);
+        content->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
+        contentBox->setContentsMargins(12, 4, 12, 12);
+        contentBox->setSpacing(10);
+        contentBox->setSizeConstraint(QLayout::SetMinimumSize);
 
         rootLayout->addWidget(header);
         rootLayout->addWidget(content);
@@ -128,15 +135,38 @@ public:
         summary->setToolTip(text);
     }
 
+    void setCollapseCallback(std::function<void()> callback)
+    {
+        collapseCallback = callback;
+    }
+
     void setExpanded(bool value)
     {
+        const bool wasExpanded = expanded;
+        if (wasExpanded && !value && collapseCallback) {
+            collapseCallback();
+        }
+
         expanded = value;
         content->setVisible(expanded);
         arrowButton->setArrowType(expanded ? Qt::DownArrow : Qt::RightArrow);
         setProperty("expanded", expanded);
-        setMinimumHeight(expanded ? 64 : 44);
+        refreshMinimumHeight();
         refreshDynamicStyle(this);
         refreshDynamicStyle(header);
+    }
+
+    void refreshMinimumHeight()
+    {
+        if (!expanded) {
+            setMinimumHeight(44);
+            setMaximumHeight(44);
+            return;
+        }
+
+        setMaximumHeight(QWIDGETSIZE_MAX);
+        const int expandedHeight = header->sizeHint().height() + content->sizeHint().height();
+        setMinimumHeight(qMax(64, expandedHeight));
     }
 
 protected:
@@ -161,6 +191,7 @@ private:
     QLabel *summary;
     QWidget *content;
     QVBoxLayout *contentBox;
+    std::function<void()> collapseCallback;
 };
 
 QString onOffText(bool enabled, AppLanguage language)
@@ -176,6 +207,12 @@ void setGroupSummary(QFrame *frame, const QString &summary)
 {
     auto *group = static_cast<CollapsibleSettingsGroup *>(frame);
     group->setSummaryText(summary);
+}
+
+void refreshGroupHeight(QFrame *frame)
+{
+    auto *group = static_cast<CollapsibleSettingsGroup *>(frame);
+    group->refreshMinimumHeight();
 }
 }
 
@@ -198,6 +235,8 @@ DashboardWindow::DashboardWindow(MemoStore *store, QWidget *parent)
     , recordSortOrderCombo(nullptr)
     , hotkeyEdit(nullptr)
     , applyHotkeyButton(nullptr)
+    , hotkeyFeedbackLabel(nullptr)
+    , hotkeyFeedbackTimer(nullptr)
     , exportJsonButton(nullptr)
     , importJsonButton(nullptr)
     , hotkeyGroupFrame(nullptr)
@@ -237,6 +276,8 @@ DashboardWindow::DashboardWindow(MemoStore *store, QWidget *parent)
     , statusLabel(nullptr)
     , recordsPanel(nullptr)
     , sidePanel(nullptr)
+    , storedHotkeySequence()
+    , hotkeyState(HotkeyEditState::Idle)
 {
     setupUi();
     connect(store, &MemoStore::recordsChanged, this, &DashboardWindow::refresh);
@@ -306,8 +347,14 @@ void DashboardWindow::refresh()
     }
 
     {
-        const QSignalBlocker blocker(hotkeyEdit);
-        hotkeyEdit->setKeySequence(QKeySequence(store->hotkey()));
+        const QKeySequence savedHotkey(store->hotkey());
+        const bool keepDraft = hotkeyState == HotkeyEditState::Recording || hotkeyState == HotkeyEditState::Pending;
+        storedHotkeySequence = savedHotkey;
+        if (!keepDraft) {
+            const QSignalBlocker blocker(hotkeyEdit);
+            hotkeyEdit->setKeySequence(savedHotkey);
+        }
+        updateHotkeyApplyState();
     }
 
     refreshRecords();
@@ -325,8 +372,127 @@ void DashboardWindow::applyTheme(ThemeMode mode, FontSizeMode fontSize, DensityM
     AppTheme::applyElevation(sidePanel, mode, ElevationLevel::E1);
 }
 
+void DashboardWindow::setHotkeyChangeSucceeded(const QKeySequence &sequence)
+{
+    storedHotkeySequence = sequence;
+    {
+        const QSignalBlocker blocker(hotkeyEdit);
+        hotkeyEdit->setKeySequence(sequence);
+    }
+
+    applyHotkeyButton->setEnabled(false);
+    updateSettingsGroupSummaries();
+    setHotkeyEditState(HotkeyEditState::Success,
+                       AppText::hotkeyUpdated(sequence.toString(QKeySequence::NativeText), store->language()));
+    hotkeyFeedbackTimer->start(1400);
+}
+
+void DashboardWindow::setHotkeyChangeFailed(const QString &message)
+{
+    {
+        const QSignalBlocker blocker(hotkeyEdit);
+        hotkeyEdit->setKeySequence(storedHotkeySequence);
+    }
+
+    applyHotkeyButton->setEnabled(false);
+    setHotkeyEditState(HotkeyEditState::Error, message);
+    hotkeyFeedbackTimer->start(2600);
+}
+
+void DashboardWindow::setHotkeyEditState(HotkeyEditState state, const QString &message)
+{
+    hotkeyState = state;
+    if (hotkeyFeedbackTimer != nullptr) {
+        hotkeyFeedbackTimer->stop();
+    }
+
+    QString feedbackKind = QStringLiteral("idle");
+    QString editState;
+    QString feedbackText = message;
+
+    switch (state) {
+    case HotkeyEditState::Idle:
+        feedbackText = feedbackText.isEmpty() ? AppText::hotkeyIdleHint(store->language()) : feedbackText;
+        break;
+    case HotkeyEditState::Recording:
+        feedbackKind = QStringLiteral("recording");
+        editState = QStringLiteral("recording");
+        feedbackText = feedbackText.isEmpty() ? AppText::hotkeyRecordingHint(store->language()) : feedbackText;
+        break;
+    case HotkeyEditState::Pending:
+        feedbackKind = QStringLiteral("pending");
+        editState = QStringLiteral("pending");
+        feedbackText = feedbackText.isEmpty() ? AppText::hotkeyPendingHint(store->language()) : feedbackText;
+        break;
+    case HotkeyEditState::Success:
+        feedbackKind = QStringLiteral("success");
+        editState = QStringLiteral("success");
+        break;
+    case HotkeyEditState::Error:
+        feedbackKind = QStringLiteral("error");
+        editState = QStringLiteral("error");
+        break;
+    }
+
+    hotkeyEdit->setProperty("captureState", editState);
+    hotkeyFeedbackLabel->setProperty("feedbackKind", feedbackKind);
+    hotkeyFeedbackLabel->setText(feedbackText);
+    refreshDynamicStyle(hotkeyEdit);
+    refreshDynamicStyle(hotkeyFeedbackLabel);
+    refreshDynamicStyle(applyHotkeyButton);
+    refreshGroupHeight(hotkeyGroupFrame);
+}
+
+void DashboardWindow::updateHotkeyApplyState()
+{
+    const QKeySequence sequence = hotkeyEdit->keySequence();
+    const bool hasPendingChange = !sequence.isEmpty() && sequence != storedHotkeySequence;
+
+    applyHotkeyButton->setEnabled(hasPendingChange);
+    if (hasPendingChange) {
+        setHotkeyEditState(HotkeyEditState::Pending);
+        return;
+    }
+
+    setHotkeyEditState(hotkeyEdit->hasFocus() ? HotkeyEditState::Recording : HotkeyEditState::Idle);
+}
+
+void DashboardWindow::resetHotkeyEdit()
+{
+    {
+        const QSignalBlocker blocker(hotkeyEdit);
+        hotkeyEdit->setKeySequence(storedHotkeySequence);
+    }
+
+    applyHotkeyButton->setEnabled(false);
+    setHotkeyEditState(HotkeyEditState::Idle);
+}
+
 bool DashboardWindow::eventFilter(QObject *object, QEvent *event)
 {
+    if (object == hotkeyEdit) {
+        if (event->type() == QEvent::FocusIn) {
+            updateHotkeyApplyState();
+            return QWidget::eventFilter(object, event);
+        }
+
+        if (event->type() == QEvent::FocusOut) {
+            updateHotkeyApplyState();
+            return QWidget::eventFilter(object, event);
+        }
+
+        if (event->type() == QEvent::KeyPress) {
+            auto *keyEvent = static_cast<QKeyEvent *>(event);
+            if (keyEvent->key() == Qt::Key_Escape) {
+                resetHotkeyEdit();
+                hotkeyEdit->clearFocus();
+                return true;
+            }
+        }
+
+        return QWidget::eventFilter(object, event);
+    }
+
     const QVariant memoId = object->property("memoId");
     if (!memoId.isValid()) {
         return QWidget::eventFilter(object, event);
@@ -446,18 +612,38 @@ void DashboardWindow::setupUi()
 
     QBoxLayout *hotkeyGroupLayout = nullptr;
     hotkeyGroupFrame = createSettingsGroup(&hotkeyGroupTitleLabel, sideContent, &hotkeyGroupLayout);
+    static_cast<CollapsibleSettingsGroup *>(hotkeyGroupFrame)->setCollapseCallback([this]() {
+        resetHotkeyEdit();
+    });
     auto *hotkeyGroup = hotkeyGroupFrame;
     hotkeyFieldLabel = new QLabel(hotkeyGroup);
     hotkeyFieldLabel->setObjectName("FieldLabel");
     hotkeyEdit = new QKeySequenceEdit(hotkeyGroup);
     hotkeyEdit->setMinimumHeight(34);
+    hotkeyEdit->installEventFilter(this);
+    connect(hotkeyEdit, &QKeySequenceEdit::keySequenceChanged, this, [this]() {
+        updateHotkeyApplyState();
+    });
+
+    hotkeyFeedbackTimer = new QTimer(this);
+    hotkeyFeedbackTimer->setSingleShot(true);
+    connect(hotkeyFeedbackTimer, &QTimer::timeout, this, [this]() {
+        updateHotkeyApplyState();
+    });
 
     applyHotkeyButton = new QPushButton(hotkeyGroup);
     applyHotkeyButton->setObjectName("PrimaryButton");
     applyHotkeyButton->setMinimumSize(68, 34);
+    applyHotkeyButton->setEnabled(false);
     connect(applyHotkeyButton, &QPushButton::clicked, this, [this]() {
-        emit hotkeyChangeRequested(hotkeyEdit->keySequence());
+        if (applyHotkeyButton->isEnabled()) {
+            emit hotkeyChangeRequested(hotkeyEdit->keySequence());
+        }
     });
+
+    hotkeyFeedbackLabel = new QLabel(hotkeyGroup);
+    hotkeyFeedbackLabel->setObjectName("HotkeyFeedbackLabel");
+    hotkeyFeedbackLabel->setWordWrap(true);
 
     auto *hotkeyInputRow = new QWidget(hotkeyGroup);
     auto *hotkeyInputLayout = new QHBoxLayout(hotkeyInputRow);
@@ -468,6 +654,7 @@ void DashboardWindow::setupUi()
 
     hotkeyGroupLayout->addWidget(hotkeyFieldLabel);
     hotkeyGroupLayout->addWidget(hotkeyInputRow);
+    hotkeyGroupLayout->addWidget(hotkeyFeedbackLabel);
 
     QBoxLayout *personalizationGroupLayout = nullptr;
     personalizationGroupFrame = createSettingsGroup(&personalizationGroupTitleLabel,
@@ -477,7 +664,7 @@ void DashboardWindow::setupUi()
     auto *personalizationGrid = new QGridLayout();
     personalizationGrid->setContentsMargins(0, 0, 0, 0);
     personalizationGrid->setHorizontalSpacing(10);
-    personalizationGrid->setVerticalSpacing(8);
+    personalizationGrid->setVerticalSpacing(12);
 
     languageFieldLabel = new QLabel(personalizationGroup);
     languageFieldLabel->setObjectName("FieldLabel");
@@ -491,19 +678,19 @@ void DashboardWindow::setupUi()
     languageCombo = new NoWheelComboBox(personalizationGroup);
     languageCombo->setObjectName("LanguageCombo");
     languageCombo->setCursor(Qt::PointingHandCursor);
-    languageCombo->setMinimumHeight(30);
+    languageCombo->setMinimumHeight(34);
     themeCombo = new NoWheelComboBox(personalizationGroup);
     themeCombo->setObjectName("ThemeCombo");
     themeCombo->setCursor(Qt::PointingHandCursor);
-    themeCombo->setMinimumHeight(30);
+    themeCombo->setMinimumHeight(34);
     fontSizeCombo = new NoWheelComboBox(personalizationGroup);
     fontSizeCombo->setObjectName("FontSizeCombo");
     fontSizeCombo->setCursor(Qt::PointingHandCursor);
-    fontSizeCombo->setMinimumHeight(30);
+    fontSizeCombo->setMinimumHeight(34);
     densityCombo = new NoWheelComboBox(personalizationGroup);
     densityCombo->setObjectName("DensityCombo");
     densityCombo->setCursor(Qt::PointingHandCursor);
-    densityCombo->setMinimumHeight(30);
+    densityCombo->setMinimumHeight(34);
 
     personalizationGrid->addWidget(languageFieldLabel, 0, 0);
     personalizationGrid->addWidget(languageCombo, 0, 1);
@@ -514,6 +701,9 @@ void DashboardWindow::setupUi()
     personalizationGrid->addWidget(densityFieldLabel, 3, 0);
     personalizationGrid->addWidget(densityCombo, 3, 1);
     personalizationGrid->setColumnStretch(1, 1);
+    for (int row = 0; row < 4; ++row) {
+        personalizationGrid->setRowMinimumHeight(row, 38);
+    }
     personalizationGroupLayout->addLayout(personalizationGrid);
 
     connect(languageCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
@@ -693,6 +883,14 @@ void DashboardWindow::setupUi()
     sideLayout->addWidget(dataGroup);
     sideLayout->addWidget(systemGroup);
     sideLayout->addStretch(1);
+
+    refreshGroupHeight(inputGroupFrame);
+    refreshGroupHeight(hotkeyGroupFrame);
+    refreshGroupHeight(personalizationGroupFrame);
+    refreshGroupHeight(memoDisplayGroupFrame);
+    refreshGroupHeight(recordGroupFrame);
+    refreshGroupHeight(dataGroupFrame);
+    refreshGroupHeight(systemGroupFrame);
 
     sideScrollArea->setWidget(sideContent);
     sidePanelLayout->addWidget(sideScrollArea);
@@ -956,6 +1154,13 @@ void DashboardWindow::retranslateUi()
 
     rebuildComboLabels();
     updateSettingsGroupSummaries();
+    refreshGroupHeight(inputGroupFrame);
+    refreshGroupHeight(hotkeyGroupFrame);
+    refreshGroupHeight(personalizationGroupFrame);
+    refreshGroupHeight(memoDisplayGroupFrame);
+    refreshGroupHeight(recordGroupFrame);
+    refreshGroupHeight(dataGroupFrame);
+    refreshGroupHeight(systemGroupFrame);
 }
 
 void DashboardWindow::rebuildComboLabels()

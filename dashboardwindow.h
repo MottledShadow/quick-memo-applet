@@ -15,6 +15,7 @@ class QKeySequenceEdit;
 class QLabel;
 class QPushButton;
 class QScrollArea;
+class QTimer;
 
 class DashboardWindow : public QWidget
 {
@@ -27,6 +28,8 @@ public slots:
     void refresh();
     void setStatusMessage(const QString &message);
     void applyTheme(ThemeMode mode, FontSizeMode fontSize, DensityMode density);
+    void setHotkeyChangeSucceeded(const QKeySequence &sequence);
+    void setHotkeyChangeFailed(const QString &message);
 
 signals:
     void showMemoRequested(MemoType type);
@@ -52,6 +55,14 @@ protected:
     void closeEvent(QCloseEvent *event) override;
 
 private:
+    enum class HotkeyEditState {
+        Idle,
+        Recording,
+        Pending,
+        Success,
+        Error
+    };
+
     void setupUi();
     QWidget *createRecordsColumn(MemoType type, QWidget *parent);
     QWidget *createRecordCard(const MemoItem &memo, QWidget *parent);
@@ -68,6 +79,9 @@ private:
     void refreshRecordColumn(MemoType type, const QVector<MemoItem> &records);
     void clearLayout(QBoxLayout *layout) const;
     void configureScrollArea(QScrollArea *scrollArea) const;
+    void setHotkeyEditState(HotkeyEditState state, const QString &message = QString());
+    void updateHotkeyApplyState();
+    void resetHotkeyEdit();
 
     MemoStore *store;
     QPushButton *questionVisibilityButton;
@@ -86,6 +100,8 @@ private:
     QComboBox *recordSortOrderCombo;
     QKeySequenceEdit *hotkeyEdit;
     QPushButton *applyHotkeyButton;
+    QLabel *hotkeyFeedbackLabel;
+    QTimer *hotkeyFeedbackTimer;
     QPushButton *exportJsonButton;
     QPushButton *importJsonButton;
     QFrame *hotkeyGroupFrame;
@@ -125,6 +141,8 @@ private:
     QLabel *statusLabel;
     QFrame *recordsPanel;
     QFrame *sidePanel;
+    QKeySequence storedHotkeySequence;
+    HotkeyEditState hotkeyState;
 };
 
 #endif // DASHBOARDWINDOW_H

@@ -1192,6 +1192,11 @@ DashboardWindow QPushButton#PrimaryButton:focus {
     background: ${primaryHover};
     border-color: ${primaryHover};
 }
+DashboardWindow QPushButton#PrimaryButton:disabled {
+    color: ${textDisabled};
+    background: ${surfaceSunken};
+    border-color: ${border};
+}
 DashboardWindow QPushButton#SecondaryButton {
     color: ${textSecondary};
     background: transparent;
@@ -1231,6 +1236,19 @@ DashboardWindow QLineEdit:focus,
 DashboardWindow QKeySequenceEdit:focus {
     border-color: ${primary};
 }
+DashboardWindow QKeySequenceEdit[captureState="recording"],
+DashboardWindow QKeySequenceEdit[captureState="pending"] {
+    background: ${infoSoft};
+    border-color: ${primary};
+}
+DashboardWindow QKeySequenceEdit[captureState="success"] {
+    background: ${successSoft};
+    border-color: ${success};
+}
+DashboardWindow QKeySequenceEdit[captureState="error"] {
+    background: ${dangerSoft};
+    border-color: ${danger};
+}
 DashboardWindow QLineEdit:disabled,
 DashboardWindow QKeySequenceEdit:disabled {
     color: ${textDisabled};
@@ -1248,6 +1266,28 @@ DashboardWindow QKeySequenceEdit QLineEdit {
 DashboardWindow QKeySequenceEdit QLineEdit:focus {
     background: transparent;
     border: none;
+}
+DashboardWindow QLabel#HotkeyFeedbackLabel {
+    color: ${textMuted};
+    background: transparent;
+    border: none;
+    padding: 0;
+    min-height: 18px;
+    font-size: ${captionSize};
+    font-weight: ${weightRegular};
+    line-height: ${lineCaption};
+}
+DashboardWindow QLabel#HotkeyFeedbackLabel[feedbackKind="recording"] {
+    color: ${primary};
+}
+DashboardWindow QLabel#HotkeyFeedbackLabel[feedbackKind="pending"] {
+    color: ${textSecondary};
+}
+DashboardWindow QLabel#HotkeyFeedbackLabel[feedbackKind="success"] {
+    color: ${success};
+}
+DashboardWindow QLabel#HotkeyFeedbackLabel[feedbackKind="error"] {
+    color: ${danger};
 }
 DashboardWindow QCheckBox {
     color: ${textPrimary};

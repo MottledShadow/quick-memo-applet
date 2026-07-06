@@ -112,6 +112,21 @@ QString AppText::applyHotkeyTooltip(AppLanguage language)
     return text(language, "应用新的全局快捷键", "Apply the new global hotkey");
 }
 
+QString AppText::hotkeyIdleHint(AppLanguage language)
+{
+    return text(language, "点击输入框后按新的组合键", "Click the field, then press a new shortcut");
+}
+
+QString AppText::hotkeyRecordingHint(AppLanguage language)
+{
+    return text(language, "正在设置快捷键，按下新的组合键", "Recording shortcut. Press the new key combination");
+}
+
+QString AppText::hotkeyPendingHint(AppLanguage language)
+{
+    return text(language, "按“应用”保存，Esc 取消", "Press Apply to save, or Esc to cancel");
+}
+
 QString AppText::personalizationTitle(AppLanguage language)
 {
     return text(language, "个性化", "Personalization");
