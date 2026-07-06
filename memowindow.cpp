@@ -6,25 +6,35 @@
 #include <QColor>
 #include <QCloseEvent>
 #include <QCursor>
+#include <QEasingCurve>
 #include <QFrame>
 #include <QHideEvent>
 #include <QLabel>
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainter>
+#include <QParallelAnimationGroup>
 #include <QPushButton>
+#include <QPropertyAnimation>
 #include <QResizeEvent>
 #include <QScrollArea>
+#include <QSequentialAnimationGroup>
 #include <QShowEvent>
 #include <QSizeGrip>
 #include <QStyle>
 #include <QStyleOption>
 #include <QVariant>
+#include <QVariantAnimation>
 
 namespace {
 constexpr int kPaperLineSpacing = 32;
 constexpr int kPaperContentTop = 18;
 constexpr int kPaperTextLineOffset = 25;
+constexpr int kStrikeAnimationDurationMs = 130;
+constexpr int kCollapseAnimationDurationMs = 120;
+constexpr int kStrikeLineHeight = 2;
+
+void refreshDynamicStyle(QWidget *widget);
 
 class LinedMemoPaper : public QFrame
 {
@@ -155,6 +165,96 @@ private:
     }
 };
 
+class MemoRecordCard : public QFrame
+{
+public:
+    explicit MemoRecordCard(QWidget *parent = nullptr)
+        : QFrame(parent)
+        , textLabel(nullptr)
+        , marker(nullptr)
+        , strikeLine(new QFrame(this))
+        , strikeProgressValue(0.0)
+    {
+        setAttribute(Qt::WA_StyledBackground, true);
+        strikeLine->setObjectName("StrikeLine");
+        strikeLine->setAttribute(Qt::WA_TransparentForMouseEvents);
+        strikeLine->hide();
+    }
+
+    void setTextLabel(QLabel *label)
+    {
+        textLabel = label;
+        updateStrikeGeometry();
+    }
+
+    void setMarker(QFrame *markerFrame)
+    {
+        marker = markerFrame;
+    }
+
+    void setMemoKind(const QString &memoKind)
+    {
+        setProperty("memoKind", memoKind);
+        strikeLine->setProperty("memoKind", memoKind);
+        refreshDynamicStyle(strikeLine);
+    }
+
+    void setStrikeProgress(qreal progress)
+    {
+        if (progress < 0.0) {
+            progress = 0.0;
+        } else if (progress > 1.0) {
+            progress = 1.0;
+        }
+
+        if (qFuzzyCompare(strikeProgressValue, progress)) {
+            return;
+        }
+
+        strikeProgressValue = progress;
+        updateStrikeGeometry();
+    }
+
+    void setDeleting(bool deleting)
+    {
+        setProperty("deleting", deleting);
+        refreshDynamicStyle(this);
+
+        if (marker != nullptr) {
+            marker->setProperty("deleting", deleting);
+            refreshDynamicStyle(marker);
+        }
+    }
+
+protected:
+    void resizeEvent(QResizeEvent *event) override
+    {
+        QFrame::resizeEvent(event);
+        updateStrikeGeometry();
+    }
+
+private:
+    void updateStrikeGeometry()
+    {
+        if (textLabel == nullptr || strikeLine == nullptr) {
+            return;
+        }
+
+        const QRect textGeometry = textLabel->geometry();
+        const int lineWidth = static_cast<int>((textGeometry.width() * strikeProgressValue) + 0.5);
+        const int lineY = textGeometry.y() + (textGeometry.height() / 2) - (kStrikeLineHeight / 2);
+
+        strikeLine->setGeometry(textGeometry.x(), lineY, lineWidth, kStrikeLineHeight);
+        strikeLine->setVisible(lineWidth > 0);
+        strikeLine->raise();
+    }
+
+    QLabel *textLabel;
+    QFrame *marker;
+    QFrame *strikeLine;
+    qreal strikeProgressValue;
+};
+
 void refreshDynamicStyle(QWidget *widget)
 {
     widget->style()->unpolish(widget);
@@ -173,8 +273,11 @@ MemoWindow::MemoWindow(MemoType type, QWidget *parent)
     , topButton(nullptr)
     , resizeGrip(nullptr)
     , listLayout(nullptr)
+    , deletingMemoId()
     , alwaysOnTop(true)
     , dragging(false)
+    , deleteAnimationActive(false)
+    , rebuildPending(false)
 {
     setProperty("memoKind", MemoStore::typeToString(type));
     setupUi();
@@ -197,6 +300,14 @@ MemoWindowState MemoWindow::currentState() const
 
 void MemoWindow::setRecords(const QVector<MemoItem> &records)
 {
+    if (deleteAnimationActive) {
+        pendingRecords = records;
+        rebuildPending = true;
+        return;
+    }
+
+    rebuildPending = false;
+    pendingRecords.clear();
     currentRecords = records;
     rebuildList();
 }
@@ -262,6 +373,10 @@ bool MemoWindow::eventFilter(QObject *object, QEvent *event)
     if (memoId.isValid() && event->type() == QEvent::MouseButtonPress) {
         auto *mouseEvent = static_cast<QMouseEvent *>(event);
         if (mouseEvent->button() == Qt::LeftButton) {
+            if (deleteAnimationActive) {
+                return true;
+            }
+
             auto *widget = qobject_cast<QWidget *>(object);
             if (widget != nullptr) {
                 widget->setProperty("pressed", true);
@@ -279,7 +394,9 @@ bool MemoWindow::eventFilter(QObject *object, QEvent *event)
             refreshDynamicStyle(widget);
         }
         if (mouseEvent->button() == Qt::LeftButton) {
-            emit memoClicked(memoId.toString());
+            if (!deleteAnimationActive && widget != nullptr) {
+                startDeleteAnimation(widget, memoId.toString());
+            }
             return true;
         }
     }
@@ -427,11 +544,12 @@ void MemoWindow::rebuildList()
     }
 
     for (const MemoItem &memo : currentRecords) {
-        auto *recordFrame = new QFrame(this);
+        auto *recordFrame = new MemoRecordCard(listLayout->parentWidget());
         recordFrame->setObjectName("MemoRecordCard");
         recordFrame->setProperty("record", true);
         recordFrame->setProperty("memoId", memo.id);
-        recordFrame->setProperty("memoKind", MemoStore::typeToString(memo.type));
+        recordFrame->setMemoKind(MemoStore::typeToString(memo.type));
+        recordFrame->setProperty("deleting", false);
         recordFrame->setCursor(Qt::PointingHandCursor);
         recordFrame->setToolTip(QStringLiteral("点击删除"));
         recordFrame->installEventFilter(this);
@@ -439,15 +557,16 @@ void MemoWindow::rebuildList()
 
         auto *recordLayout = new QHBoxLayout(recordFrame);
         recordLayout->setContentsMargins(0, 0, 0, 0);
-        recordLayout->setSpacing(memo.type == MemoType::Todo ? 8 : 0);
+        recordLayout->setSpacing(8);
 
-        if (memo.type == MemoType::Todo) {
-            auto *marker = new QFrame(recordFrame);
-            marker->setObjectName("TodoMarker");
-            marker->setFixedSize(8, 8);
-            marker->setAttribute(Qt::WA_TransparentForMouseEvents);
-            recordLayout->addWidget(marker, 0, Qt::AlignVCenter);
-        }
+        auto *marker = new QFrame(recordFrame);
+        marker->setObjectName("RecordMarker");
+        marker->setProperty("memoKind", MemoStore::typeToString(memo.type));
+        marker->setProperty("deleting", false);
+        marker->setFixedSize(8, 8);
+        marker->setAttribute(Qt::WA_TransparentForMouseEvents);
+        recordFrame->setMarker(marker);
+        recordLayout->addWidget(marker, 0, Qt::AlignVCenter);
 
         auto *textLabel = new QLabel(memo.text, recordFrame);
         textLabel->setObjectName("RecordText");
@@ -458,10 +577,74 @@ void MemoWindow::rebuildList()
         textLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
 
         recordLayout->addWidget(textLabel);
+        recordFrame->setTextLabel(textLabel);
         listLayout->addWidget(recordFrame);
     }
 
     listLayout->addStretch();
+}
+
+void MemoWindow::startDeleteAnimation(QWidget *recordWidget, const QString &id)
+{
+    if (deleteAnimationActive || recordWidget == nullptr || id.isEmpty()) {
+        return;
+    }
+
+    auto *record = static_cast<MemoRecordCard *>(recordWidget);
+    deleteAnimationActive = true;
+    rebuildPending = false;
+    pendingRecords.clear();
+    deletingMemoId = id;
+
+    record->setProperty("pressed", false);
+    record->setDeleting(true);
+    record->setStrikeProgress(0.0);
+
+    auto *strikeAnimation = new QVariantAnimation();
+    strikeAnimation->setDuration(kStrikeAnimationDurationMs);
+    strikeAnimation->setEasingCurve(QEasingCurve::OutCubic);
+    strikeAnimation->setStartValue(0.0);
+    strikeAnimation->setEndValue(1.0);
+    connect(strikeAnimation, &QVariantAnimation::valueChanged, record, [record](const QVariant &value) {
+        record->setStrikeProgress(value.toReal());
+    });
+
+    auto *collapseGroup = new QParallelAnimationGroup();
+    auto *minHeightAnimation = new QPropertyAnimation(record, "minimumHeight");
+    minHeightAnimation->setDuration(kCollapseAnimationDurationMs);
+    minHeightAnimation->setEasingCurve(QEasingCurve::InCubic);
+    minHeightAnimation->setStartValue(kPaperLineSpacing);
+    minHeightAnimation->setEndValue(0);
+
+    auto *maxHeightAnimation = new QPropertyAnimation(record, "maximumHeight");
+    maxHeightAnimation->setDuration(kCollapseAnimationDurationMs);
+    maxHeightAnimation->setEasingCurve(QEasingCurve::InCubic);
+    maxHeightAnimation->setStartValue(kPaperLineSpacing);
+    maxHeightAnimation->setEndValue(0);
+
+    collapseGroup->addAnimation(minHeightAnimation);
+    collapseGroup->addAnimation(maxHeightAnimation);
+
+    auto *deleteAnimation = new QSequentialAnimationGroup(this);
+    deleteAnimation->addAnimation(strikeAnimation);
+    deleteAnimation->addAnimation(collapseGroup);
+    connect(deleteAnimation, &QSequentialAnimationGroup::finished, this, [this, deleteAnimation]() {
+        const QString id = deletingMemoId;
+        deleteAnimationActive = false;
+        deletingMemoId.clear();
+        deleteAnimation->deleteLater();
+
+        emit memoClicked(id);
+
+        if (rebuildPending) {
+            currentRecords = pendingRecords;
+            pendingRecords.clear();
+            rebuildPending = false;
+            rebuildList();
+        }
+    });
+
+    deleteAnimation->start();
 }
 
 void MemoWindow::updateWindowFlags(bool keepVisible)

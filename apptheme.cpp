@@ -650,17 +650,42 @@ MemoWindow QFrame#MemoRecordCard[pressed="true"] {
     background: rgba(253, 230, 138, 42);
     border-color: transparent;
 }
-MemoWindow QFrame#TodoMarker {
+MemoWindow QFrame#RecordMarker {
     background: transparent;
-    border: 1px solid ${secondary};
+    border: 1px solid ${primary};
     border-radius: 4px;
     max-width: 8px;
     max-height: 8px;
     min-width: 8px;
     min-height: 8px;
 }
-MemoWindow QFrame#MemoRecordCard[pressed="true"] QFrame#TodoMarker {
+MemoWindow QFrame#RecordMarker[memoKind="todo"] {
+    border-color: ${secondary};
+}
+MemoWindow QFrame#MemoRecordCard[pressed="true"] QFrame#RecordMarker {
+    background: rgba(37, 99, 235, 40);
+}
+MemoWindow QFrame#MemoRecordCard[pressed="true"] QFrame#RecordMarker[memoKind="todo"] {
     background: rgba(4, 120, 87, 40);
+}
+MemoWindow QFrame#MemoRecordCard[deleting="true"] QFrame#RecordMarker,
+MemoWindow QFrame#RecordMarker[deleting="true"] {
+    background: ${primary};
+    border-color: ${primary};
+}
+MemoWindow QFrame#MemoRecordCard[deleting="true"] QFrame#RecordMarker[memoKind="todo"],
+MemoWindow QFrame#RecordMarker[memoKind="todo"][deleting="true"] {
+    background: ${secondary};
+    border-color: ${secondary};
+}
+MemoWindow QFrame#StrikeLine {
+    background: ${primary};
+    border: none;
+    min-height: 2px;
+    max-height: 2px;
+}
+MemoWindow QFrame#StrikeLine[memoKind="todo"] {
+    background: ${secondary};
 }
 MemoWindow QLabel#RecordText {
     color: ${memoPaperText};

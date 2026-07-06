@@ -44,12 +44,14 @@ protected:
 private:
     void setupUi();
     void rebuildList();
+    void startDeleteAnimation(QWidget *recordWidget, const QString &id);
     void updateWindowFlags(bool keepVisible);
     void updateResizeGripGeometry();
     void emitStateChanged();
 
     MemoType type;
     QVector<MemoItem> currentRecords;
+    QVector<MemoItem> pendingRecords;
     QFrame *panel;
     QWidget *titleBar;
     QLabel *titleLabel;
@@ -57,8 +59,11 @@ private:
     QPushButton *topButton;
     QSizeGrip *resizeGrip;
     QBoxLayout *listLayout;
+    QString deletingMemoId;
     bool alwaysOnTop;
     bool dragging;
+    bool deleteAnimationActive;
+    bool rebuildPending;
     QPoint dragOffset;
 };
 
