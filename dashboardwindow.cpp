@@ -419,7 +419,13 @@ void DashboardWindow::setupUi()
     sidePanelLayout->setContentsMargins(0, 0, 0, 0);
     sidePanelLayout->setSpacing(0);
 
-    auto *sideContent = new QWidget(sidePanel);
+    auto *sideScrollArea = new QScrollArea(sidePanel);
+    sideScrollArea->setObjectName("SideContentScrollArea");
+    sideScrollArea->setWidgetResizable(true);
+    sideScrollArea->setFrameShape(QFrame::NoFrame);
+    configureScrollArea(sideScrollArea);
+
+    auto *sideContent = new QWidget(sideScrollArea);
     sideContent->setObjectName("SideContent");
 
     auto *sideLayout = new QVBoxLayout(sideContent);
@@ -688,7 +694,8 @@ void DashboardWindow::setupUi()
     sideLayout->addWidget(systemGroup);
     sideLayout->addStretch(1);
 
-    sidePanelLayout->addWidget(sideContent);
+    sideScrollArea->setWidget(sideContent);
+    sidePanelLayout->addWidget(sideScrollArea);
 
     contentLayout->addWidget(recordsPanel, 1);
     contentLayout->addWidget(sidePanel);

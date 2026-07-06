@@ -947,6 +947,10 @@ DashboardWindow QFrame#StatusBar {
     background: transparent;
     border: none;
 }
+DashboardWindow QScrollArea#SideContentScrollArea {
+    background: transparent;
+    border: none;
+}
 DashboardWindow QWidget#SideContent {
     background: transparent;
     border: none;
