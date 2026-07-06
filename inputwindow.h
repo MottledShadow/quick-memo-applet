@@ -14,6 +14,7 @@ class QFrame;
 class QLabel;
 class QPropertyAnimation;
 class QPushButton;
+class QTimer;
 
 class InputWindow : public QWidget
 {
@@ -27,6 +28,7 @@ public:
 
 public slots:
     void setCurrentType(MemoType type);
+    void setHideAfterSave(bool enabled);
     void toggleCurrentType();
     void showAndFocus();
     void applyTheme(ThemeMode mode);
@@ -43,6 +45,8 @@ protected:
 private:
     void setupUi();
     void updateTypeButton();
+    void showFeedback(const QString &message, const QString &kind, int durationMs, bool hideAfterDelay);
+    void clearFeedback();
     void startShowAnimation();
     void startHideAnimation();
     void stopInputAnimation();
@@ -52,11 +56,15 @@ private:
     QPushButton *typeButton;
     QLabel *enterHint;
     QLabel *escHint;
+    QLabel *feedbackLabel;
+    QTimer *feedbackTimer;
+    QTimer *autoHideTimer;
     QParallelAnimationGroup *inputAnimation;
     QPropertyAnimation *opacityAnimation;
     QPropertyAnimation *positionAnimation;
     QPoint visiblePosition;
     MemoType activeType;
+    bool hideAfterSave;
     bool captureOpen;
     bool hidingWithAnimation;
 };

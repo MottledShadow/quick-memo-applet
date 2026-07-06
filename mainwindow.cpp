@@ -44,6 +44,7 @@ MainWindow::MainWindow(QObject *parent)
     questionWindow->setRecords(store->records(MemoType::Question));
     todoWindow->setRecords(store->records(MemoType::Todo));
     inputWindow->setCurrentType(store->currentType());
+    inputWindow->setHideAfterSave(store->hideInputAfterSave());
     applyTheme(store->themeMode(), false);
 
     restoreWindows();
@@ -71,6 +72,7 @@ void MainWindow::setupConnections()
         const ThemeMode mode = store->themeMode();
         const bool themeChanged = mode != appliedTheme;
         inputWindow->setCurrentType(store->currentType());
+        inputWindow->setHideAfterSave(store->hideInputAfterSave());
         if (themeChanged) {
             applyTheme(mode, true);
         }
@@ -132,6 +134,12 @@ void MainWindow::setupConnections()
         store->setThemeMode(mode);
         dashboardWindow->setStatusMessage(QStringLiteral("主题已切换为：%1")
                                               .arg(MemoStore::themeDisplayName(mode)));
+    });
+
+    connect(dashboardWindow, &DashboardWindow::inputAutoHideChanged, this, [this](bool enabled) {
+        store->setHideInputAfterSave(enabled);
+        dashboardWindow->setStatusMessage(enabled ? QStringLiteral("保存后将自动收起输入框。")
+                                                  : QStringLiteral("保存后将继续输入。"));
     });
 
     connect(dashboardWindow, &DashboardWindow::autostartChanged, this, [this](bool enabled) {

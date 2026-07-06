@@ -789,6 +789,23 @@ InputWindow QLabel#ShortcutHint {
     font-weight: ${weightRegular};
     line-height: ${lineCaption};
 }
+InputWindow QLabel#FeedbackLabel {
+    color: ${success};
+    background: ${successSoft};
+    border: 1px solid ${success};
+    border-radius: ${radiusS};
+    padding: 2px 6px;
+    font-family: ${fontFamily};
+    font-size: ${captionSize};
+    font-weight: ${weightControl};
+    line-height: ${lineCaption};
+    min-height: 18px;
+}
+InputWindow QLabel#FeedbackLabel[feedbackKind="warning"] {
+    color: ${warning};
+    background: ${warningSoft};
+    border-color: ${warning};
+}
 )", p);
 }
 
@@ -1106,7 +1123,8 @@ DashboardWindow QCheckBox {
     font-weight: ${weightRegular};
     line-height: ${lineBody};
 }
-DashboardWindow QCheckBox#SystemToggle {
+DashboardWindow QCheckBox#SystemToggle,
+DashboardWindow QCheckBox#InputToggle {
     color: ${textSecondary};
     background: transparent;
     border: none;

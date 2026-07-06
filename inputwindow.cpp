@@ -18,12 +18,16 @@
 #include <QPushButton>
 #include <QScreen>
 #include <QStyle>
+#include <QTimer>
 
 namespace {
 constexpr int kShowAnimationDurationMs = 120;
 constexpr int kHideAnimationDurationMs = 90;
 constexpr int kShowOffsetY = 8;
 constexpr int kHideOffsetY = 6;
+constexpr int kSuccessFeedbackDurationMs = 1200;
+constexpr int kWarningFeedbackDurationMs = 1400;
+constexpr int kAutoHideAfterSaveDelayMs = 800;
 
 void refreshDynamicStyle(QWidget *widget)
 {
@@ -43,11 +47,15 @@ InputWindow::InputWindow(QWidget *parent)
     , typeButton(nullptr)
     , enterHint(nullptr)
     , escHint(nullptr)
+    , feedbackLabel(nullptr)
+    , feedbackTimer(nullptr)
+    , autoHideTimer(nullptr)
     , inputAnimation(nullptr)
     , opacityAnimation(nullptr)
     , positionAnimation(nullptr)
     , visiblePosition()
     , activeType(MemoType::Question)
+    , hideAfterSave(false)
     , captureOpen(false)
     , hidingWithAnimation(false)
 {
@@ -71,8 +79,14 @@ void InputWindow::setCurrentType(MemoType type)
     }
 
     activeType = type;
+    clearFeedback();
     updateTypeButton();
     emit currentTypeChanged(activeType);
+}
+
+void InputWindow::setHideAfterSave(bool enabled)
+{
+    hideAfterSave = enabled;
 }
 
 void InputWindow::toggleCurrentType()
@@ -143,6 +157,7 @@ bool InputWindow::eventFilter(QObject *object, QEvent *event)
 
 void InputWindow::hideEvent(QHideEvent *event)
 {
+    clearFeedback();
     captureOpen = false;
     QWidget::hideEvent(event);
 }
@@ -185,6 +200,14 @@ void InputWindow::setupUi()
         setWindowOpacity(1.0);
     });
 
+    feedbackTimer = new QTimer(this);
+    feedbackTimer->setSingleShot(true);
+    connect(feedbackTimer, &QTimer::timeout, this, &InputWindow::clearFeedback);
+
+    autoHideTimer = new QTimer(this);
+    autoHideTimer->setSingleShot(true);
+    connect(autoHideTimer, &QTimer::timeout, this, &InputWindow::startHideAnimation);
+
     auto *outerLayout = new QHBoxLayout(this);
     outerLayout->setContentsMargins(8, 8, 8, 8);
     outerLayout->setSpacing(0);
@@ -212,10 +235,18 @@ void InputWindow::setupUi()
     connect(input, &QLineEdit::returnPressed, this, [this]() {
         const QString text = input->text().trimmed();
         if (text.isEmpty()) {
+            showFeedback(QStringLiteral("请输入内容"),
+                         QStringLiteral("warning"),
+                         kWarningFeedbackDurationMs,
+                         false);
             return;
         }
         emit memoSubmitted(activeType, text);
         input->clear();
+        showFeedback(QStringLiteral("已保存到 %1").arg(MemoStore::displayName(activeType)),
+                     QStringLiteral("success"),
+                     kSuccessFeedbackDurationMs,
+                     hideAfterSave);
     });
 
     enterHint = new QLabel(QStringLiteral("Enter 保存"), inputPanel);
@@ -226,10 +257,24 @@ void InputWindow::setupUi()
     escHint->setObjectName("ShortcutHint");
     escHint->setAttribute(Qt::WA_TransparentForMouseEvents);
 
+    feedbackLabel = new QLabel(inputPanel);
+    feedbackLabel->setObjectName("FeedbackLabel");
+    feedbackLabel->setAlignment(Qt::AlignCenter);
+    feedbackLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
+    feedbackLabel->hide();
+
+    auto *hintArea = new QWidget(inputPanel);
+    hintArea->setFixedWidth(136);
+    auto *hintLayout = new QHBoxLayout(hintArea);
+    hintLayout->setContentsMargins(0, 0, 0, 0);
+    hintLayout->setSpacing(6);
+    hintLayout->addWidget(enterHint);
+    hintLayout->addWidget(escHint);
+    hintLayout->addWidget(feedbackLabel, 1);
+
     panelLayout->addWidget(typeButton);
     panelLayout->addWidget(input, 1);
-    panelLayout->addWidget(enterHint, 0, Qt::AlignVCenter);
-    panelLayout->addWidget(escHint, 0, Qt::AlignVCenter);
+    panelLayout->addWidget(hintArea, 0, Qt::AlignVCenter);
     outerLayout->addWidget(inputPanel);
 
     updateTypeButton();
@@ -251,6 +296,51 @@ void InputWindow::updateTypeButton()
     if (input->isVisible()) {
         input->repaint();
     }
+}
+
+void InputWindow::showFeedback(const QString &message, const QString &kind, int durationMs, bool hideAfterDelay)
+{
+    if (feedbackLabel == nullptr || enterHint == nullptr || escHint == nullptr) {
+        return;
+    }
+
+    feedbackTimer->stop();
+    autoHideTimer->stop();
+
+    feedbackLabel->setText(message);
+    feedbackLabel->setProperty("feedbackKind", kind);
+    refreshDynamicStyle(feedbackLabel);
+
+    enterHint->hide();
+    escHint->hide();
+    feedbackLabel->show();
+    input->setFocus();
+
+    feedbackTimer->start(durationMs);
+    if (hideAfterDelay) {
+        autoHideTimer->start(kAutoHideAfterSaveDelayMs);
+    }
+}
+
+void InputWindow::clearFeedback()
+{
+    if (feedbackTimer != nullptr) {
+        feedbackTimer->stop();
+    }
+    if (autoHideTimer != nullptr) {
+        autoHideTimer->stop();
+    }
+
+    if (feedbackLabel == nullptr || enterHint == nullptr || escHint == nullptr) {
+        return;
+    }
+
+    feedbackLabel->hide();
+    feedbackLabel->clear();
+    feedbackLabel->setProperty("feedbackKind", QString());
+    refreshDynamicStyle(feedbackLabel);
+    enterHint->show();
+    escHint->show();
 }
 
 void InputWindow::startShowAnimation()

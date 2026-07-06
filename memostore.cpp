@@ -60,6 +60,7 @@ MemoStore::MemoStore(QObject *parent)
     , activeType(MemoType::Question)
     , hotkeyText(kDefaultHotkey)
     , autostart(false)
+    , hideInputOnSave(false)
     , theme(ThemeMode::Light)
     , questionState(defaultWindowState(MemoType::Question))
     , todoState(defaultWindowState(MemoType::Todo))
@@ -87,6 +88,7 @@ bool MemoStore::load()
     activeType = typeFromString(root.value("currentType").toString(typeToString(MemoType::Question)));
     hotkeyText = root.value("hotkey").toString(kDefaultHotkey);
     autostart = root.value("autostart").toBool(false);
+    hideInputOnSave = root.value("hideInputAfterSave").toBool(false);
     theme = themeFromString(root.value("theme").toString(themeToString(ThemeMode::Light)));
 
     const QJsonObject windows = root.value("windows").toObject();
@@ -145,6 +147,7 @@ bool MemoStore::save() const
         {"currentType", typeToString(activeType)},
         {"hotkey", hotkeyText},
         {"autostart", autostart},
+        {"hideInputAfterSave", hideInputOnSave},
         {"theme", themeToString(theme)},
         {"windows", windows},
         {"records", records}
@@ -219,6 +222,22 @@ void MemoStore::setAutostartEnabled(bool enabled)
     }
 
     autostart = enabled;
+    save();
+    emit settingsChanged();
+}
+
+bool MemoStore::hideInputAfterSave() const
+{
+    return hideInputOnSave;
+}
+
+void MemoStore::setHideInputAfterSave(bool enabled)
+{
+    if (hideInputOnSave == enabled) {
+        return;
+    }
+
+    hideInputOnSave = enabled;
     save();
     emit settingsChanged();
 }

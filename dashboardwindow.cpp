@@ -36,6 +36,7 @@ DashboardWindow::DashboardWindow(MemoStore *store, QWidget *parent)
     , questionTopCheck(nullptr)
     , todoTopCheck(nullptr)
     , autostartCheck(nullptr)
+    , hideInputAfterSaveCheck(nullptr)
     , themeCombo(nullptr)
     , hotkeyEdit(nullptr)
     , questionCountLabel(nullptr)
@@ -61,6 +62,11 @@ void DashboardWindow::refresh()
     {
         const QSignalBlocker blocker(autostartCheck);
         autostartCheck->setChecked(store->autostartEnabled());
+    }
+
+    {
+        const QSignalBlocker blocker(hideInputAfterSaveCheck);
+        hideInputAfterSaveCheck->setChecked(store->hideInputAfterSave());
     }
 
     {
@@ -214,6 +220,16 @@ void DashboardWindow::setupUi()
     appearanceGroupLayout->addWidget(themeCombo);
     appearanceGroup->setFixedHeight(124);
 
+    QBoxLayout *inputGroupLayout = nullptr;
+    auto *inputGroup = createSettingsGroup(QStringLiteral("输入"), sideContent, &inputGroupLayout);
+    hideInputAfterSaveCheck = new QCheckBox(QStringLiteral("保存后自动收起输入框"), inputGroup);
+    hideInputAfterSaveCheck->setObjectName("InputToggle");
+    hideInputAfterSaveCheck->setMinimumHeight(28);
+    hideInputAfterSaveCheck->setToolTip(QStringLiteral("保存成功后短暂显示反馈并自动收起输入框"));
+    connect(hideInputAfterSaveCheck, &QCheckBox::toggled, this, &DashboardWindow::inputAutoHideChanged);
+    inputGroupLayout->addWidget(hideInputAfterSaveCheck);
+    inputGroup->setFixedHeight(112);
+
     QBoxLayout *systemGroupLayout = nullptr;
     auto *systemGroup = createSettingsGroup(QStringLiteral("系统"), sideContent, &systemGroupLayout);
     autostartCheck = new QCheckBox(QStringLiteral("开机自启"), systemGroup);
@@ -231,6 +247,7 @@ void DashboardWindow::setupUi()
 
     sideLayout->addWidget(hotkeyGroup);
     sideLayout->addWidget(appearanceGroup);
+    sideLayout->addWidget(inputGroup);
     sideLayout->addWidget(systemGroup);
     sideLayout->addStretch(1);
     sideLayout->addWidget(exitButton);

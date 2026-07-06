@@ -33,6 +33,7 @@ signals:
     void alwaysOnTopChanged(MemoType type, bool enabled);
     void hotkeyChangeRequested(const QKeySequence &sequence);
     void themeChangeRequested(ThemeMode mode);
+    void inputAutoHideChanged(bool enabled);
     void autostartChanged(bool enabled);
     void exitRequested();
 
@@ -57,6 +58,7 @@ private:
     QCheckBox *questionTopCheck;
     QCheckBox *todoTopCheck;
     QCheckBox *autostartCheck;
+    QCheckBox *hideInputAfterSaveCheck;
     QComboBox *themeCombo;
     QKeySequenceEdit *hotkeyEdit;
     QLabel *questionCountLabel;

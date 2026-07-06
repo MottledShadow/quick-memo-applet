@@ -52,6 +52,9 @@ public:
     bool autostartEnabled() const;
     void setAutostartEnabled(bool enabled);
 
+    bool hideInputAfterSave() const;
+    void setHideInputAfterSave(bool enabled);
+
     ThemeMode themeMode() const;
     void setThemeMode(ThemeMode mode);
 
@@ -83,6 +86,7 @@ private:
     MemoType activeType;
     QString hotkeyText;
     bool autostart;
+    bool hideInputOnSave;
     ThemeMode theme;
     MemoWindowState questionState;
     MemoWindowState todoState;
