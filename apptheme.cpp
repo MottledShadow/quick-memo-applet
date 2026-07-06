@@ -622,6 +622,27 @@ MemoWindow[memoKind="question"] QLabel#TitleLabel {
 MemoWindow[memoKind="todo"] QLabel#TitleLabel {
     color: ${secondary};
 }
+MemoWindow QLineEdit#TitleEdit {
+    color: ${memoPaperText};
+    background: rgba(255, 255, 255, 82);
+    border: 1px solid ${memoPaperBorder};
+    border-radius: ${radiusS};
+    padding: 0 6px;
+    min-height: 26px;
+    font-family: ${fontFamily};
+    font-size: ${bodyLargeSize};
+    font-weight: ${weightControl};
+    line-height: ${lineBodyLarge};
+    selection-color: ${primaryText};
+    selection-background-color: ${primary};
+}
+MemoWindow QLineEdit#TitleEdit:focus {
+    border-color: ${primary};
+}
+MemoWindow[memoKind="todo"] QLineEdit#TitleEdit:focus {
+    border-color: ${secondary};
+    selection-background-color: ${secondary};
+}
 MemoWindow QLabel#TitleCount {
     color: ${memoPaperTimeText};
     background: rgba(255, 255, 255, 70);

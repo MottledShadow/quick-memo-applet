@@ -10,6 +10,11 @@ QString text(AppLanguage language, const char *zhText, const char *enText)
 QString AppText::memoTypeName(MemoType type, AppLanguage language)
 {
     if (type == MemoType::Todo) {
+        return QStringLiteral("ToDo");
+    }
+    return QStringLiteral("Idea");
+
+    if (type == MemoType::Todo) {
         return text(language, "待办", "Todos");
     }
     return text(language, "问题", "Questions");
@@ -17,6 +22,11 @@ QString AppText::memoTypeName(MemoType type, AppLanguage language)
 
 QString AppText::memoTypeSingular(MemoType type, AppLanguage language)
 {
+    if (type == MemoType::Todo) {
+        return QStringLiteral("ToDo");
+    }
+    return QStringLiteral("Idea");
+
     if (type == MemoType::Todo) {
         return text(language, "待办", "todo");
     }
@@ -222,6 +232,14 @@ QString AppText::deletedRecord(MemoType type, AppLanguage language)
     return QString::fromUtf8("已删除一条%1。").arg(memoTypeSingular(type, language));
 }
 
+QString AppText::deletedRecord(const QString &categoryName, AppLanguage language)
+{
+    if (language == AppLanguage::English) {
+        return QStringLiteral("Deleted one %1.").arg(categoryName);
+    }
+    return QString::fromUtf8("已删除一条%1。").arg(categoryName);
+}
+
 QString AppText::inputWindowTitle(AppLanguage language)
 {
     return text(language, "快速记录", "Quick Memo Input");
@@ -260,6 +278,14 @@ QString AppText::savedTo(MemoType type, AppLanguage language)
     return QString::fromUtf8("已保存到 %1").arg(memoTypeName(type, language));
 }
 
+QString AppText::savedTo(const QString &categoryName, AppLanguage language)
+{
+    if (language == AppLanguage::English) {
+        return QStringLiteral("Saved to %1").arg(categoryName);
+    }
+    return QString::fromUtf8("已保存到 %1").arg(categoryName);
+}
+
 QString AppText::enterSave(AppLanguage language)
 {
     return text(language, "Enter 保存", "Enter Save");
@@ -268,6 +294,11 @@ QString AppText::enterSave(AppLanguage language)
 QString AppText::escHide(AppLanguage language)
 {
     return text(language, "Esc 收起", "Esc Hide");
+}
+
+QString AppText::renameCategoryTooltip(AppLanguage language)
+{
+    return text(language, "双击重命名分类", "Double-click to rename");
 }
 
 QString AppText::hideMemoButtonTooltip(AppLanguage language)
@@ -369,6 +400,52 @@ QString AppText::densityChanged(DensityMode mode, AppLanguage language)
         return QStringLiteral("Density changed to: %1").arg(densityDisplayName(mode, language));
     }
     return QString::fromUtf8("密度已切换为：%1").arg(densityDisplayName(mode, language));
+}
+
+QString AppText::memoStartupDisplayTitle(AppLanguage language)
+{
+    return text(language, "便签显示", "Memo display");
+}
+
+QString AppText::memoStartupDisplayLabel(AppLanguage language)
+{
+    return text(language, "启动时", "On startup");
+}
+
+QString AppText::memoStartupDisplayTooltip(AppLanguage language)
+{
+    return text(language, "设置程序启动时便签窗口的显示方式",
+                "Choose how memo windows appear when the app starts");
+}
+
+QString AppText::memoStartupDisplayName(MemoStartupDisplayMode mode, AppLanguage language)
+{
+    switch (mode) {
+    case MemoStartupDisplayMode::ShowAll:
+        return text(language, "全部显示", "Show all");
+    case MemoStartupDisplayMode::HideAll:
+        return text(language, "全部隐藏", "Hide all");
+    case MemoStartupDisplayMode::Restore:
+        return text(language, "恢复上次状态", "Restore previous");
+    }
+
+    return text(language, "恢复上次状态", "Restore previous");
+}
+
+QString AppText::memoStartupDisplayChanged(MemoStartupDisplayMode mode, AppLanguage language)
+{
+    if (language == AppLanguage::English) {
+        return QStringLiteral("Memo startup display: %1").arg(memoStartupDisplayName(mode, language));
+    }
+    return QString::fromUtf8("便签启动显示：%1").arg(memoStartupDisplayName(mode, language));
+}
+
+QString AppText::categoryNameChanged(const QString &categoryName, AppLanguage language)
+{
+    if (language == AppLanguage::English) {
+        return QStringLiteral("Category renamed: %1").arg(categoryName);
+    }
+    return QString::fromUtf8("分类已重命名：%1").arg(categoryName);
 }
 
 QString AppText::inputAutoHideEnabled(AppLanguage language)

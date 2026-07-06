@@ -30,6 +30,7 @@ public slots:
     void setCurrentType(MemoType type);
     void setHideAfterSave(bool enabled);
     void setLanguage(AppLanguage language);
+    void setCategoryName(MemoType type, const QString &name);
     void toggleCurrentType();
     void showAndFocus();
     void applyTheme(ThemeMode mode, FontSizeMode fontSize, DensityMode density);
@@ -46,6 +47,7 @@ protected:
 private:
     void setupUi();
     void retranslateUi();
+    QString categoryName(MemoType type) const;
     void updateTypeButton();
     void showFeedback(const QString &message, const QString &kind, int durationMs, bool hideAfterDelay);
     void clearFeedback();
@@ -67,6 +69,8 @@ private:
     QPoint visiblePosition;
     MemoType activeType;
     AppLanguage appLanguage;
+    QString questionCategoryName;
+    QString todoCategoryName;
     bool hideAfterSave;
     bool captureOpen;
     bool hidingWithAnimation;

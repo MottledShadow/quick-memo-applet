@@ -10,6 +10,7 @@
 class QBoxLayout;
 class QFrame;
 class QLabel;
+class QLineEdit;
 class QPushButton;
 class QSizeGrip;
 
@@ -28,10 +29,12 @@ public slots:
     void restoreState(const MemoWindowState &state);
     void setAlwaysOnTop(bool enabled);
     void setLanguage(AppLanguage language);
+    void setCategoryName(const QString &name);
     void applyTheme(ThemeMode mode, FontSizeMode fontSize, DensityMode density);
 
 signals:
     void memoClicked(const QString &id);
+    void categoryNameChangeRequested(MemoType type, const QString &name);
     void stateChanged(MemoType type, const MemoWindowState &state);
 
 protected:
@@ -46,6 +49,8 @@ private:
     void setupUi();
     void retranslateUi();
     void rebuildList();
+    void startTitleEditing();
+    void finishTitleEditing(bool save);
     void startDeleteAnimation(QWidget *recordWidget, const QString &id);
     void updateWindowFlags(bool keepVisible);
     void updateResizeGripGeometry();
@@ -57,15 +62,18 @@ private:
     QFrame *panel;
     QWidget *titleBar;
     QLabel *titleLabel;
+    QLineEdit *titleEdit;
     QLabel *titleCountLabel;
     QPushButton *topButton;
     QPushButton *hideButton;
     QSizeGrip *resizeGrip;
     QBoxLayout *listLayout;
     QString deletingMemoId;
+    QString categoryName;
     AppLanguage appLanguage;
     bool alwaysOnTop;
     bool dragging;
+    bool editingTitle;
     bool deleteAnimationActive;
     bool rebuildPending;
     QPoint dragOffset;

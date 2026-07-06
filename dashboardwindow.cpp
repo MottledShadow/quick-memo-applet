@@ -66,6 +66,7 @@ DashboardWindow::DashboardWindow(MemoStore *store, QWidget *parent)
     , themeCombo(nullptr)
     , fontSizeCombo(nullptr)
     , densityCombo(nullptr)
+    , memoStartupDisplayCombo(nullptr)
     , hotkeyEdit(nullptr)
     , applyHotkeyButton(nullptr)
     , recordsTitleLabel(nullptr)
@@ -84,6 +85,8 @@ DashboardWindow::DashboardWindow(MemoStore *store, QWidget *parent)
     , themeFieldLabel(nullptr)
     , fontSizeFieldLabel(nullptr)
     , densityFieldLabel(nullptr)
+    , memoDisplayGroupTitleLabel(nullptr)
+    , memoStartupDisplayFieldLabel(nullptr)
     , inputGroupTitleLabel(nullptr)
     , systemGroupTitleLabel(nullptr)
     , questionRecordsLayout(nullptr)
@@ -136,6 +139,12 @@ void DashboardWindow::refresh()
     }
 
     {
+        const QSignalBlocker blocker(memoStartupDisplayCombo);
+        memoStartupDisplayCombo->setCurrentIndex(
+            memoStartupDisplayCombo->findData(static_cast<int>(store->memoStartupDisplayMode())));
+    }
+
+    {
         const QSignalBlocker blocker(hotkeyEdit);
         hotkeyEdit->setKeySequence(QKeySequence(store->hotkey()));
     }
@@ -184,7 +193,7 @@ bool DashboardWindow::eventFilter(QObject *object, QEvent *event)
         if (mouseEvent->button() == Qt::LeftButton && widget->rect().contains(mouseEvent->pos())) {
             const MemoType type = MemoStore::typeFromString(widget->property("memoKind").toString());
             emit recordDeleteRequested(memoId.toString(), type);
-            setStatusMessage(AppText::deletedRecord(type, store->language()));
+            setStatusMessage(AppText::deletedRecord(store->categoryName(type), store->language()));
         }
         return true;
     }
@@ -376,6 +385,36 @@ void DashboardWindow::setupUi()
         emit densityChangeRequested(static_cast<DensityMode>(data.toInt()));
     });
 
+    QBoxLayout *memoDisplayGroupLayout = nullptr;
+    auto *memoDisplayGroup = createSettingsGroup(&memoDisplayGroupTitleLabel,
+                                                 sideContent,
+                                                 &memoDisplayGroupLayout);
+    auto *memoDisplayGrid = new QGridLayout();
+    memoDisplayGrid->setContentsMargins(0, 0, 0, 0);
+    memoDisplayGrid->setHorizontalSpacing(8);
+    memoDisplayGrid->setVerticalSpacing(6);
+
+    memoStartupDisplayFieldLabel = new QLabel(memoDisplayGroup);
+    memoStartupDisplayFieldLabel->setObjectName("FieldLabel");
+    memoStartupDisplayCombo = new NoWheelComboBox(memoDisplayGroup);
+    memoStartupDisplayCombo->setObjectName("MemoStartupDisplayCombo");
+    memoStartupDisplayCombo->setCursor(Qt::PointingHandCursor);
+    memoStartupDisplayCombo->setMinimumHeight(30);
+
+    memoDisplayGrid->addWidget(memoStartupDisplayFieldLabel, 0, 0);
+    memoDisplayGrid->addWidget(memoStartupDisplayCombo, 0, 1);
+    memoDisplayGrid->setColumnStretch(1, 1);
+    memoDisplayGroupLayout->addLayout(memoDisplayGrid);
+    memoDisplayGroup->setMinimumHeight(76);
+
+    connect(memoStartupDisplayCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
+        const QVariant data = memoStartupDisplayCombo->itemData(index);
+        if (!data.isValid()) {
+            return;
+        }
+        emit memoStartupDisplayChangeRequested(static_cast<MemoStartupDisplayMode>(data.toInt()));
+    });
+
     QBoxLayout *inputGroupLayout = nullptr;
     auto *inputGroup = createSettingsGroup(&inputGroupTitleLabel, sideContent, &inputGroupLayout);
     hideInputAfterSaveCheck = new QCheckBox(inputGroup);
@@ -396,6 +435,7 @@ void DashboardWindow::setupUi()
 
     sideLayout->addWidget(hotkeyGroup);
     sideLayout->addWidget(personalizationGroup);
+    sideLayout->addWidget(memoDisplayGroup);
     sideLayout->addWidget(inputGroup);
     sideLayout->addWidget(systemGroup);
     sideLayout->addStretch(1);
@@ -435,7 +475,7 @@ QWidget *DashboardWindow::createRecordsColumn(MemoType type, QWidget *parent)
     auto *headerLayout = new QHBoxLayout(header);
     headerLayout->setContentsMargins(0, 0, 0, 0);
 
-    auto *titleLabel = new QLabel(AppText::memoTypeName(type, store->language()), header);
+    auto *titleLabel = new QLabel(store->categoryName(type), header);
     titleLabel->setObjectName("RecordColumnTitle");
 
     auto *countLabel = new QLabel(QStringLiteral("0"), header);
@@ -538,7 +578,7 @@ QWidget *DashboardWindow::createMemoControls(MemoType type, QWidget *parent)
     topRowLayout->setContentsMargins(0, 0, 0, 0);
     topRowLayout->setSpacing(6);
 
-    auto *label = new QLabel(AppText::memoTypeName(type, store->language()), topRow);
+    auto *label = new QLabel(store->categoryName(type), topRow);
     label->setObjectName("MemoControlTitle");
 
     auto *visibilityButton = new QPushButton(topRow);
@@ -617,10 +657,10 @@ void DashboardWindow::retranslateUi()
     recordsTitleLabel->setText(AppText::recordsTitle(language));
     memoSectionTitleLabel->setText(AppText::memoWindowsTitle(language));
     settingsSectionTitleLabel->setText(AppText::settingsTitle(language));
-    questionColumnTitleLabel->setText(AppText::memoTypeName(MemoType::Question, language));
-    todoColumnTitleLabel->setText(AppText::memoTypeName(MemoType::Todo, language));
-    questionControlTitleLabel->setText(AppText::memoTypeName(MemoType::Question, language));
-    todoControlTitleLabel->setText(AppText::memoTypeName(MemoType::Todo, language));
+    questionColumnTitleLabel->setText(store->categoryName(MemoType::Question));
+    todoColumnTitleLabel->setText(store->categoryName(MemoType::Todo));
+    questionControlTitleLabel->setText(store->categoryName(MemoType::Question));
+    todoControlTitleLabel->setText(store->categoryName(MemoType::Todo));
 
     hotkeyGroupTitleLabel->setText(AppText::hotkeyTitle(language));
     hotkeyFieldLabel->setText(AppText::globalHotkeyLabel(language));
@@ -635,6 +675,10 @@ void DashboardWindow::retranslateUi()
     themeCombo->setToolTip(AppText::themeTooltip(language));
     fontSizeCombo->setToolTip(AppText::fontSizeTooltip(language));
     densityCombo->setToolTip(AppText::densityTooltip(language));
+
+    memoDisplayGroupTitleLabel->setText(AppText::memoStartupDisplayTitle(language));
+    memoStartupDisplayFieldLabel->setText(AppText::memoStartupDisplayLabel(language));
+    memoStartupDisplayCombo->setToolTip(AppText::memoStartupDisplayTooltip(language));
 
     inputGroupTitleLabel->setText(AppText::inputTitle(language));
     hideInputAfterSaveCheck->setText(AppText::hideInputAfterSave(language));
@@ -697,6 +741,22 @@ void DashboardWindow::rebuildComboLabels()
         densityCombo->addItem(AppText::densityDisplayName(DensityMode::Compact, language),
                               static_cast<int>(DensityMode::Compact));
         densityCombo->setCurrentIndex(densityCombo->findData(static_cast<int>(store->densityMode())));
+    }
+
+    {
+        const QSignalBlocker blocker(memoStartupDisplayCombo);
+        memoStartupDisplayCombo->clear();
+        memoStartupDisplayCombo->addItem(
+            AppText::memoStartupDisplayName(MemoStartupDisplayMode::Restore, language),
+            static_cast<int>(MemoStartupDisplayMode::Restore));
+        memoStartupDisplayCombo->addItem(
+            AppText::memoStartupDisplayName(MemoStartupDisplayMode::ShowAll, language),
+            static_cast<int>(MemoStartupDisplayMode::ShowAll));
+        memoStartupDisplayCombo->addItem(
+            AppText::memoStartupDisplayName(MemoStartupDisplayMode::HideAll, language),
+            static_cast<int>(MemoStartupDisplayMode::HideAll));
+        memoStartupDisplayCombo->setCurrentIndex(
+            memoStartupDisplayCombo->findData(static_cast<int>(store->memoStartupDisplayMode())));
     }
 }
 

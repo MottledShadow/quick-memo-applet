@@ -48,6 +48,7 @@ public:
     static QString clickToDelete(AppLanguage language);
     static QString ready(AppLanguage language);
     static QString deletedRecord(MemoType type, AppLanguage language);
+    static QString deletedRecord(const QString &categoryName, AppLanguage language);
 
     static QString inputWindowTitle(AppLanguage language);
     static QString switchTypeTooltip(AppLanguage language);
@@ -56,8 +57,10 @@ public:
     static QString todoPlaceholder(AppLanguage language);
     static QString emptyInputWarning(AppLanguage language);
     static QString savedTo(MemoType type, AppLanguage language);
+    static QString savedTo(const QString &categoryName, AppLanguage language);
     static QString enterSave(AppLanguage language);
     static QString escHide(AppLanguage language);
+    static QString renameCategoryTooltip(AppLanguage language);
 
     static QString hideMemoButtonTooltip(AppLanguage language);
     static QString keepOnTopTooltip(AppLanguage language);
@@ -77,6 +80,12 @@ public:
     static QString themeChanged(ThemeMode mode, AppLanguage language);
     static QString fontSizeChanged(FontSizeMode mode, AppLanguage language);
     static QString densityChanged(DensityMode mode, AppLanguage language);
+    static QString memoStartupDisplayTitle(AppLanguage language);
+    static QString memoStartupDisplayLabel(AppLanguage language);
+    static QString memoStartupDisplayTooltip(AppLanguage language);
+    static QString memoStartupDisplayName(MemoStartupDisplayMode mode, AppLanguage language);
+    static QString memoStartupDisplayChanged(MemoStartupDisplayMode mode, AppLanguage language);
+    static QString categoryNameChanged(const QString &categoryName, AppLanguage language);
     static QString inputAutoHideEnabled(AppLanguage language);
     static QString inputAutoHideDisabled(AppLanguage language);
     static QString autostartFailed(AppLanguage language);

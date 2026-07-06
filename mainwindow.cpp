@@ -55,6 +55,7 @@ MainWindow::MainWindow(QObject *parent)
 
     restoreWindows();
     setupConnections();
+    dashboardWindow->refresh();
     registerStoredHotkey();
     applyAutostart(store->autostartEnabled());
 
@@ -95,6 +96,14 @@ void MainWindow::setupConnections()
 
     connect(questionWindow, &MemoWindow::memoClicked, store, &MemoStore::deleteMemo);
     connect(todoWindow, &MemoWindow::memoClicked, store, &MemoStore::deleteMemo);
+    connect(questionWindow, &MemoWindow::categoryNameChangeRequested, this, [this](MemoType type, const QString &name) {
+        store->setCategoryName(type, name);
+        dashboardWindow->setStatusMessage(AppText::categoryNameChanged(store->categoryName(type), store->language()));
+    });
+    connect(todoWindow, &MemoWindow::categoryNameChangeRequested, this, [this](MemoType type, const QString &name) {
+        store->setCategoryName(type, name);
+        dashboardWindow->setStatusMessage(AppText::categoryNameChanged(store->categoryName(type), store->language()));
+    });
 
     connect(questionWindow, &MemoWindow::stateChanged, store, &MemoStore::setWindowState);
     connect(todoWindow, &MemoWindow::stateChanged, store, &MemoStore::setWindowState);
@@ -170,6 +179,11 @@ void MainWindow::setupConnections()
         dashboardWindow->setStatusMessage(AppText::densityChanged(mode, store->language()));
     });
 
+    connect(dashboardWindow, &DashboardWindow::memoStartupDisplayChangeRequested, this, [this](MemoStartupDisplayMode mode) {
+        store->setMemoStartupDisplayMode(mode);
+        dashboardWindow->setStatusMessage(AppText::memoStartupDisplayChanged(mode, store->language()));
+    });
+
     connect(dashboardWindow, &DashboardWindow::inputAutoHideChanged, this, [this](bool enabled) {
         store->setHideInputAfterSave(enabled);
         dashboardWindow->setStatusMessage(enabled ? AppText::inputAutoHideEnabled(store->language())
@@ -192,8 +206,26 @@ void MainWindow::setupConnections()
 
 void MainWindow::restoreWindows()
 {
-    questionWindow->restoreState(store->windowState(MemoType::Question));
-    todoWindow->restoreState(store->windowState(MemoType::Todo));
+    MemoWindowState questionState = store->windowState(MemoType::Question);
+    MemoWindowState todoState = store->windowState(MemoType::Todo);
+
+    switch (store->memoStartupDisplayMode()) {
+    case MemoStartupDisplayMode::ShowAll:
+        questionState.visible = true;
+        todoState.visible = true;
+        break;
+    case MemoStartupDisplayMode::HideAll:
+        questionState.visible = false;
+        todoState.visible = false;
+        break;
+    case MemoStartupDisplayMode::Restore:
+        break;
+    }
+
+    store->setWindowState(MemoType::Question, questionState);
+    store->setWindowState(MemoType::Todo, todoState);
+    questionWindow->restoreState(questionState);
+    todoWindow->restoreState(todoState);
 }
 
 void MainWindow::registerStoredHotkey()
@@ -208,8 +240,12 @@ void MainWindow::syncLanguage()
 {
     const AppLanguage language = store->language();
     inputWindow->setLanguage(language);
+    inputWindow->setCategoryName(MemoType::Question, store->categoryName(MemoType::Question));
+    inputWindow->setCategoryName(MemoType::Todo, store->categoryName(MemoType::Todo));
     questionWindow->setLanguage(language);
+    questionWindow->setCategoryName(store->categoryName(MemoType::Question));
     todoWindow->setLanguage(language);
+    todoWindow->setCategoryName(store->categoryName(MemoType::Todo));
     hotkeyManager->setLanguage(language);
     trayController->setLanguage(language);
 }

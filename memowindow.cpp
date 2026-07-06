@@ -10,7 +10,9 @@
 #include <QEasingCurve>
 #include <QFrame>
 #include <QHideEvent>
+#include <QKeyEvent>
 #include <QLabel>
+#include <QLineEdit>
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainter>
@@ -258,15 +260,18 @@ MemoWindow::MemoWindow(MemoType type, QWidget *parent)
     , panel(nullptr)
     , titleBar(nullptr)
     , titleLabel(nullptr)
+    , titleEdit(nullptr)
     , titleCountLabel(nullptr)
     , topButton(nullptr)
     , hideButton(nullptr)
     , resizeGrip(nullptr)
     , listLayout(nullptr)
     , deletingMemoId()
+    , categoryName(type == MemoType::Question ? QStringLiteral("Idea") : QStringLiteral("ToDo"))
     , appLanguage(AppLanguage::ZhCn)
     , alwaysOnTop(true)
     , dragging(false)
+    , editingTitle(false)
     , deleteAnimationActive(false)
     , rebuildPending(false)
 {
@@ -338,6 +343,17 @@ void MemoWindow::setLanguage(AppLanguage language)
     rebuildList();
 }
 
+void MemoWindow::setCategoryName(const QString &name)
+{
+    if (categoryName == name) {
+        return;
+    }
+
+    categoryName = name;
+    retranslateUi();
+    rebuildList();
+}
+
 void MemoWindow::applyTheme(ThemeMode mode, FontSizeMode fontSize, DensityMode density)
 {
     setStyleSheet(AppTheme::memoWindowStyleSheet(mode, fontSize, density));
@@ -349,6 +365,35 @@ void MemoWindow::applyTheme(ThemeMode mode, FontSizeMode fontSize, DensityMode d
 
 bool MemoWindow::eventFilter(QObject *object, QEvent *event)
 {
+    if (object == titleLabel) {
+        if (event->type() == QEvent::MouseButtonDblClick) {
+            auto *mouseEvent = static_cast<QMouseEvent *>(event);
+            if (mouseEvent->button() == Qt::LeftButton) {
+                startTitleEditing();
+                return true;
+            }
+        }
+    }
+
+    if (object == titleEdit) {
+        if (event->type() == QEvent::KeyPress) {
+            auto *keyEvent = static_cast<QKeyEvent *>(event);
+            if (keyEvent->key() == Qt::Key_Escape) {
+                finishTitleEditing(false);
+                return true;
+            }
+            if (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) {
+                finishTitleEditing(true);
+                return true;
+            }
+        }
+
+        if (event->type() == QEvent::FocusOut && editingTitle) {
+            finishTitleEditing(true);
+            return false;
+        }
+    }
+
     if (object == titleBar) {
         if (event->type() == QEvent::MouseButtonPress) {
             auto *mouseEvent = static_cast<QMouseEvent *>(event);
@@ -448,7 +493,7 @@ void MemoWindow::closeEvent(QCloseEvent *event)
 void MemoWindow::setupUi()
 {
     setMinimumSize(256, 240);
-    setWindowTitle(AppText::memoTypeName(type, appLanguage));
+    setWindowTitle(categoryName);
     setProperty("memoKind", MemoStore::typeToString(type));
     setAttribute(Qt::WA_DeleteOnClose, false);
     setAttribute(Qt::WA_TranslucentBackground, true);
@@ -473,8 +518,17 @@ void MemoWindow::setupUi()
     titleLayout->setContentsMargins(18, 14, 12, 4);
     titleLayout->setSpacing(8);
 
-    titleLabel = new QLabel(AppText::memoTypeName(type, appLanguage), titleBar);
+    titleLabel = new QLabel(categoryName, titleBar);
     titleLabel->setObjectName("TitleLabel");
+    titleLabel->setCursor(Qt::IBeamCursor);
+    titleLabel->setToolTip(AppText::renameCategoryTooltip(appLanguage));
+    titleLabel->installEventFilter(this);
+
+    titleEdit = new QLineEdit(titleBar);
+    titleEdit->setObjectName("TitleEdit");
+    titleEdit->setMaxLength(24);
+    titleEdit->installEventFilter(this);
+    titleEdit->hide();
 
     titleCountLabel = new QLabel(QStringLiteral("0"), titleBar);
     titleCountLabel->setObjectName("TitleCount");
@@ -495,6 +549,7 @@ void MemoWindow::setupUi()
     connect(hideButton, &QPushButton::clicked, this, &MemoWindow::hide);
 
     titleLayout->addWidget(titleLabel);
+    titleLayout->addWidget(titleEdit);
     titleLayout->addWidget(titleCountLabel, 0, Qt::AlignVCenter);
     titleLayout->addStretch(1);
     titleLayout->addWidget(topButton);
@@ -533,8 +588,10 @@ void MemoWindow::setupUi()
 
 void MemoWindow::retranslateUi()
 {
-    setWindowTitle(AppText::memoTypeName(type, appLanguage));
-    titleLabel->setText(AppText::memoTypeName(type, appLanguage));
+    setWindowTitle(categoryName);
+    titleLabel->setText(categoryName);
+    titleLabel->setToolTip(AppText::renameCategoryTooltip(appLanguage));
+    titleEdit->setToolTip(AppText::renameCategoryTooltip(appLanguage));
     hideButton->setToolTip(AppText::hideMemoButtonTooltip(appLanguage));
     topButton->setText(QString(QChar(alwaysOnTop ? 0x25CF : 0x25CB)));
     topButton->setToolTip(alwaysOnTop ? AppText::cancelOnTopTooltip(appLanguage)
@@ -545,7 +602,7 @@ void MemoWindow::retranslateUi()
 
 void MemoWindow::rebuildList()
 {
-    titleLabel->setText(AppText::memoTypeName(type, appLanguage));
+    titleLabel->setText(categoryName);
     titleCountLabel->setText(QString::number(currentRecords.size()));
 
     while (QLayoutItem *item = listLayout->takeAt(0)) {
@@ -588,6 +645,39 @@ void MemoWindow::rebuildList()
     }
 
     listLayout->addStretch();
+}
+
+void MemoWindow::startTitleEditing()
+{
+    if (editingTitle || titleEdit == nullptr || titleLabel == nullptr) {
+        return;
+    }
+
+    editingTitle = true;
+    titleEdit->setText(categoryName);
+    titleLabel->hide();
+    titleEdit->show();
+    titleEdit->setFocus();
+    titleEdit->selectAll();
+}
+
+void MemoWindow::finishTitleEditing(bool save)
+{
+    if (!editingTitle) {
+        return;
+    }
+
+    editingTitle = false;
+    const QString editedName = titleEdit->text().trimmed().left(24);
+    titleEdit->hide();
+    titleLabel->show();
+
+    if (save && !editedName.isEmpty() && editedName != categoryName) {
+        emit categoryNameChangeRequested(type, editedName);
+        return;
+    }
+
+    titleEdit->setText(categoryName);
 }
 
 void MemoWindow::startDeleteAnimation(QWidget *recordWidget, const QString &id)

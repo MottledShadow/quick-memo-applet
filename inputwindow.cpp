@@ -57,6 +57,8 @@ InputWindow::InputWindow(QWidget *parent)
     , visiblePosition()
     , activeType(MemoType::Question)
     , appLanguage(AppLanguage::ZhCn)
+    , questionCategoryName(QStringLiteral("Idea"))
+    , todoCategoryName(QStringLiteral("ToDo"))
     , hideAfterSave(false)
     , captureOpen(false)
     , hidingWithAnimation(false)
@@ -100,6 +102,18 @@ void InputWindow::setLanguage(AppLanguage language)
     appLanguage = language;
     clearFeedback();
     retranslateUi();
+}
+
+void InputWindow::setCategoryName(MemoType type, const QString &name)
+{
+    QString &target = type == MemoType::Question ? questionCategoryName : todoCategoryName;
+    if (target == name) {
+        return;
+    }
+
+    target = name;
+    clearFeedback();
+    updateTypeButton();
 }
 
 void InputWindow::toggleCurrentType()
@@ -256,7 +270,7 @@ void InputWindow::setupUi()
         }
         emit memoSubmitted(activeType, text);
         input->clear();
-        showFeedback(AppText::savedTo(activeType, appLanguage),
+        showFeedback(AppText::savedTo(categoryName(activeType), appLanguage),
                      QStringLiteral("success"),
                      kSuccessFeedbackDurationMs,
                      hideAfterSave);
@@ -304,10 +318,15 @@ void InputWindow::retranslateUi()
     updateTypeButton();
 }
 
+QString InputWindow::categoryName(MemoType type) const
+{
+    return type == MemoType::Question ? questionCategoryName : todoCategoryName;
+}
+
 void InputWindow::updateTypeButton()
 {
     typeButton->setText(QStringLiteral("%1 %2")
-                            .arg(QString(QChar(0x25CF)), AppText::memoTypeName(activeType, appLanguage)));
+                            .arg(QString(QChar(0x25CF)), categoryName(activeType)));
     typeButton->setProperty("memoKind", MemoStore::typeToString(activeType));
     inputPanel->setProperty("memoKind", MemoStore::typeToString(activeType));
     input->setPlaceholderText(activeType == MemoType::Question

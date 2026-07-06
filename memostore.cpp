@@ -12,6 +12,21 @@
 namespace {
 constexpr auto kDefaultHotkey = "Ctrl+Alt+Space";
 constexpr auto kDataFileName = "data.json";
+constexpr int kMaxCategoryNameLength = 24;
+
+QString defaultCategoryName(MemoType type)
+{
+    return type == MemoType::Question ? QStringLiteral("Idea") : QStringLiteral("ToDo");
+}
+
+QString normalizedCategoryName(MemoType type, const QString &name)
+{
+    const QString trimmed = name.trimmed();
+    if (trimmed.isEmpty()) {
+        return defaultCategoryName(type);
+    }
+    return trimmed.left(kMaxCategoryNameLength);
+}
 
 QJsonObject geometryToJson(const QRect &geometry)
 {
@@ -71,6 +86,9 @@ MemoStore::MemoStore(QObject *parent)
     , appLanguage(defaultLanguage())
     , fontSize(FontSizeMode::Default)
     , density(DensityMode::Comfortable)
+    , questionCategoryName(defaultCategoryName(MemoType::Question))
+    , todoCategoryName(defaultCategoryName(MemoType::Todo))
+    , memoStartupDisplay(MemoStartupDisplayMode::Restore)
     , questionState(defaultWindowState(MemoType::Question))
     , todoState(defaultWindowState(MemoType::Todo))
 {
@@ -102,6 +120,16 @@ bool MemoStore::load()
     appLanguage = languageFromString(root.value("language").toString(languageToString(defaultLanguage())));
     fontSize = fontSizeFromString(root.value("fontSize").toString(fontSizeToString(FontSizeMode::Default)));
     density = densityFromString(root.value("density").toString(densityToString(DensityMode::Comfortable)));
+    memoStartupDisplay = memoStartupDisplayFromString(
+        root.value("memoStartupDisplay").toString(memoStartupDisplayToString(MemoStartupDisplayMode::Restore)));
+
+    const QJsonObject categoryNames = root.value("categoryNames").toObject();
+    questionCategoryName = normalizedCategoryName(
+        MemoType::Question,
+        categoryNames.value(typeToString(MemoType::Question)).toString(defaultCategoryName(MemoType::Question)));
+    todoCategoryName = normalizedCategoryName(
+        MemoType::Todo,
+        categoryNames.value(typeToString(MemoType::Todo)).toString(defaultCategoryName(MemoType::Todo)));
 
     const QJsonObject windows = root.value("windows").toObject();
     questionState = windowStateFromJson(windows.value(typeToString(MemoType::Question)).toObject(),
@@ -155,6 +183,10 @@ bool MemoStore::save() const
     windows.insert(typeToString(MemoType::Question), windowStateToJson(questionState));
     windows.insert(typeToString(MemoType::Todo), windowStateToJson(todoState));
 
+    QJsonObject categoryNames;
+    categoryNames.insert(typeToString(MemoType::Question), questionCategoryName);
+    categoryNames.insert(typeToString(MemoType::Todo), todoCategoryName);
+
     const QJsonObject root{
         {"currentType", typeToString(activeType)},
         {"hotkey", hotkeyText},
@@ -164,6 +196,8 @@ bool MemoStore::save() const
         {"language", languageToString(appLanguage)},
         {"fontSize", fontSizeToString(fontSize)},
         {"density", densityToString(density)},
+        {"categoryNames", categoryNames},
+        {"memoStartupDisplay", memoStartupDisplayToString(memoStartupDisplay)},
         {"windows", windows},
         {"records", records}
     };
@@ -321,6 +355,40 @@ void MemoStore::setDensityMode(DensityMode mode)
     emit settingsChanged();
 }
 
+QString MemoStore::categoryName(MemoType type) const
+{
+    return type == MemoType::Question ? questionCategoryName : todoCategoryName;
+}
+
+void MemoStore::setCategoryName(MemoType type, const QString &name)
+{
+    QString &target = type == MemoType::Question ? questionCategoryName : todoCategoryName;
+    const QString normalized = normalizedCategoryName(type, name);
+    if (target == normalized) {
+        return;
+    }
+
+    target = normalized;
+    save();
+    emit settingsChanged();
+}
+
+MemoStartupDisplayMode MemoStore::memoStartupDisplayMode() const
+{
+    return memoStartupDisplay;
+}
+
+void MemoStore::setMemoStartupDisplayMode(MemoStartupDisplayMode mode)
+{
+    if (memoStartupDisplay == mode) {
+        return;
+    }
+
+    memoStartupDisplay = mode;
+    save();
+    emit settingsChanged();
+}
+
 MemoWindowState MemoStore::windowState(MemoType type) const
 {
     return type == MemoType::Question ? questionState : todoState;
@@ -386,6 +454,8 @@ MemoType MemoStore::typeFromString(const QString &value)
 
 QString MemoStore::displayName(MemoType type)
 {
+    return defaultCategoryName(type);
+
     return type == MemoType::Question ? QStringLiteral("问题") : QStringLiteral("待办");
 }
 
@@ -468,6 +538,31 @@ QString MemoStore::densityToString(DensityMode mode)
 DensityMode MemoStore::densityFromString(const QString &value)
 {
     return value == "compact" ? DensityMode::Compact : DensityMode::Comfortable;
+}
+
+QString MemoStore::memoStartupDisplayToString(MemoStartupDisplayMode mode)
+{
+    switch (mode) {
+    case MemoStartupDisplayMode::ShowAll:
+        return "showAll";
+    case MemoStartupDisplayMode::HideAll:
+        return "hideAll";
+    case MemoStartupDisplayMode::Restore:
+        return "restore";
+    }
+
+    return "restore";
+}
+
+MemoStartupDisplayMode MemoStore::memoStartupDisplayFromString(const QString &value)
+{
+    if (value == "showAll") {
+        return MemoStartupDisplayMode::ShowAll;
+    }
+    if (value == "hideAll") {
+        return MemoStartupDisplayMode::HideAll;
+    }
+    return MemoStartupDisplayMode::Restore;
 }
 
 MemoWindowState MemoStore::defaultWindowState(MemoType type) const

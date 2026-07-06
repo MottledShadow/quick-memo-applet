@@ -37,6 +37,7 @@ signals:
     void languageChangeRequested(AppLanguage language);
     void fontSizeChangeRequested(FontSizeMode mode);
     void densityChangeRequested(DensityMode mode);
+    void memoStartupDisplayChangeRequested(MemoStartupDisplayMode mode);
     void inputAutoHideChanged(bool enabled);
     void recordDeleteRequested(const QString &id, MemoType type);
     void autostartChanged(bool enabled);
@@ -70,6 +71,7 @@ private:
     QComboBox *themeCombo;
     QComboBox *fontSizeCombo;
     QComboBox *densityCombo;
+    QComboBox *memoStartupDisplayCombo;
     QKeySequenceEdit *hotkeyEdit;
     QPushButton *applyHotkeyButton;
     QLabel *recordsTitleLabel;
@@ -88,6 +90,8 @@ private:
     QLabel *themeFieldLabel;
     QLabel *fontSizeFieldLabel;
     QLabel *densityFieldLabel;
+    QLabel *memoDisplayGroupTitleLabel;
+    QLabel *memoStartupDisplayFieldLabel;
     QLabel *inputGroupTitleLabel;
     QLabel *systemGroupTitleLabel;
     QBoxLayout *questionRecordsLayout;

@@ -34,6 +34,12 @@ enum class DensityMode {
     Comfortable
 };
 
+enum class MemoStartupDisplayMode {
+    Restore,
+    ShowAll,
+    HideAll
+};
+
 struct MemoItem {
     QString id;
     MemoType type;
@@ -84,6 +90,12 @@ public:
     DensityMode densityMode() const;
     void setDensityMode(DensityMode mode);
 
+    QString categoryName(MemoType type) const;
+    void setCategoryName(MemoType type, const QString &name);
+
+    MemoStartupDisplayMode memoStartupDisplayMode() const;
+    void setMemoStartupDisplayMode(MemoStartupDisplayMode mode);
+
     MemoWindowState windowState(MemoType type) const;
     void setWindowState(MemoType type, const MemoWindowState &state);
 
@@ -104,6 +116,8 @@ public:
     static FontSizeMode fontSizeFromString(const QString &value);
     static QString densityToString(DensityMode mode);
     static DensityMode densityFromString(const QString &value);
+    static QString memoStartupDisplayToString(MemoStartupDisplayMode mode);
+    static MemoStartupDisplayMode memoStartupDisplayFromString(const QString &value);
 
 signals:
     void recordsChanged();
@@ -123,6 +137,9 @@ private:
     AppLanguage appLanguage;
     FontSizeMode fontSize;
     DensityMode density;
+    QString questionCategoryName;
+    QString todoCategoryName;
+    MemoStartupDisplayMode memoStartupDisplay;
     MemoWindowState questionState;
     MemoWindowState todoState;
 };
