@@ -2,7 +2,9 @@
 
 #include "apptheme.h"
 
+#include <QAbstractAnimation>
 #include <QCursor>
+#include <QEasingCurve>
 #include <QFrame>
 #include <QGuiApplication>
 #include <QHideEvent>
@@ -10,11 +12,19 @@
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
+#include <QParallelAnimationGroup>
+#include <QPoint>
+#include <QPropertyAnimation>
 #include <QPushButton>
 #include <QScreen>
 #include <QStyle>
 
 namespace {
+constexpr int kShowAnimationDurationMs = 120;
+constexpr int kHideAnimationDurationMs = 90;
+constexpr int kShowOffsetY = 8;
+constexpr int kHideOffsetY = 6;
+
 void refreshDynamicStyle(QWidget *widget)
 {
     widget->style()->unpolish(widget);
@@ -33,8 +43,13 @@ InputWindow::InputWindow(QWidget *parent)
     , typeButton(nullptr)
     , enterHint(nullptr)
     , escHint(nullptr)
+    , inputAnimation(nullptr)
+    , opacityAnimation(nullptr)
+    , positionAnimation(nullptr)
+    , visiblePosition()
     , activeType(MemoType::Question)
     , captureOpen(false)
+    , hidingWithAnimation(false)
 {
     setupUi();
 }
@@ -67,7 +82,9 @@ void InputWindow::toggleCurrentType()
 
 void InputWindow::showAndFocus()
 {
-    if (!isVisible()) {
+    const bool shouldAnimate = !isVisible();
+
+    if (shouldAnimate) {
         const QScreen *screen = QGuiApplication::screenAt(QCursor::pos());
         if (screen == nullptr) {
             screen = QGuiApplication::primaryScreen();
@@ -78,11 +95,28 @@ void InputWindow::showAndFocus()
         }
     }
 
+    if (inputAnimation->state() == QAbstractAnimation::Running) {
+        stopInputAnimation();
+    }
+
     captureOpen = true;
+    visiblePosition = pos();
+
+    if (shouldAnimate) {
+        setWindowOpacity(0.0);
+        move(visiblePosition + QPoint(0, kShowOffsetY));
+    } else {
+        setWindowOpacity(1.0);
+    }
+
     show();
     raise();
     activateWindow();
     input->setFocus();
+
+    if (shouldAnimate) {
+        startShowAnimation();
+    }
 }
 
 void InputWindow::applyTheme(ThemeMode mode)
@@ -116,7 +150,7 @@ void InputWindow::hideEvent(QHideEvent *event)
 void InputWindow::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_Escape) {
-        hide();
+        startHideAnimation();
         event->accept();
         return;
     }
@@ -131,6 +165,25 @@ void InputWindow::setupUi()
     setAttribute(Qt::WA_TranslucentBackground, true);
     setAutoFillBackground(false);
     setFixedSize(560, 64);
+
+    inputAnimation = new QParallelAnimationGroup(this);
+    opacityAnimation = new QPropertyAnimation(this, "windowOpacity");
+    positionAnimation = new QPropertyAnimation(this, "pos");
+    inputAnimation->addAnimation(opacityAnimation);
+    inputAnimation->addAnimation(positionAnimation);
+    connect(inputAnimation, &QParallelAnimationGroup::finished, this, [this]() {
+        if (hidingWithAnimation) {
+            const QPoint restorePosition = visiblePosition;
+            hidingWithAnimation = false;
+            hide();
+            move(restorePosition);
+            setWindowOpacity(1.0);
+            return;
+        }
+
+        move(visiblePosition);
+        setWindowOpacity(1.0);
+    });
 
     auto *outerLayout = new QHBoxLayout(this);
     outerLayout->setContentsMargins(8, 8, 8, 8);
@@ -198,4 +251,59 @@ void InputWindow::updateTypeButton()
     if (input->isVisible()) {
         input->repaint();
     }
+}
+
+void InputWindow::startShowAnimation()
+{
+    hidingWithAnimation = false;
+
+    opacityAnimation->setDuration(kShowAnimationDurationMs);
+    opacityAnimation->setEasingCurve(QEasingCurve::OutCubic);
+    opacityAnimation->setStartValue(windowOpacity());
+    opacityAnimation->setEndValue(1.0);
+
+    positionAnimation->setDuration(kShowAnimationDurationMs);
+    positionAnimation->setEasingCurve(QEasingCurve::OutCubic);
+    positionAnimation->setStartValue(pos());
+    positionAnimation->setEndValue(visiblePosition);
+
+    inputAnimation->start();
+}
+
+void InputWindow::startHideAnimation()
+{
+    if (!isVisible()) {
+        return;
+    }
+
+    if (inputAnimation->state() == QAbstractAnimation::Running) {
+        stopInputAnimation();
+    }
+
+    captureOpen = false;
+    hidingWithAnimation = true;
+    visiblePosition = pos();
+
+    opacityAnimation->setDuration(kHideAnimationDurationMs);
+    opacityAnimation->setEasingCurve(QEasingCurve::InCubic);
+    opacityAnimation->setStartValue(windowOpacity());
+    opacityAnimation->setEndValue(0.0);
+
+    positionAnimation->setDuration(kHideAnimationDurationMs);
+    positionAnimation->setEasingCurve(QEasingCurve::InCubic);
+    positionAnimation->setStartValue(pos());
+    positionAnimation->setEndValue(visiblePosition + QPoint(0, kHideOffsetY));
+
+    inputAnimation->start();
+}
+
+void InputWindow::stopInputAnimation()
+{
+    if (inputAnimation->state() == QAbstractAnimation::Running) {
+        inputAnimation->stop();
+    }
+
+    hidingWithAnimation = false;
+    move(visiblePosition);
+    setWindowOpacity(1.0);
 }

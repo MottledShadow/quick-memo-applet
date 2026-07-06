@@ -3,13 +3,16 @@
 
 #include "memostore.h"
 
+#include <QPoint>
 #include <QWidget>
 
 class QEvent;
 class QHideEvent;
 class QLineEdit;
+class QParallelAnimationGroup;
 class QFrame;
 class QLabel;
+class QPropertyAnimation;
 class QPushButton;
 
 class InputWindow : public QWidget
@@ -40,14 +43,22 @@ protected:
 private:
     void setupUi();
     void updateTypeButton();
+    void startShowAnimation();
+    void startHideAnimation();
+    void stopInputAnimation();
 
     QFrame *inputPanel;
     QLineEdit *input;
     QPushButton *typeButton;
     QLabel *enterHint;
     QLabel *escHint;
+    QParallelAnimationGroup *inputAnimation;
+    QPropertyAnimation *opacityAnimation;
+    QPropertyAnimation *positionAnimation;
+    QPoint visiblePosition;
     MemoType activeType;
     bool captureOpen;
+    bool hidingWithAnimation;
 };
 
 #endif // INPUTWINDOW_H
