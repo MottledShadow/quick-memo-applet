@@ -18,8 +18,8 @@
 #include <QWidget>
 
 namespace {
-constexpr int kThemeTransitionDurationMs = 110;
-constexpr qreal kThemeTransitionStartOpacity = 0.92;
+constexpr int kThemeTransitionDurationMs = 180;
+constexpr qreal kThemeTransitionStartOpacity = 0.82;
 constexpr qreal kThemeTransitionMinimumIdleOpacity = 0.99;
 }
 
