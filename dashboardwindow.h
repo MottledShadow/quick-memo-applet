@@ -56,9 +56,13 @@ private:
     QWidget *createRecordsColumn(MemoType type, QWidget *parent);
     QWidget *createRecordCard(const MemoItem &memo, QWidget *parent);
     QWidget *createMemoControls(MemoType type, QWidget *parent);
-    QFrame *createSettingsGroup(QLabel **titleLabel, QWidget *parent, QBoxLayout **contentLayout) const;
+    QFrame *createSettingsGroup(QLabel **titleLabel,
+                                QWidget *parent,
+                                QBoxLayout **contentLayout,
+                                bool expandedByDefault = false) const;
     void retranslateUi();
     void rebuildComboLabels();
+    void updateSettingsGroupSummaries();
     void refreshMemoControls(MemoType type);
     void refreshRecords();
     void refreshRecordColumn(MemoType type, const QVector<MemoItem> &records);
@@ -84,6 +88,13 @@ private:
     QPushButton *applyHotkeyButton;
     QPushButton *exportJsonButton;
     QPushButton *importJsonButton;
+    QFrame *hotkeyGroupFrame;
+    QFrame *personalizationGroupFrame;
+    QFrame *memoDisplayGroupFrame;
+    QFrame *inputGroupFrame;
+    QFrame *recordGroupFrame;
+    QFrame *dataGroupFrame;
+    QFrame *systemGroupFrame;
     QLabel *recordsTitleLabel;
     QLabel *memoSectionTitleLabel;
     QLabel *settingsSectionTitleLabel;

@@ -961,8 +961,41 @@ DashboardWindow QFrame#SettingsGroup {
     border-radius: ${radiusM};
 }
 DashboardWindow QFrame#SettingsGroup:hover {
-    background: ${surfaceRaised};
+    background: ${surface};
     border-color: ${border};
+}
+DashboardWindow QFrame#SettingsGroup[expanded="false"] {
+    background: ${surface};
+    border-color: ${border};
+}
+DashboardWindow QWidget#SettingsGroupHeader {
+    background: transparent;
+    border: none;
+    border-radius: ${radiusM};
+}
+DashboardWindow QWidget#SettingsGroupHeader:hover {
+    background: ${overlayHover};
+}
+DashboardWindow QWidget#SettingsGroupContent {
+    background: transparent;
+    border: none;
+}
+DashboardWindow QLabel#SettingGroupSummary {
+    color: ${textMuted};
+    font-size: ${captionSize};
+    font-weight: ${weightRegular};
+    line-height: ${lineCaption};
+}
+DashboardWindow QToolButton#CollapseArrow {
+    color: ${textSecondary};
+    background: transparent;
+    border: none;
+    border-radius: ${radiusS};
+    padding: 0;
+}
+DashboardWindow QToolButton#CollapseArrow:hover,
+DashboardWindow QToolButton#CollapseArrow:focus {
+    background: ${overlayHover};
 }
 DashboardWindow QLabel#PageTitle {
     color: ${textPrimary};
