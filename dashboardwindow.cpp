@@ -375,8 +375,8 @@ void DashboardWindow::closeEvent(QCloseEvent *event)
 void DashboardWindow::setupUi()
 {
     setWindowTitle(AppText::dashboardWindowTitle(store->language()));
-    resize(984, 640);
-    setMinimumSize(864, 520);
+    resize(984, 760);
+    setMinimumSize(864, 760);
 
     auto *rootLayout = new QVBoxLayout(this);
     rootLayout->setContentsMargins(16, 16, 16, 16);
@@ -419,13 +419,7 @@ void DashboardWindow::setupUi()
     sidePanelLayout->setContentsMargins(0, 0, 0, 0);
     sidePanelLayout->setSpacing(0);
 
-    auto *sideScrollArea = new QScrollArea(sidePanel);
-    sideScrollArea->setObjectName("SideContentScrollArea");
-    sideScrollArea->setWidgetResizable(true);
-    sideScrollArea->setFrameShape(QFrame::NoFrame);
-    configureScrollArea(sideScrollArea);
-
-    auto *sideContent = new QWidget(sideScrollArea);
+    auto *sideContent = new QWidget(sidePanel);
     sideContent->setObjectName("SideContent");
 
     auto *sideLayout = new QVBoxLayout(sideContent);
@@ -590,14 +584,16 @@ void DashboardWindow::setupUi()
     defaultInputTypeCombo->setCursor(Qt::PointingHandCursor);
     defaultInputTypeCombo->setMinimumHeight(30);
 
+    hideInputAfterSaveCheck = new QCheckBox(inputGroup);
+    hideInputAfterSaveCheck->setObjectName("InputToggle");
+    hideInputAfterSaveCheck->setMinimumHeight(28);
+    inputGroupLayout->addWidget(hideInputAfterSaveCheck);
+
     inputGrid->addWidget(defaultInputTypeFieldLabel, 0, 0);
     inputGrid->addWidget(defaultInputTypeCombo, 0, 1);
     inputGrid->setColumnStretch(1, 1);
     inputGroupLayout->addLayout(inputGrid);
 
-    hideInputAfterSaveCheck = new QCheckBox(inputGroup);
-    hideInputAfterSaveCheck->setObjectName("InputToggle");
-    hideInputAfterSaveCheck->setMinimumHeight(28);
     connect(defaultInputTypeCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
         const QVariant data = defaultInputTypeCombo->itemData(index);
         if (!data.isValid()) {
@@ -606,7 +602,6 @@ void DashboardWindow::setupUi()
         emit defaultInputTypeChangeRequested(static_cast<DefaultInputTypeMode>(data.toInt()));
     });
     connect(hideInputAfterSaveCheck, &QCheckBox::toggled, this, &DashboardWindow::inputAutoHideChanged);
-    inputGroupLayout->addWidget(hideInputAfterSaveCheck);
 
     QBoxLayout *recordGroupLayout = nullptr;
     recordGroupFrame = createSettingsGroup(&recordGroupTitleLabel, sideContent, &recordGroupLayout);
@@ -693,8 +688,7 @@ void DashboardWindow::setupUi()
     sideLayout->addWidget(systemGroup);
     sideLayout->addStretch(1);
 
-    sideScrollArea->setWidget(sideContent);
-    sidePanelLayout->addWidget(sideScrollArea);
+    sidePanelLayout->addWidget(sideContent);
 
     contentLayout->addWidget(recordsPanel, 1);
     contentLayout->addWidget(sidePanel);
