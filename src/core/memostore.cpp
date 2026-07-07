@@ -13,6 +13,7 @@
 #include <QUuid>
 
 namespace {
+constexpr int kSchemaVersion = 1;
 constexpr auto kDefaultHotkey = "Ctrl+Alt+Space";
 constexpr auto kDataFileName = "data.json";
 constexpr int kMaxCategoryNameLength = 24;
@@ -792,6 +793,7 @@ QJsonObject MemoStore::toJson() const
     categoryNames.insert(typeToString(MemoType::Todo), todoCategoryName);
 
     return {
+        {"schemaVersion", kSchemaVersion},
         {"currentType", typeToString(activeType)},
         {"hotkey", hotkeyText},
         {"autostart", autostart},

@@ -10,8 +10,8 @@ body:
     id: version
     attributes:
       label: 版本
-      description: 例如 v0.2.0，或填写 commit hash / 自行构建。
-      placeholder: v0.2.0
+      description: 例如 v1.0.0，或填写 commit hash / 自行构建。
+      placeholder: v1.0.0
   - type: input
     id: windows
     attributes:
