@@ -31,7 +31,12 @@ set(PROJECT_SOURCES
         src/ui/memowindow.h
         src/ui/traycontroller.cpp
         src/ui/traycontroller.h
+        resources/app.qrc
 )
+
+if(WIN32)
+    list(APPEND PROJECT_SOURCES resources/app.rc)
+endif()
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(Quick_Memo_Applet

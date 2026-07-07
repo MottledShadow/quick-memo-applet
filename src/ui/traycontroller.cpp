@@ -6,6 +6,7 @@
 #include <QApplication>
 #include <QFrame>
 #include <QGuiApplication>
+#include <QIcon>
 #include <QLabel>
 #include <QMenu>
 #include <QScreen>
@@ -24,7 +25,9 @@ TrayController::TrayController(QObject *parent)
     , startupToast(nullptr)
     , appLanguage(AppLanguage::ZhCn)
 {
-    trayIcon->setIcon(qApp->style()->standardIcon(QStyle::SP_FileDialogDetailedView));
+    const QIcon appIcon = qApp->windowIcon();
+    trayIcon->setIcon(appIcon.isNull() ? qApp->style()->standardIcon(QStyle::SP_FileDialogDetailedView)
+                                       : appIcon);
     trayIcon->setToolTip(QStringLiteral("Quick Memo Applet"));
 
     trayMenu->addAction(openDashboardAction);

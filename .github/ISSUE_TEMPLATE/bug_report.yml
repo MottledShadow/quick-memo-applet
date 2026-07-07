@@ -1,0 +1,47 @@
+name: Bug report
+description: 报告 Quick Memo Applet 的问题
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。请尽量提供可复现步骤和运行环境。
+  - type: input
+    id: version
+    attributes:
+      label: 版本
+      description: 例如 v0.1.0，或填写 commit hash / 自行构建。
+      placeholder: v0.1.0
+  - type: input
+    id: windows
+    attributes:
+      label: Windows 版本
+      placeholder: Windows 11 23H2
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 请写出从启动应用到出现问题的具体步骤。
+      placeholder: |
+        1. 启动 Quick Memo Applet
+        2. 按 Ctrl+Alt+Space
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: 补充信息
+      description: 可以附截图、错误提示、热键冲突信息、打包方式或是否从 Qt Creator 启动。
