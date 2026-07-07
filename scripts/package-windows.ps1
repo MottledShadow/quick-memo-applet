@@ -82,6 +82,7 @@ function Find-InnoSetup {
 
     $candidates = @()
     if ($env:LOCALAPPDATA) {
+        $candidates += Join-Path $env:LOCALAPPDATA "Programs\Inno\ISCC.exe"
         $candidates += Join-Path $env:LOCALAPPDATA "Programs\Inno Setup 6\ISCC.exe"
     }
     if ($env:ProgramFiles) {
