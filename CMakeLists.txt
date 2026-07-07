@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(Quick_Memo_Applet VERSION 0.1 LANGUAGES CXX)
+project(Quick_Memo_Applet VERSION 0.1.1 LANGUAGES CXX)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
