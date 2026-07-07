@@ -288,12 +288,18 @@ DashboardWindow::DashboardWindow(MemoStore *store, QWidget *parent)
     , sidePanel(nullptr)
     , storedHotkeySequence()
     , hotkeyState(HotkeyEditState::Idle)
+    , closeAllowed(false)
 {
     setupUi();
     connect(store, &MemoStore::recordsChanged, this, &DashboardWindow::refresh);
     connect(store, &MemoStore::settingsChanged, this, &DashboardWindow::refresh);
     connect(store, &MemoStore::windowStateChanged, this, &DashboardWindow::refresh);
     refresh();
+}
+
+void DashboardWindow::setCloseAllowed(bool enabled)
+{
+    closeAllowed = enabled;
 }
 
 void DashboardWindow::refresh()
@@ -546,6 +552,11 @@ bool DashboardWindow::eventFilter(QObject *object, QEvent *event)
 
 void DashboardWindow::closeEvent(QCloseEvent *event)
 {
+    if (closeAllowed) {
+        QWidget::closeEvent(event);
+        return;
+    }
+
     event->ignore();
     hide();
 }

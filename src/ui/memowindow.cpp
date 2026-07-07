@@ -271,6 +271,7 @@ MemoWindow::MemoWindow(MemoType type, QWidget *parent)
     , appLanguage(AppLanguage::ZhCn)
     , clickAction(RecordClickAction::Delete)
     , alwaysOnTop(true)
+    , closeAllowed(false)
     , dragging(false)
     , editingTitle(false)
     , deleteAnimationActive(false)
@@ -293,6 +294,11 @@ MemoWindowState MemoWindow::currentState() const
     state.visible = isVisible();
     state.alwaysOnTop = alwaysOnTop;
     return state;
+}
+
+void MemoWindow::setCloseAllowed(bool enabled)
+{
+    closeAllowed = enabled;
 }
 
 void MemoWindow::setRecords(const QVector<MemoItem> &records)
@@ -501,6 +507,11 @@ void MemoWindow::hideEvent(QHideEvent *event)
 
 void MemoWindow::closeEvent(QCloseEvent *event)
 {
+    if (closeAllowed) {
+        QWidget::closeEvent(event);
+        return;
+    }
+
     event->ignore();
     hide();
 }
@@ -800,5 +811,9 @@ void MemoWindow::updateResizeGripGeometry()
 
 void MemoWindow::emitStateChanged()
 {
+    if (closeAllowed) {
+        return;
+    }
+
     emit stateChanged(type, currentState());
 }

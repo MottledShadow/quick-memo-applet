@@ -30,6 +30,7 @@ public:
     };
 
     explicit DashboardWindow(MemoStore *store, QWidget *parent = nullptr);
+    void setCloseAllowed(bool enabled);
 
 public slots:
     void refresh();
@@ -144,6 +145,7 @@ private:
     QFrame *sidePanel;
     QKeySequence storedHotkeySequence;
     HotkeyEditState hotkeyState;
+    bool closeAllowed;
 };
 
 #endif // DASHBOARDWINDOW_H

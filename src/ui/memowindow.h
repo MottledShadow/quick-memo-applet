@@ -23,6 +23,7 @@ public:
 
     MemoType memoType() const;
     MemoWindowState currentState() const;
+    void setCloseAllowed(bool enabled);
 
 public slots:
     void setRecords(const QVector<MemoItem> &records);
@@ -74,6 +75,7 @@ private:
     AppLanguage appLanguage;
     RecordClickAction clickAction;
     bool alwaysOnTop;
+    bool closeAllowed;
     bool dragging;
     bool editingTitle;
     bool deleteAnimationActive;

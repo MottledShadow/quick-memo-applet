@@ -481,5 +481,8 @@ void MainWindow::quitApplication()
     store->setWindowState(MemoType::Question, questionWindow->currentState());
     store->setWindowState(MemoType::Todo, todoWindow->currentState());
     store->save();
+    questionWindow->setCloseAllowed(true);
+    todoWindow->setCloseAllowed(true);
+    dashboardWindow->setCloseAllowed(true);
     qApp->quit();
 }
