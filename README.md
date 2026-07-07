@@ -1,161 +1,116 @@
 # Quick Memo Applet
 
-Quick Memo Applet 是一个 Windows-first 的快捷便签小工具，使用 C++、Qt Widgets 和 CMake 编写。它面向日常快速记录：按全局快捷键呼出输入小窗，把内容保存到两张常驻便签窗口中，并通过后台窗口管理记录、外观和工作流偏好。
+Quick Memo Applet 是一个 Windows 快捷便签小工具。它常驻系统托盘，按一个快捷键就能打开输入框，把想法或待办保存到两张便签窗口里。
 
-项目当前处于 MVP 阶段，核心功能已经可用，已提供应用图标、基础 Windows Release 包和 Dashboard 体验修补，后续会继续补充截图、发布检查清单和更完整的发布流程。
+这个 README 面向第一次使用的用户，目标是 5 分钟内下载、运行、写下第一条便签。
 
-## 功能
+## 5 分钟开始使用
 
-- 全局快捷键呼出输入窗口，默认快捷键为 `Ctrl+Alt+Space`
-- 两类便签窗口：`Idea` 和 `ToDo`
-- 后台 Dashboard，用于查看记录、显示或隐藏便签窗口、修改设置
-- 亮色、暗色、跟随系统主题
-- 字号、显示密度、语言等基础个性化设置
-- 便签窗口位置、大小、显示状态和置顶状态持久化
-- 开机自启选项
-- 输入后是否自动收起输入窗口
-- 记录点击行为可配置：删除、完成、仅后台删除
-- 记录排序：最新优先或最旧优先
-- JSON 导入和导出
-- 本地 JSON 存储，无云同步、无账号系统
-- 自定义应用图标，显示在窗口、托盘和 Windows 可执行文件中
+### 1. 下载
 
-## 系统要求
+打开 GitHub Releases 页面，下载最新版：
 
-主要支持 Windows 10/11。
+- 推荐：`QuickMemoApplet-v1.0.0-win64-setup.exe`
+- 免安装备用：`QuickMemoApplet-v1.0.0-win64.zip`
 
-开发和构建需要：
+如果 Windows 提示未知发布者，这是因为当前版本还没有代码签名。请只从本项目 GitHub Release 页面下载。
 
-- CMake 3.16 或更新版本
-- C++17 编译器
-- Qt 6 或 Qt 5，需包含 Widgets 模块
-- Windows 构建需要可用的 Qt/MinGW 或 Qt/MSVC 工具链
+### 2. 安装或解压
 
-项目代码保留了部分非 Windows fallback，但全局热键和开机自启目前是 Windows-first 能力，其他平台不是首要支持目标。
+使用安装包：
 
-## 从源码构建
+1. 双击 `QuickMemoApplet-v1.0.0-win64-setup.exe`。
+2. 按安装向导完成安装。
+3. 安装结束后可以直接启动 Quick Memo Applet。
 
-使用 Qt Creator：
+使用 zip：
 
-1. 打开本仓库根目录。
-2. 选择已安装 Qt Kit。
-3. 配置 CMake。
-4. 构建并运行 `Quick_Memo_Applet`。
+1. 右键 zip，选择“全部解压”。
+2. 进入解压后的文件夹。
+3. 双击 `Quick_Memo_Applet.exe`。
 
-使用命令行：
+不要只把 exe 单独拷贝出来运行。Qt 程序需要和旁边的 DLL、`platforms/qwindows.dll` 一起放在同一个部署目录里。
 
-```powershell
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build --config Release
+### 3. 找到托盘图标
+
+启动后，程序会在 Windows 系统托盘后台运行。托盘图标可能在任务栏右下角，也可能藏在“显示隐藏的图标”里。
+
+- 单击或双击托盘图标：打开 Dashboard。
+- 右键托盘图标：打开菜单，可以退出程序。
+
+### 4. 写第一条便签
+
+默认快捷键是：
+
+```text
+Ctrl + Alt + Space
 ```
 
-如果 CMake 找不到 Qt，请先使用 Qt 提供的开发环境终端，或把 Qt 的 CMake 包路径加入 `CMAKE_PREFIX_PATH`。
+按下快捷键后会出现输入小窗：
 
-## 使用方式
+1. 输入内容。
+2. 选择保存到 `Idea` 或 `ToDo`。
+3. 按 Enter 保存。
+4. 按 Esc 收起输入小窗。
 
-1. 启动程序后，应用会驻留在系统托盘。
-2. 按 `Ctrl+Alt+Space` 呼出输入窗口。
-3. 输入内容后按 Enter 保存。
-4. 在输入窗口中切换保存类型，或在后台窗口中调整默认输入类型。
-5. 点击托盘图标可打开 Dashboard。
-6. 通过托盘菜单退出程序。
+如果快捷键没有反应，通常是这个组合键被其他软件占用了。打开 Dashboard，在“快捷输入”里修改快捷键。
 
-如果快捷键注册失败，通常是因为该组合键已被其他应用占用。可以在 Dashboard 中修改快捷键。
+## 主要功能
 
-## 数据存储
+- 全局快捷键呼出输入小窗。
+- 两张便签窗口：`Idea` 和 `ToDo`。
+- Dashboard 管理记录、设置、便签显示和数据导入导出。
+- 亮色、暗色、跟随系统主题。
+- 字号、显示密度、语言设置。
+- 便签窗口位置、大小、显示状态和置顶状态自动保存。
+- 开机自启选项。
+- JSON 导入和导出。
+- 本地存储，无账号、无云同步。
 
-默认数据文件位置：
+## 数据保存在哪里
+
+默认数据文件在：
 
 ```text
 %APPDATA%\QuickMemoApplet\data.json
 ```
 
-数据包括记录内容、设置、窗口位置、窗口大小、置顶状态和显示状态。项目不会上传数据，也没有远程同步功能。
+数据只保存在本机，包括记录内容、设置、窗口位置、窗口大小、置顶状态和显示状态。项目不会上传数据，也没有云同步。
 
-Dashboard 中提供 JSON 导出和导入：
+Dashboard 的“数据与系统”里可以导出或导入 JSON。导入会替换当前数据，并会先尝试备份现有数据。
 
-- 导出会写出完整本地数据。
-- 导入会替换当前数据，并在导入前尝试备份现有数据。
-
-## Windows 打包发布
-
-Release 包建议使用 Release 构建，不要直接发布 Debug 构建目录。
-
-典型流程：
-
-```powershell
-cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release
-cmake --build build-release --config Release
-windeployqt --release path\to\Quick_Memo_Applet.exe
-```
-
-部署包至少需要包含：
-
-- `Quick_Memo_Applet.exe`
-- Qt 运行时 DLL，例如 `Qt6Core.dll`、`Qt6Gui.dll`、`Qt6Widgets.dll`
-- Windows 平台插件：`platforms\qwindows.dll`
-- 编译器运行时依赖和其他由 `windeployqt` 复制的插件
-- `LICENSE`
-- `THIRD_PARTY_NOTICES.md`
-
-如果直接运行 exe 时提示缺少 `Qt6Core.dll` 或找不到 platform plugin，优先检查部署目录是否由 `windeployqt` 正确生成，以及 `platforms\qwindows.dll` 是否在正确位置。
-
-Qt 官方 Windows 部署文档见：[Qt for Windows - Deployment](https://doc.qt.io/qt-6/windows-deployment.html)。
-
-## 项目结构
-
-```text
-src/
-  app/       应用入口和主协调逻辑
-  core/      本地数据模型、JSON 存储和设置
-  platform/  Windows 全局快捷键等平台相关逻辑
-  theme/     文案、主题、QSS 和视觉 token
-  ui/        Dashboard、输入窗口、便签窗口和托盘控制
-```
+更详细的数据兼容说明见 [docs/DATA_COMPATIBILITY.md](docs/DATA_COMPATIBILITY.md)。
 
 ## 常见问题
 
-### 为什么程序关闭窗口后仍在运行？
+### 关闭窗口后为什么程序还在运行？
 
-这是预期行为。应用是托盘常驻工具，关闭可见窗口不会退出进程。请通过托盘菜单退出。
+这是正常行为。Quick Memo Applet 是托盘常驻工具，关闭可见窗口不会退出进程。请通过托盘菜单退出。
 
-### 为什么快捷键没有反应？
+### 快捷键没有反应怎么办？
 
-可能是快捷键被其他应用占用，或程序未成功注册全局快捷键。请打开 Dashboard 修改快捷键后再试。
+可能是快捷键被其他程序占用。打开 Dashboard，在“快捷输入”里设置一个新的快捷键。
 
-### 为什么直接拷贝 exe 到别的机器后无法运行？
+### 为什么 zip 里的 exe 单独拷出去不能运行？
 
-Qt 应用需要随 exe 一起部署 Qt DLL 和插件。请使用 `windeployqt` 生成部署目录，再打包发布。
+Qt 程序需要随 exe 一起部署 Qt DLL 和插件。请保留 zip 解压后的目录结构。
 
-### 数据是否会同步到云端？
+### 卸载会删除我的便签吗？
 
-不会。当前版本只使用本地 JSON 文件。
+安装包卸载时不会主动删除 `%APPDATA%\QuickMemoApplet\data.json`。如果你想完全清理数据，需要手动删除这个目录。
 
-## 路线图
+### 支持 macOS 或 Linux 吗？
 
-短期路线图见 [ROADMAP.md](ROADMAP.md)。
+当前项目是 Windows-first。代码里有部分非 Windows fallback，但全局快捷键和开机自启主要面向 Windows。
 
-当前优先级：
+## 给开发者
 
-- 补充 README 截图和更完整的发布检查清单
-- 增加 Windows CI 构建检查
-- 继续补充 Dashboard 细节反馈和用户体验验收
-
-## 贡献
-
-欢迎提交 issue 和 pull request。较大的功能、架构或视觉方向调整，请先开 issue 讨论，避免重复劳动。
-
-详细说明见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+如果你想从源码构建、开发或提交 PR，请看 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## 许可证与第三方依赖
 
 本项目代码使用 MIT License，见 [LICENSE](LICENSE)。
 
 本项目依赖 Qt。Qt 是商业和开源双许可项目；如果发布包含 Qt DLL 的二进制包，请确认所使用 Qt 版本、模块和分发方式满足对应许可证要求。更具体的第三方依赖和 Qt 许可说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
-
-Qt 官方资料：
-
-- [Qt for Windows - Deployment](https://doc.qt.io/qt-6/windows-deployment.html)
-- [Qt Open Source LGPL Obligations](https://www.qt.io/licensing/open-source-lgpl-obligations)
 
 本 README 中的许可证说明不是法律意见。

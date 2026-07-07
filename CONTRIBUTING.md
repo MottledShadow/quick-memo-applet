@@ -1,74 +1,125 @@
 # Contributing
 
-感谢你关注 Quick Memo Applet。这个项目目前是一个轻量级个人桌面工具，欢迎 issue、bug report、小型修复和清晰边界内的 pull request。
+感谢你关注 Quick Memo Applet。本文档面向开发者，说明如何搭建环境、构建项目、理解目录结构和提交改动。
 
-## 贡献原则
-
-- 大改动先开 issue 讨论，包括架构调整、数据格式变化、大范围 UI 重做和新依赖。
-- 提交 issue 时优先使用 GitHub issue template，方便保留复现步骤、环境和期望行为。
-- 保持项目轻量，优先使用现有 Qt Widgets/C++ + QSS 结构。
-- 不引入 QML、重型框架或复杂后台服务，除非维护者已经明确接受方向。
-- 不提交本地构建产物、Qt Creator 配置、部署 DLL、用户数据或临时文件。
-- 改动越靠近用户体验，PR 描述越要写清楚可见变化。
-
-## 本地开发
+## 开发环境
 
 推荐环境：
 
 - Windows 10/11
-- Qt 6 或 Qt 5，包含 Widgets 模块
+- Qt 6.11.x 或其他 Qt 6/Qt 5 Widgets Kit
 - CMake 3.16+
-- 支持 C++17 的编译器
+- 支持 C++17 的编译器，当前主要使用 MinGW 64-bit
+- Git
+- 可选：Inno Setup 6，用于生成 Windows 安装包
 
-命令行构建：
+项目保持 Windows-first、Qt Widgets/C++ + QSS 方向。不引入 QML、重型框架、复杂后台服务或云同步，除非维护者先接受方向。
+
+## 获取和打开项目
+
+```powershell
+git clone https://github.com/MottledShadow/quick-memo-applet.git
+cd quick-memo-applet
+```
+
+使用 Qt Creator：
+
+1. 打开仓库根目录。
+2. 选择可用的 Qt Widgets Kit。
+3. 配置 CMake。
+4. 构建并运行 `Quick_Memo_Applet`。
+
+使用命令行：
 
 ```powershell
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build --config Debug
 ```
 
-也可以直接用 Qt Creator 打开仓库根目录并选择合适的 Qt Kit。
+如果 CMake 找不到 Qt，请使用 Qt 提供的开发环境终端，或设置 `CMAKE_PREFIX_PATH` 指向 Qt Kit，例如 `C:\Qt\6.11.1\mingw_64`。
 
-## 代码风格
+## 目录结构
 
-- 继续使用 C++17 和 Qt Widgets。
-- UI 样式优先放在 `src/theme/` 的主题和 QSS 体系里。
-- 保持命名和周围代码一致，不做无关重排。
-- 小函数、小改动优先；大文件拆分应单独讨论。
-- 新增行为需要考虑中英文文案和当前设置持久化方式。
+```text
+src/
+  app/       应用入口和主协调逻辑
+  core/      本地数据模型、JSON 存储和设置
+  platform/  Windows 全局快捷键等平台相关逻辑
+  theme/     文案、主题、QSS 和视觉 token
+  ui/        Dashboard、输入窗口、便签窗口和托盘控制
+resources/  图标、qrc 和 Windows rc 资源
+scripts/    本地工程化脚本
+installer/  Inno Setup 安装包脚本
+docs/       发布、数据兼容等维护文档
+```
 
-## 文档要求
+## 开发约束
 
-以下改动通常需要同步更新 README：
+- 保持 C++17 和 Qt Widgets。
+- UI 视觉优先走 `src/theme/` 的 QSS 和 token。
+- 用户可见文案需要同时维护中文和英文。
+- 修改数据字段时必须更新 [docs/DATA_COMPATIBILITY.md](docs/DATA_COMPATIBILITY.md)。
+- 不提交 `build/`、`build-*`、`.qtcreator/`、部署 DLL、用户数据、zip 或 exe。
+- 不做无关格式化或大范围重排。
 
-- 新增或移除用户可见功能
-- 修改构建、运行或打包方式
-- 修改数据文件位置或 JSON 数据含义
-- 修改 Qt 依赖、平台支持或发布流程
+## 数据兼容
 
-如果 PR 涉及 UI 视觉效果，请在 PR 描述中说明影响的窗口和状态。能够提供截图时，请提供截图。
+默认数据路径：
 
-## 提交前检查
+```text
+%APPDATA%\QuickMemoApplet\data.json
+```
 
-提交 PR 前至少运行：
+当前 JSON schema 版本为 `1`。旧版没有 `schemaVersion` 的数据按 v0.x 数据读取。读取时会忽略未知字段，缺失字段使用默认值，非法记录会跳过。
+
+详细策略见 [docs/DATA_COMPATIBILITY.md](docs/DATA_COMPATIBILITY.md)。
+
+## 本地验证
+
+提交前至少运行：
 
 ```powershell
-cmake --build build --config Debug
+cmake --build C:\Users\MOS\Documents\Quick_Memo_Applet\build\Desktop_Qt_6_11_1_MinGW_64_bit_Debug
 git diff --check
 ```
 
-如果你使用的是 Qt Creator 自动生成的构建目录，也可以运行对应构建目录的 `cmake --build`。
+如果你使用自己的构建目录，替换为对应路径即可。
+
+涉及发布或打包时，还要运行 Release 构建：
+
+```powershell
+cmake --build C:\Users\MOS\Documents\Quick_Memo_Applet\build\Desktop_Qt_6_11_1_MinGW_64_bit_Release --config Release
+```
+
+## Windows 打包
+
+可重复打包脚本：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\package-windows.ps1 -Version 1.0.0
+```
+
+脚本会：
+
+- 构建 Release 目标。
+- 使用 `windeployqt --release` 收集 Qt DLL 和插件。
+- 复制 `README.md`、`LICENSE`、`THIRD_PARTY_NOTICES.md`。
+- 生成 `QuickMemoApplet-v1.0.0-win64.zip`。
+- 使用 Inno Setup 生成 `QuickMemoApplet-v1.0.0-win64-setup.exe`。
+- 输出 SHA256。
+
+如果提示找不到 `ISCC.exe`，请安装 Inno Setup 6，或传入 `-InnoSetupPath`。
 
 ## PR Checklist
 
-提交 PR 时请确认：
+提交 PR 前确认：
 
-- 改动范围和 issue 或 PR 描述一致
-- 没有提交 `build/`、`.qtcreator/`、`.agents/`、`.codex/` 或部署 DLL
-- 本地构建通过
-- `git diff --check` 通过
-- 用户可见行为变化已更新 README 或 PR 描述
-- 数据格式变化已说明兼容性影响
+- 改动范围和描述一致。
+- 本地构建通过。
+- `git diff --check` 通过。
+- 用户可见行为变化已更新 README 或相关 docs。
+- 数据格式变化已更新数据兼容文档。
+- 没有提交本地构建产物、部署产物或个人配置。
 
 ## 许可证
 
