@@ -117,14 +117,18 @@ MemoStore::MemoStore(QObject *parent)
     , sortOrder(RecordSortOrder::NewestFirst)
     , questionState(defaultWindowState(MemoType::Question))
     , todoState(defaultWindowState(MemoType::Todo))
+    , createdDataOnLoad(false)
 {
 }
 
 bool MemoStore::load()
 {
+    createdDataOnLoad = false;
+
     QFile file(dataFilePath());
     if (!file.exists()) {
-        return save();
+        createdDataOnLoad = save();
+        return createdDataOnLoad;
     }
 
     if (!file.open(QIODevice::ReadOnly)) {
@@ -165,6 +169,11 @@ bool MemoStore::save() const
 
     file.write(QJsonDocument(toJson()).toJson(QJsonDocument::Indented));
     return file.commit();
+}
+
+bool MemoStore::firstRunCreated() const
+{
+    return createdDataOnLoad;
 }
 
 QVector<MemoItem> MemoStore::records() const

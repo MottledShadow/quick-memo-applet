@@ -81,6 +81,7 @@ public:
 
     bool load();
     bool save() const;
+    bool firstRunCreated() const;
 
     QVector<MemoItem> records() const;
     QVector<MemoItem> records(MemoType type) const;
@@ -183,6 +184,7 @@ private:
     RecordSortOrder sortOrder;
     MemoWindowState questionState;
     MemoWindowState todoState;
+    bool createdDataOnLoad;
 };
 
 #endif // MEMOSTORE_H

@@ -22,11 +22,18 @@ class DashboardWindow : public QWidget
     Q_OBJECT
 
 public:
+    enum class DashboardStatusKind {
+        Ready,
+        Info,
+        Success,
+        Error
+    };
+
     explicit DashboardWindow(MemoStore *store, QWidget *parent = nullptr);
 
 public slots:
     void refresh();
-    void setStatusMessage(const QString &message);
+    void setStatusMessage(const QString &message, DashboardStatusKind kind = DashboardStatusKind::Info);
     void applyTheme(ThemeMode mode, FontSizeMode fontSize, DensityMode density);
     void setHotkeyChangeSucceeded(const QKeySequence &sequence);
     void setHotkeyChangeFailed(const QString &message);
@@ -104,13 +111,10 @@ private:
     QTimer *hotkeyFeedbackTimer;
     QPushButton *exportJsonButton;
     QPushButton *importJsonButton;
-    QFrame *hotkeyGroupFrame;
     QFrame *personalizationGroupFrame;
-    QFrame *memoDisplayGroupFrame;
     QFrame *inputGroupFrame;
     QFrame *recordGroupFrame;
     QFrame *dataGroupFrame;
-    QFrame *systemGroupFrame;
     QLabel *recordsTitleLabel;
     QLabel *memoSectionTitleLabel;
     QLabel *settingsSectionTitleLabel;
@@ -120,14 +124,12 @@ private:
     QLabel *todoCountLabel;
     QLabel *questionControlTitleLabel;
     QLabel *todoControlTitleLabel;
-    QLabel *hotkeyGroupTitleLabel;
     QLabel *hotkeyFieldLabel;
     QLabel *personalizationGroupTitleLabel;
     QLabel *languageFieldLabel;
     QLabel *themeFieldLabel;
     QLabel *fontSizeFieldLabel;
     QLabel *densityFieldLabel;
-    QLabel *memoDisplayGroupTitleLabel;
     QLabel *memoStartupDisplayFieldLabel;
     QLabel *inputGroupTitleLabel;
     QLabel *defaultInputTypeFieldLabel;
@@ -135,7 +137,6 @@ private:
     QLabel *recordClickActionFieldLabel;
     QLabel *recordSortOrderFieldLabel;
     QLabel *dataGroupTitleLabel;
-    QLabel *systemGroupTitleLabel;
     QBoxLayout *questionRecordsLayout;
     QBoxLayout *todoRecordsLayout;
     QLabel *statusLabel;

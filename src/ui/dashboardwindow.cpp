@@ -203,6 +203,22 @@ QString onOffText(bool enabled, AppLanguage language)
     return enabled ? QString::fromUtf8("开启") : QString::fromUtf8("关闭");
 }
 
+QString statusKindName(DashboardWindow::DashboardStatusKind kind)
+{
+    switch (kind) {
+    case DashboardWindow::DashboardStatusKind::Ready:
+        return QStringLiteral("ready");
+    case DashboardWindow::DashboardStatusKind::Success:
+        return QStringLiteral("success");
+    case DashboardWindow::DashboardStatusKind::Error:
+        return QStringLiteral("error");
+    case DashboardWindow::DashboardStatusKind::Info:
+        return QStringLiteral("info");
+    }
+
+    return QStringLiteral("info");
+}
+
 void setGroupSummary(QFrame *frame, const QString &summary)
 {
     auto *group = static_cast<CollapsibleSettingsGroup *>(frame);
@@ -239,13 +255,10 @@ DashboardWindow::DashboardWindow(MemoStore *store, QWidget *parent)
     , hotkeyFeedbackTimer(nullptr)
     , exportJsonButton(nullptr)
     , importJsonButton(nullptr)
-    , hotkeyGroupFrame(nullptr)
     , personalizationGroupFrame(nullptr)
-    , memoDisplayGroupFrame(nullptr)
     , inputGroupFrame(nullptr)
     , recordGroupFrame(nullptr)
     , dataGroupFrame(nullptr)
-    , systemGroupFrame(nullptr)
     , recordsTitleLabel(nullptr)
     , memoSectionTitleLabel(nullptr)
     , settingsSectionTitleLabel(nullptr)
@@ -255,14 +268,12 @@ DashboardWindow::DashboardWindow(MemoStore *store, QWidget *parent)
     , todoCountLabel(nullptr)
     , questionControlTitleLabel(nullptr)
     , todoControlTitleLabel(nullptr)
-    , hotkeyGroupTitleLabel(nullptr)
     , hotkeyFieldLabel(nullptr)
     , personalizationGroupTitleLabel(nullptr)
     , languageFieldLabel(nullptr)
     , themeFieldLabel(nullptr)
     , fontSizeFieldLabel(nullptr)
     , densityFieldLabel(nullptr)
-    , memoDisplayGroupTitleLabel(nullptr)
     , memoStartupDisplayFieldLabel(nullptr)
     , inputGroupTitleLabel(nullptr)
     , defaultInputTypeFieldLabel(nullptr)
@@ -270,7 +281,6 @@ DashboardWindow::DashboardWindow(MemoStore *store, QWidget *parent)
     , recordClickActionFieldLabel(nullptr)
     , recordSortOrderFieldLabel(nullptr)
     , dataGroupTitleLabel(nullptr)
-    , systemGroupTitleLabel(nullptr)
     , questionRecordsLayout(nullptr)
     , todoRecordsLayout(nullptr)
     , statusLabel(nullptr)
@@ -360,9 +370,11 @@ void DashboardWindow::refresh()
     refreshRecords();
 }
 
-void DashboardWindow::setStatusMessage(const QString &message)
+void DashboardWindow::setStatusMessage(const QString &message, DashboardStatusKind kind)
 {
     statusLabel->setText(message);
+    statusLabel->setProperty("statusKind", statusKindName(kind));
+    refreshDynamicStyle(statusLabel);
 }
 
 void DashboardWindow::applyTheme(ThemeMode mode, FontSizeMode fontSize, DensityMode density)
@@ -440,7 +452,7 @@ void DashboardWindow::setHotkeyEditState(HotkeyEditState state, const QString &m
     refreshDynamicStyle(hotkeyEdit);
     refreshDynamicStyle(hotkeyFeedbackLabel);
     refreshDynamicStyle(applyHotkeyButton);
-    refreshGroupHeight(hotkeyGroupFrame);
+    refreshGroupHeight(inputGroupFrame);
 }
 
 void DashboardWindow::updateHotkeyApplyState()
@@ -610,15 +622,15 @@ void DashboardWindow::setupUi()
     sideLayout->addSpacing(2);
     sideLayout->addWidget(settingsSectionTitleLabel);
 
-    QBoxLayout *hotkeyGroupLayout = nullptr;
-    hotkeyGroupFrame = createSettingsGroup(&hotkeyGroupTitleLabel, sideContent, &hotkeyGroupLayout);
-    static_cast<CollapsibleSettingsGroup *>(hotkeyGroupFrame)->setCollapseCallback([this]() {
+    QBoxLayout *inputGroupLayout = nullptr;
+    inputGroupFrame = createSettingsGroup(&inputGroupTitleLabel, sideContent, &inputGroupLayout, true);
+    static_cast<CollapsibleSettingsGroup *>(inputGroupFrame)->setCollapseCallback([this]() {
         resetHotkeyEdit();
     });
-    auto *hotkeyGroup = hotkeyGroupFrame;
-    hotkeyFieldLabel = new QLabel(hotkeyGroup);
+    auto *inputGroup = inputGroupFrame;
+    hotkeyFieldLabel = new QLabel(inputGroup);
     hotkeyFieldLabel->setObjectName("FieldLabel");
-    hotkeyEdit = new QKeySequenceEdit(hotkeyGroup);
+    hotkeyEdit = new QKeySequenceEdit(inputGroup);
     hotkeyEdit->setMinimumHeight(34);
     hotkeyEdit->installEventFilter(this);
     connect(hotkeyEdit, &QKeySequenceEdit::keySequenceChanged, this, [this]() {
@@ -631,7 +643,7 @@ void DashboardWindow::setupUi()
         updateHotkeyApplyState();
     });
 
-    applyHotkeyButton = new QPushButton(hotkeyGroup);
+    applyHotkeyButton = new QPushButton(inputGroup);
     applyHotkeyButton->setObjectName("PrimaryButton");
     applyHotkeyButton->setMinimumSize(68, 34);
     applyHotkeyButton->setEnabled(false);
@@ -641,20 +653,51 @@ void DashboardWindow::setupUi()
         }
     });
 
-    hotkeyFeedbackLabel = new QLabel(hotkeyGroup);
+    hotkeyFeedbackLabel = new QLabel(inputGroup);
     hotkeyFeedbackLabel->setObjectName("HotkeyFeedbackLabel");
     hotkeyFeedbackLabel->setWordWrap(true);
 
-    auto *hotkeyInputRow = new QWidget(hotkeyGroup);
+    auto *hotkeyInputRow = new QWidget(inputGroup);
     auto *hotkeyInputLayout = new QHBoxLayout(hotkeyInputRow);
     hotkeyInputLayout->setContentsMargins(0, 0, 0, 0);
     hotkeyInputLayout->setSpacing(6);
     hotkeyInputLayout->addWidget(hotkeyEdit, 1);
     hotkeyInputLayout->addWidget(applyHotkeyButton);
 
-    hotkeyGroupLayout->addWidget(hotkeyFieldLabel);
-    hotkeyGroupLayout->addWidget(hotkeyInputRow);
-    hotkeyGroupLayout->addWidget(hotkeyFeedbackLabel);
+    inputGroupLayout->addWidget(hotkeyFieldLabel);
+    inputGroupLayout->addWidget(hotkeyInputRow);
+    inputGroupLayout->addWidget(hotkeyFeedbackLabel);
+
+    auto *inputGrid = new QGridLayout();
+    inputGrid->setContentsMargins(0, 0, 0, 0);
+    inputGrid->setHorizontalSpacing(10);
+    inputGrid->setVerticalSpacing(8);
+
+    defaultInputTypeFieldLabel = new QLabel(inputGroup);
+    defaultInputTypeFieldLabel->setObjectName("FieldLabel");
+    defaultInputTypeCombo = new NoWheelComboBox(inputGroup);
+    defaultInputTypeCombo->setObjectName("DefaultInputTypeCombo");
+    defaultInputTypeCombo->setCursor(Qt::PointingHandCursor);
+    defaultInputTypeCombo->setMinimumHeight(30);
+
+    hideInputAfterSaveCheck = new QCheckBox(inputGroup);
+    hideInputAfterSaveCheck->setObjectName("InputToggle");
+    hideInputAfterSaveCheck->setMinimumHeight(28);
+
+    inputGrid->addWidget(defaultInputTypeFieldLabel, 0, 0);
+    inputGrid->addWidget(defaultInputTypeCombo, 0, 1);
+    inputGrid->setColumnStretch(1, 1);
+    inputGroupLayout->addLayout(inputGrid);
+    inputGroupLayout->addWidget(hideInputAfterSaveCheck);
+
+    connect(defaultInputTypeCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
+        const QVariant data = defaultInputTypeCombo->itemData(index);
+        if (!data.isValid()) {
+            return;
+        }
+        emit defaultInputTypeChangeRequested(static_cast<DefaultInputTypeMode>(data.toInt()));
+    });
+    connect(hideInputAfterSaveCheck, &QCheckBox::toggled, this, &DashboardWindow::inputAutoHideChanged);
 
     QBoxLayout *personalizationGroupLayout = nullptr;
     personalizationGroupFrame = createSettingsGroup(&personalizationGroupTitleLabel,
@@ -674,6 +717,8 @@ void DashboardWindow::setupUi()
     fontSizeFieldLabel->setObjectName("FieldLabel");
     densityFieldLabel = new QLabel(personalizationGroup);
     densityFieldLabel->setObjectName("FieldLabel");
+    memoStartupDisplayFieldLabel = new QLabel(personalizationGroup);
+    memoStartupDisplayFieldLabel->setObjectName("FieldLabel");
 
     languageCombo = new NoWheelComboBox(personalizationGroup);
     languageCombo->setObjectName("LanguageCombo");
@@ -691,6 +736,10 @@ void DashboardWindow::setupUi()
     densityCombo->setObjectName("DensityCombo");
     densityCombo->setCursor(Qt::PointingHandCursor);
     densityCombo->setMinimumHeight(34);
+    memoStartupDisplayCombo = new NoWheelComboBox(personalizationGroup);
+    memoStartupDisplayCombo->setObjectName("MemoStartupDisplayCombo");
+    memoStartupDisplayCombo->setCursor(Qt::PointingHandCursor);
+    memoStartupDisplayCombo->setMinimumHeight(34);
 
     personalizationGrid->addWidget(languageFieldLabel, 0, 0);
     personalizationGrid->addWidget(languageCombo, 0, 1);
@@ -700,8 +749,10 @@ void DashboardWindow::setupUi()
     personalizationGrid->addWidget(fontSizeCombo, 2, 1);
     personalizationGrid->addWidget(densityFieldLabel, 3, 0);
     personalizationGrid->addWidget(densityCombo, 3, 1);
+    personalizationGrid->addWidget(memoStartupDisplayFieldLabel, 4, 0);
+    personalizationGrid->addWidget(memoStartupDisplayCombo, 4, 1);
     personalizationGrid->setColumnStretch(1, 1);
-    for (int row = 0; row < 4; ++row) {
+    for (int row = 0; row < 5; ++row) {
         personalizationGrid->setRowMinimumHeight(row, 38);
     }
     personalizationGroupLayout->addLayout(personalizationGrid);
@@ -734,29 +785,6 @@ void DashboardWindow::setupUi()
         }
         emit densityChangeRequested(static_cast<DensityMode>(data.toInt()));
     });
-
-    QBoxLayout *memoDisplayGroupLayout = nullptr;
-    memoDisplayGroupFrame = createSettingsGroup(&memoDisplayGroupTitleLabel,
-                                                sideContent,
-                                                &memoDisplayGroupLayout);
-    auto *memoDisplayGroup = memoDisplayGroupFrame;
-    auto *memoDisplayGrid = new QGridLayout();
-    memoDisplayGrid->setContentsMargins(0, 0, 0, 0);
-    memoDisplayGrid->setHorizontalSpacing(10);
-    memoDisplayGrid->setVerticalSpacing(8);
-
-    memoStartupDisplayFieldLabel = new QLabel(memoDisplayGroup);
-    memoStartupDisplayFieldLabel->setObjectName("FieldLabel");
-    memoStartupDisplayCombo = new NoWheelComboBox(memoDisplayGroup);
-    memoStartupDisplayCombo->setObjectName("MemoStartupDisplayCombo");
-    memoStartupDisplayCombo->setCursor(Qt::PointingHandCursor);
-    memoStartupDisplayCombo->setMinimumHeight(30);
-
-    memoDisplayGrid->addWidget(memoStartupDisplayFieldLabel, 0, 0);
-    memoDisplayGrid->addWidget(memoStartupDisplayCombo, 0, 1);
-    memoDisplayGrid->setColumnStretch(1, 1);
-    memoDisplayGroupLayout->addLayout(memoDisplayGrid);
-
     connect(memoStartupDisplayCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
         const QVariant data = memoStartupDisplayCombo->itemData(index);
         if (!data.isValid()) {
@@ -764,40 +792,6 @@ void DashboardWindow::setupUi()
         }
         emit memoStartupDisplayChangeRequested(static_cast<MemoStartupDisplayMode>(data.toInt()));
     });
-
-    QBoxLayout *inputGroupLayout = nullptr;
-    inputGroupFrame = createSettingsGroup(&inputGroupTitleLabel, sideContent, &inputGroupLayout, true);
-    auto *inputGroup = inputGroupFrame;
-    auto *inputGrid = new QGridLayout();
-    inputGrid->setContentsMargins(0, 0, 0, 0);
-    inputGrid->setHorizontalSpacing(10);
-    inputGrid->setVerticalSpacing(8);
-
-    defaultInputTypeFieldLabel = new QLabel(inputGroup);
-    defaultInputTypeFieldLabel->setObjectName("FieldLabel");
-    defaultInputTypeCombo = new NoWheelComboBox(inputGroup);
-    defaultInputTypeCombo->setObjectName("DefaultInputTypeCombo");
-    defaultInputTypeCombo->setCursor(Qt::PointingHandCursor);
-    defaultInputTypeCombo->setMinimumHeight(30);
-
-    hideInputAfterSaveCheck = new QCheckBox(inputGroup);
-    hideInputAfterSaveCheck->setObjectName("InputToggle");
-    hideInputAfterSaveCheck->setMinimumHeight(28);
-    inputGroupLayout->addWidget(hideInputAfterSaveCheck);
-
-    inputGrid->addWidget(defaultInputTypeFieldLabel, 0, 0);
-    inputGrid->addWidget(defaultInputTypeCombo, 0, 1);
-    inputGrid->setColumnStretch(1, 1);
-    inputGroupLayout->addLayout(inputGrid);
-
-    connect(defaultInputTypeCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
-        const QVariant data = defaultInputTypeCombo->itemData(index);
-        if (!data.isValid()) {
-            return;
-        }
-        emit defaultInputTypeChangeRequested(static_cast<DefaultInputTypeMode>(data.toInt()));
-    });
-    connect(hideInputAfterSaveCheck, &QCheckBox::toggled, this, &DashboardWindow::inputAutoHideChanged);
 
     QBoxLayout *recordGroupLayout = nullptr;
     recordGroupFrame = createSettingsGroup(&recordGroupTitleLabel, sideContent, &recordGroupLayout);
@@ -866,31 +860,22 @@ void DashboardWindow::setupUi()
     dataButtonLayout->addWidget(importJsonButton, 1);
     dataGroupLayout->addWidget(dataButtonRow);
 
-    QBoxLayout *systemGroupLayout = nullptr;
-    systemGroupFrame = createSettingsGroup(&systemGroupTitleLabel, sideContent, &systemGroupLayout);
-    auto *systemGroup = systemGroupFrame;
-    autostartCheck = new QCheckBox(systemGroup);
+    autostartCheck = new QCheckBox(dataGroup);
     autostartCheck->setObjectName("SystemToggle");
     autostartCheck->setMinimumHeight(28);
     connect(autostartCheck, &QCheckBox::toggled, this, &DashboardWindow::autostartChanged);
-    systemGroupLayout->addWidget(autostartCheck);
+    dataGroupLayout->addWidget(autostartCheck);
 
     sideLayout->addWidget(inputGroup);
-    sideLayout->addWidget(hotkeyGroup);
     sideLayout->addWidget(personalizationGroup);
-    sideLayout->addWidget(memoDisplayGroup);
     sideLayout->addWidget(recordGroup);
     sideLayout->addWidget(dataGroup);
-    sideLayout->addWidget(systemGroup);
     sideLayout->addStretch(1);
 
     refreshGroupHeight(inputGroupFrame);
-    refreshGroupHeight(hotkeyGroupFrame);
     refreshGroupHeight(personalizationGroupFrame);
-    refreshGroupHeight(memoDisplayGroupFrame);
     refreshGroupHeight(recordGroupFrame);
     refreshGroupHeight(dataGroupFrame);
-    refreshGroupHeight(systemGroupFrame);
 
     sideScrollArea->setWidget(sideContent);
     sidePanelLayout->addWidget(sideScrollArea);
@@ -904,6 +889,7 @@ void DashboardWindow::setupUi()
     statusLayout->setContentsMargins(16, 0, 16, 0);
     statusLabel = new QLabel(AppText::ready(store->language()), statusBar);
     statusLabel->setObjectName("StatusLabel");
+    statusLabel->setProperty("statusKind", statusKindName(DashboardStatusKind::Ready));
     statusLayout->addWidget(statusLabel, 1);
 
     rootLayout->addWidget(content, 1);
@@ -1108,7 +1094,6 @@ void DashboardWindow::retranslateUi()
     questionControlTitleLabel->setText(store->categoryName(MemoType::Question));
     todoControlTitleLabel->setText(store->categoryName(MemoType::Todo));
 
-    hotkeyGroupTitleLabel->setText(AppText::hotkeyTitle(language));
     hotkeyFieldLabel->setText(AppText::globalHotkeyLabel(language));
     applyHotkeyButton->setText(AppText::applyButton(language));
     applyHotkeyButton->setToolTip(AppText::applyHotkeyTooltip(language));
@@ -1121,8 +1106,6 @@ void DashboardWindow::retranslateUi()
     themeCombo->setToolTip(AppText::themeTooltip(language));
     fontSizeCombo->setToolTip(AppText::fontSizeTooltip(language));
     densityCombo->setToolTip(AppText::densityTooltip(language));
-
-    memoDisplayGroupTitleLabel->setText(AppText::memoStartupDisplayTitle(language));
     memoStartupDisplayFieldLabel->setText(AppText::memoStartupDisplayLabel(language));
     memoStartupDisplayCombo->setToolTip(AppText::memoStartupDisplayTooltip(language));
 
@@ -1144,7 +1127,6 @@ void DashboardWindow::retranslateUi()
     importJsonButton->setText(AppText::importJson(language));
     importJsonButton->setToolTip(AppText::importJsonTooltip(language));
 
-    systemGroupTitleLabel->setText(AppText::systemTitle(language));
     autostartCheck->setText(AppText::autostart(language));
     autostartCheck->setToolTip(AppText::autostartTooltip(language));
     questionTopCheck->setText(AppText::pin(language));
@@ -1155,12 +1137,9 @@ void DashboardWindow::retranslateUi()
     rebuildComboLabels();
     updateSettingsGroupSummaries();
     refreshGroupHeight(inputGroupFrame);
-    refreshGroupHeight(hotkeyGroupFrame);
     refreshGroupHeight(personalizationGroupFrame);
-    refreshGroupHeight(memoDisplayGroupFrame);
     refreshGroupHeight(recordGroupFrame);
     refreshGroupHeight(dataGroupFrame);
-    refreshGroupHeight(systemGroupFrame);
 }
 
 void DashboardWindow::rebuildComboLabels()
@@ -1283,25 +1262,27 @@ void DashboardWindow::updateSettingsGroupSummaries()
     const QString questionName = store->categoryName(MemoType::Question);
     const QString todoName = store->categoryName(MemoType::Todo);
 
-    setGroupSummary(hotkeyGroupFrame, QKeySequence(store->hotkey()).toString(QKeySequence::NativeText));
     setGroupSummary(personalizationGroupFrame,
-                    QStringLiteral("%1 / %2")
+                    QStringLiteral("%1 / %2 / %3")
                         .arg(AppText::languageDisplayName(language),
-                             AppText::themeDisplayName(store->themeMode(), language)));
-    setGroupSummary(memoDisplayGroupFrame,
-                    AppText::memoStartupDisplayName(store->memoStartupDisplayMode(), language));
+                             AppText::themeDisplayName(store->themeMode(), language),
+                             AppText::memoStartupDisplayName(store->memoStartupDisplayMode(), language)));
     setGroupSummary(inputGroupFrame,
-                    AppText::defaultInputTypeName(store->defaultInputTypeMode(),
-                                                  questionName,
-                                                  todoName,
-                                                  language));
+                    QStringLiteral("%1 / %2")
+                        .arg(QKeySequence(store->hotkey()).toString(QKeySequence::NativeText),
+                             AppText::defaultInputTypeName(store->defaultInputTypeMode(),
+                                                           questionName,
+                                                           todoName,
+                                                           language)));
     setGroupSummary(recordGroupFrame,
                     QStringLiteral("%1 / %2")
                         .arg(AppText::recordClickActionName(store->recordClickAction(), language),
                              AppText::recordSortOrderName(store->recordSortOrder(), language)));
     setGroupSummary(dataGroupFrame,
-                    QStringLiteral("%1 / %2").arg(AppText::exportJson(language), AppText::importJson(language)));
-    setGroupSummary(systemGroupFrame, onOffText(store->autostartEnabled(), language));
+                    QStringLiteral("%1 / %2 / %3")
+                        .arg(AppText::exportJson(language),
+                             AppText::importJson(language),
+                             onOffText(store->autostartEnabled(), language)));
 }
 
 void DashboardWindow::refreshMemoControls(MemoType type)

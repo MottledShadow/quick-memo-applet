@@ -116,8 +116,11 @@ public:
     static QString importJson(AppLanguage language);
     static QString exportJsonTooltip(AppLanguage language);
     static QString importJsonTooltip(AppLanguage language);
-    static QString exportJsonSuccess(AppLanguage language);
+    static QString exportJsonSuccess(const QString &fileName, AppLanguage language);
     static QString exportJsonFailed(const QString &reason, AppLanguage language);
+    static QString importJsonConfirmTitle(AppLanguage language);
+    static QString importJsonConfirmBody(const QString &fileName, AppLanguage language);
+    static QString importJsonConfirmButton(AppLanguage language);
     static QString importJsonSuccess(AppLanguage language);
     static QString importJsonFailed(const QString &reason, AppLanguage language);
     static QString inputAutoHideEnabled(AppLanguage language);

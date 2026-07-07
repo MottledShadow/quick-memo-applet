@@ -14,13 +14,18 @@
 #include <QDir>
 #include <QEasingCurve>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QKeySequence>
+#include <QMessageBox>
 #include <QPropertyAnimation>
+#include <QPushButton>
 #include <QSettings>
 #include <QTimer>
 #include <QWidget>
 
 namespace {
+using StatusKind = DashboardWindow::DashboardStatusKind;
+
 constexpr int kThemeTransitionDurationMs = 180;
 constexpr qreal kThemeTransitionStartOpacity = 0.82;
 constexpr qreal kThemeTransitionMinimumIdleOpacity = 0.99;
@@ -62,7 +67,7 @@ MainWindow::MainWindow(QObject *parent)
     applyAutostart(store->autostartEnabled());
 
     const bool launchedFromAutostart = QCoreApplication::arguments().contains(QStringLiteral("--autostart"));
-    if (!launchedFromAutostart) {
+    if (!launchedFromAutostart && store->firstRunCreated()) {
         QTimer::singleShot(kStartupMessageDelayMs, trayController, [this]() {
             trayController->showStartupMessage(QKeySequence(store->hotkey()).toString(QKeySequence::NativeText));
         });
@@ -104,11 +109,13 @@ void MainWindow::setupConnections()
     });
     connect(questionWindow, &MemoWindow::categoryNameChangeRequested, this, [this](MemoType type, const QString &name) {
         store->setCategoryName(type, name);
-        dashboardWindow->setStatusMessage(AppText::categoryNameChanged(store->categoryName(type), store->language()));
+        dashboardWindow->setStatusMessage(AppText::categoryNameChanged(store->categoryName(type), store->language()),
+                                          StatusKind::Success);
     });
     connect(todoWindow, &MemoWindow::categoryNameChangeRequested, this, [this](MemoType type, const QString &name) {
         store->setCategoryName(type, name);
-        dashboardWindow->setStatusMessage(AppText::categoryNameChanged(store->categoryName(type), store->language()));
+        dashboardWindow->setStatusMessage(AppText::categoryNameChanged(store->categoryName(type), store->language()),
+                                          StatusKind::Success);
     });
 
     connect(questionWindow, &MemoWindow::stateChanged, store, &MemoStore::setWindowState);
@@ -158,7 +165,7 @@ void MainWindow::setupConnections()
         if (!hotkeyManager->registerHotkey(sequence, &error)) {
             hotkeyManager->registerHotkey(QKeySequence(oldHotkey));
             dashboardWindow->setHotkeyChangeFailed(error);
-            dashboardWindow->setStatusMessage(error);
+            dashboardWindow->setStatusMessage(error, StatusKind::Error);
             return;
         }
 
@@ -166,32 +173,33 @@ void MainWindow::setupConnections()
         const QString message = AppText::hotkeyUpdated(sequence.toString(QKeySequence::NativeText),
                                                        store->language());
         dashboardWindow->setHotkeyChangeSucceeded(sequence);
-        dashboardWindow->setStatusMessage(message);
+        dashboardWindow->setStatusMessage(message, StatusKind::Success);
     });
 
     connect(dashboardWindow, &DashboardWindow::themeChangeRequested, this, [this](ThemeMode mode) {
         store->setThemeMode(mode);
-        dashboardWindow->setStatusMessage(AppText::themeChanged(mode, store->language()));
+        dashboardWindow->setStatusMessage(AppText::themeChanged(mode, store->language()), StatusKind::Success);
     });
 
     connect(dashboardWindow, &DashboardWindow::languageChangeRequested, this, [this](AppLanguage language) {
         store->setLanguage(language);
-        dashboardWindow->setStatusMessage(AppText::ready(store->language()));
+        dashboardWindow->setStatusMessage(AppText::ready(store->language()), StatusKind::Ready);
     });
 
     connect(dashboardWindow, &DashboardWindow::fontSizeChangeRequested, this, [this](FontSizeMode mode) {
         store->setFontSizeMode(mode);
-        dashboardWindow->setStatusMessage(AppText::fontSizeChanged(mode, store->language()));
+        dashboardWindow->setStatusMessage(AppText::fontSizeChanged(mode, store->language()), StatusKind::Success);
     });
 
     connect(dashboardWindow, &DashboardWindow::densityChangeRequested, this, [this](DensityMode mode) {
         store->setDensityMode(mode);
-        dashboardWindow->setStatusMessage(AppText::densityChanged(mode, store->language()));
+        dashboardWindow->setStatusMessage(AppText::densityChanged(mode, store->language()), StatusKind::Success);
     });
 
     connect(dashboardWindow, &DashboardWindow::memoStartupDisplayChangeRequested, this, [this](MemoStartupDisplayMode mode) {
         store->setMemoStartupDisplayMode(mode);
-        dashboardWindow->setStatusMessage(AppText::memoStartupDisplayChanged(mode, store->language()));
+        dashboardWindow->setStatusMessage(AppText::memoStartupDisplayChanged(mode, store->language()),
+                                          StatusKind::Success);
     });
 
     connect(dashboardWindow, &DashboardWindow::defaultInputTypeChangeRequested, this, [this](DefaultInputTypeMode mode) {
@@ -199,17 +207,20 @@ void MainWindow::setupConnections()
         dashboardWindow->setStatusMessage(AppText::defaultInputTypeChanged(mode,
                                                                            store->categoryName(MemoType::Question),
                                                                            store->categoryName(MemoType::Todo),
-                                                                           store->language()));
+                                                                           store->language()),
+                                          StatusKind::Success);
     });
 
     connect(dashboardWindow, &DashboardWindow::recordClickActionChangeRequested, this, [this](RecordClickAction action) {
         store->setRecordClickAction(action);
-        dashboardWindow->setStatusMessage(AppText::recordClickActionChanged(action, store->language()));
+        dashboardWindow->setStatusMessage(AppText::recordClickActionChanged(action, store->language()),
+                                          StatusKind::Success);
     });
 
     connect(dashboardWindow, &DashboardWindow::recordSortOrderChangeRequested, this, [this](RecordSortOrder order) {
         store->setRecordSortOrder(order);
-        dashboardWindow->setStatusMessage(AppText::recordSortOrderChanged(order, store->language()));
+        dashboardWindow->setStatusMessage(AppText::recordSortOrderChanged(order, store->language()),
+                                          StatusKind::Success);
     });
 
     connect(dashboardWindow, &DashboardWindow::exportJsonRequested, this, &MainWindow::exportJson);
@@ -218,19 +229,21 @@ void MainWindow::setupConnections()
     connect(dashboardWindow, &DashboardWindow::inputAutoHideChanged, this, [this](bool enabled) {
         store->setHideInputAfterSave(enabled);
         dashboardWindow->setStatusMessage(enabled ? AppText::inputAutoHideEnabled(store->language())
-                                                  : AppText::inputAutoHideDisabled(store->language()));
+                                                  : AppText::inputAutoHideDisabled(store->language()),
+                                          StatusKind::Success);
     });
 
     connect(dashboardWindow, &DashboardWindow::autostartChanged, this, [this](bool enabled) {
         if (!applyAutostart(enabled)) {
-            dashboardWindow->setStatusMessage(AppText::autostartFailed(store->language()));
+            dashboardWindow->setStatusMessage(AppText::autostartFailed(store->language()), StatusKind::Error);
             dashboardWindow->refresh();
             return;
         }
 
         store->setAutostartEnabled(enabled);
         dashboardWindow->setStatusMessage(enabled ? AppText::autostartEnabled(store->language())
-                                                  : AppText::autostartDisabled(store->language()));
+                                                  : AppText::autostartDisabled(store->language()),
+                                          StatusKind::Success);
     });
 
 }
@@ -263,7 +276,7 @@ void MainWindow::registerStoredHotkey()
 {
     QString error;
     if (!hotkeyManager->registerHotkey(QKeySequence(store->hotkey()), &error)) {
-        dashboardWindow->setStatusMessage(error);
+        dashboardWindow->setStatusMessage(error, StatusKind::Error);
     }
 }
 
@@ -317,12 +330,14 @@ void MainWindow::handleRecordClick(const QString &id, MemoType type, bool fromDa
 
     if (action == RecordClickAction::Complete) {
         store->completeMemo(id);
-        dashboardWindow->setStatusMessage(AppText::completedRecord(store->categoryName(type), store->language()));
+        dashboardWindow->setStatusMessage(AppText::completedRecord(store->categoryName(type), store->language()),
+                                          StatusKind::Success);
         return;
     }
 
     store->deleteMemo(id);
-    dashboardWindow->setStatusMessage(AppText::deletedRecord(store->categoryName(type), store->language()));
+    dashboardWindow->setStatusMessage(AppText::deletedRecord(store->categoryName(type), store->language()),
+                                      StatusKind::Success);
 }
 
 void MainWindow::exportJson()
@@ -341,11 +356,12 @@ void MainWindow::exportJson()
 
     QString error;
     if (!store->exportToFile(filePath, &error)) {
-        dashboardWindow->setStatusMessage(AppText::exportJsonFailed(error, store->language()));
+        dashboardWindow->setStatusMessage(AppText::exportJsonFailed(error, store->language()), StatusKind::Error);
         return;
     }
 
-    dashboardWindow->setStatusMessage(AppText::exportJsonSuccess(store->language()));
+    dashboardWindow->setStatusMessage(AppText::exportJsonSuccess(QFileInfo(filePath).fileName(), store->language()),
+                                      StatusKind::Success);
 }
 
 void MainWindow::importJson()
@@ -358,9 +374,23 @@ void MainWindow::importJson()
         return;
     }
 
+    const QFileInfo importFile(filePath);
+    QMessageBox confirm(QMessageBox::Warning,
+                        AppText::importJsonConfirmTitle(store->language()),
+                        AppText::importJsonConfirmBody(importFile.fileName(), store->language()),
+                        QMessageBox::Cancel,
+                        dashboardWindow);
+    QPushButton *importButton = confirm.addButton(AppText::importJsonConfirmButton(store->language()),
+                                                  QMessageBox::AcceptRole);
+    confirm.setDefaultButton(QMessageBox::Cancel);
+    confirm.exec();
+    if (confirm.clickedButton() != importButton) {
+        return;
+    }
+
     QString error;
     if (!store->importFromFile(filePath, &error)) {
-        dashboardWindow->setStatusMessage(AppText::importJsonFailed(error, store->language()));
+        dashboardWindow->setStatusMessage(AppText::importJsonFailed(error, store->language()), StatusKind::Error);
         return;
     }
 
@@ -374,7 +404,7 @@ void MainWindow::importJson()
     registerStoredHotkey();
     applyAutostart(store->autostartEnabled());
     dashboardWindow->refresh();
-    dashboardWindow->setStatusMessage(AppText::importJsonSuccess(store->language()));
+    dashboardWindow->setStatusMessage(AppText::importJsonSuccess(store->language()), StatusKind::Success);
 }
 
 void MainWindow::applyAppearance(bool animate)

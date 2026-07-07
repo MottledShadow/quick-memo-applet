@@ -123,7 +123,7 @@ QString AppText::hotkeyPendingHint(AppLanguage language)
 
 QString AppText::personalizationTitle(AppLanguage language)
 {
-    return text(language, "个性化", "Personalization");
+    return text(language, "外观与便签", "Appearance & memos");
 }
 
 QString AppText::languageLabel(AppLanguage language)
@@ -164,7 +164,7 @@ QString AppText::densityTooltip(AppLanguage language)
 
 QString AppText::inputTitle(AppLanguage language)
 {
-    return text(language, "输入", "Input");
+    return text(language, "快捷输入", "Quick input");
 }
 
 QString AppText::hideInputAfterSave(AppLanguage language)
@@ -355,15 +355,16 @@ QString AppText::exitApplication(AppLanguage language)
 
 QString AppText::startupTitle(AppLanguage language)
 {
-    return text(language, "Quick Memo 已在后台运行", "Quick Memo is running");
+    return text(language, "Quick Memo 已准备好", "Quick Memo is ready");
 }
 
 QString AppText::startupBody(const QString &hotkeyText, AppLanguage language)
 {
     if (language == AppLanguage::English) {
-        return QStringLiteral("Press %1 to open input\nClick the tray icon to open Dashboard").arg(hotkeyText);
+        return QStringLiteral("Press %1 to capture a memo\nClick the tray icon for Dashboard and settings")
+            .arg(hotkeyText);
     }
-    return QString::fromUtf8("按 %1 呼出输入框\n点击托盘图标可打开后台").arg(hotkeyText);
+    return QString::fromUtf8("按 %1 快速记录\n点击托盘图标打开后台和设置").arg(hotkeyText);
 }
 
 QString AppText::hotkeyUpdated(const QString &hotkeyText, AppLanguage language)
@@ -519,7 +520,7 @@ QString AppText::defaultInputTypeChanged(DefaultInputTypeMode mode,
 
 QString AppText::recordTitle(AppLanguage language)
 {
-    return text(language, "记录", "Records");
+    return text(language, "记录行为", "Record behavior");
 }
 
 QString AppText::recordClickActionLabel(AppLanguage language)
@@ -581,7 +582,7 @@ QString AppText::recordSortOrderChanged(RecordSortOrder order, AppLanguage langu
 
 QString AppText::dataTitle(AppLanguage language)
 {
-    return text(language, "数据", "Data");
+    return text(language, "数据与系统", "Data & system");
 }
 
 QString AppText::exportJson(AppLanguage language)
@@ -606,9 +607,12 @@ QString AppText::importJsonTooltip(AppLanguage language)
                 "Replace current data from a JSON file after backing up the current data");
 }
 
-QString AppText::exportJsonSuccess(AppLanguage language)
+QString AppText::exportJsonSuccess(const QString &fileName, AppLanguage language)
 {
-    return text(language, "JSON 已导出。", "JSON exported.");
+    if (language == AppLanguage::English) {
+        return QStringLiteral("JSON exported: %1").arg(fileName);
+    }
+    return QString::fromUtf8("JSON 已导出：%1").arg(fileName);
 }
 
 QString AppText::exportJsonFailed(const QString &reason, AppLanguage language)
@@ -617,6 +621,25 @@ QString AppText::exportJsonFailed(const QString &reason, AppLanguage language)
         return QStringLiteral("JSON export failed: %1").arg(reason);
     }
     return QString::fromUtf8("JSON 导出失败：%1").arg(reason);
+}
+
+QString AppText::importJsonConfirmTitle(AppLanguage language)
+{
+    return text(language, "确认导入 JSON", "Confirm JSON import");
+}
+
+QString AppText::importJsonConfirmBody(const QString &fileName, AppLanguage language)
+{
+    if (language == AppLanguage::English) {
+        return QStringLiteral("Import %1 and replace the current local data? A backup will be attempted first.")
+            .arg(fileName);
+    }
+    return QString::fromUtf8("导入 %1 并替换当前本地数据？导入前会先尝试备份当前数据。").arg(fileName);
+}
+
+QString AppText::importJsonConfirmButton(AppLanguage language)
+{
+    return text(language, "导入并替换", "Import and replace");
 }
 
 QString AppText::importJsonSuccess(AppLanguage language)

@@ -1023,6 +1023,18 @@ DashboardWindow QLabel#StatusLabel {
     font-weight: ${weightRegular};
     line-height: ${lineCaption};
 }
+DashboardWindow QLabel#StatusLabel[statusKind="ready"] {
+    color: ${textMuted};
+}
+DashboardWindow QLabel#StatusLabel[statusKind="info"] {
+    color: ${textSecondary};
+}
+DashboardWindow QLabel#StatusLabel[statusKind="success"] {
+    color: ${success};
+}
+DashboardWindow QLabel#StatusLabel[statusKind="error"] {
+    color: ${danger};
+}
 DashboardWindow QLabel#SettingGroupTitle {
     color: ${textPrimary};
     font-size: ${bodySize};
